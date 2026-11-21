@@ -4,10 +4,11 @@ Mounted under /api/ai/ecommerce-support-bot
 """
 import time
 from typing import Dict, Any, List, Optional
-from fastapi import APIRouter, HTTPException, Request
+from fastapi import APIRouter, HTTPException, Request, Depends
 from core.events import event_broker
 from core.health import record_project_activity
 from core.db import DatabaseSession
+from core.security import verify_admin_token, mask_email, mask_phone
 from .schemas import CustomerMessageRequest, BotResponse, ClassificationResult
 from .classifier import classify_customer_message
 from .guardrails import check_and_apply_refund_guardrail
@@ -135,18 +136,35 @@ def handle_customer_message(request: CustomerMessageRequest):
         execution_time_ms=elapsed
     )
 
-@router.get("/orders")
+@router.get("/orders", dependencies=[Depends(verify_admin_token)])
 def get_orders_list(limit: int = 10):
-    """Lists orders from Shopify / local SQLite ledger."""
-    return {"orders": shopify_adapter.list_recent_orders(limit)}
+    """Lists orders from Shopify / local SQLite ledger with masked contact details."""
+    orders = shopify_adapter.list_recent_orders(limit)
+    masked_orders = []
+    for o in orders:
+        o_copy = dict(o)
+        if "customer_email" in o_copy:
+            o_copy["customer_email"] = mask_email(o_copy["customer_email"])
+        if "customer_phone" in o_copy:
+            o_copy["customer_phone"] = mask_phone(o_copy["customer_phone"])
+        masked_orders.append(o_copy)
+    return {"orders": masked_orders}
 
-@router.get("/tickets")
+@router.get("/tickets", dependencies=[Depends(verify_admin_token)])
 def get_escalation_tickets():
-    """Lists human escalation tickets created by the sentiment/refund guardrail."""
+    """Lists human escalation tickets created by the sentiment/refund guardrail with masked contact info."""
     db = DatabaseSession()
     try:
         rows = db.fetchall("SELECT * FROM p03_tickets ORDER BY created_at DESC")
-        return {"total": len(rows), "tickets": [dict(r) for r in rows]}
+        tickets = []
+        for r in rows:
+            d = dict(r)
+            if "customer_phone" in d:
+                d["customer_phone"] = mask_phone(d["customer_phone"])
+            if "customer_email" in d:
+                d["customer_email"] = mask_email(d["customer_email"])
+            tickets.append(d)
+        return {"total": len(tickets), "tickets": tickets}
     finally:
         db.close()
 

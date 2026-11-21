@@ -8,6 +8,7 @@ from typing import List, Dict, Any, Optional
 from fastapi import APIRouter, HTTPException, Depends
 from core.db import get_db, DatabaseSession
 from core.events import event_broker
+from core.security import verify_admin_token, mask_email, mask_phone
 from .schemas import (
     RawLeadInquiry,
     QualifiedLead,
@@ -126,11 +127,19 @@ def ingest_lead(inquiry: RawLeadInquiry, db: DatabaseSession = Depends(get_db)):
         execution_time_ms=round(t_elapsed, 2)
     )
 
-@router.get("/leads")
+@router.get("/leads", dependencies=[Depends(verify_admin_token)])
 def get_all_leads(db: DatabaseSession = Depends(get_db)):
-    """Fetches all qualified leads and current statuses from SQLite."""
+    """Fetches all qualified leads and current statuses with masked contact details."""
     rows = db.query_all("SELECT * FROM p01_leads ORDER BY created_at DESC LIMIT 50")
-    return {"leads": rows, "count": len(rows)}
+    leads = []
+    for r in rows:
+        d = dict(r)
+        if "email" in d:
+            d["email"] = mask_email(d["email"])
+        if "phone" in d:
+            d["phone"] = mask_phone(d["phone"])
+        leads.append(d)
+    return {"leads": leads, "count": len(leads)}
 
 @router.get("/inventory")
 def get_mls_inventory():

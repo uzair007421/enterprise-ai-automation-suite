@@ -17,6 +17,8 @@
 | **Phase 3** | **Extended Systems** (07 Voice -> 06 HR -> 09 Media -> 08 Competitor Intel) | **DONE** | None | 100% (15/15 tests passed) |
 | **Phase 4** | **Portfolio Integration & Deliverables** (Clean URLs, Under the Hood SSE stream, Feature Table, Final Report) | **DONE** | None | 100% Complete |
 
+- Phase 2 Tier 0: Global fixes applied (Python 3.12 compatibility, LLM fabrication removed, truthful health, security middleware & admin gating, hygiene, honest reporting).
+
 ---
 
 ## Detailed Project-by-Project Tracker

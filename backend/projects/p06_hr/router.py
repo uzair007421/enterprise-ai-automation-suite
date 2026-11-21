@@ -9,6 +9,7 @@ import datetime
 from fastapi import APIRouter, Depends
 from core.db import get_db, DatabaseSession
 from core.events import event_broker
+from core.security import verify_admin_token, mask_email, mask_phone
 from .schemas import (
     CandidateScreenRequest,
     CandidateScreenResponse
@@ -90,8 +91,16 @@ def screen_candidate(req: CandidateScreenRequest, db: DatabaseSession = Depends(
         execution_time_ms=round(t_elapsed, 2)
     )
 
-@router.get("/candidates")
+@router.get("/candidates", dependencies=[Depends(verify_admin_token)])
 def get_candidate_registry(db: DatabaseSession = Depends(get_db)):
     """Returns anonymized candidate records and rubric audit history."""
     rows = db.fetchall("SELECT * FROM p06_candidates ORDER BY created_at DESC LIMIT 50")
-    return {"candidates": rows, "count": len(rows)}
+    candidates = []
+    for r in rows:
+        d = dict(r)
+        if "email" in d:
+            d["email"] = mask_email(d["email"])
+        if "phone" in d:
+            d["phone"] = mask_phone(d["phone"])
+        candidates.append(d)
+    return {"candidates": candidates, "count": len(candidates)}

@@ -7,6 +7,7 @@ import datetime
 from fastapi import APIRouter, HTTPException, Depends
 from core.db import get_db, DatabaseSession
 from core.events import event_broker
+from core.security import verify_admin_token, mask_phone, mask_email
 from .schemas import (
     VoiceTriageRequest,
     VoiceTriageResponse,
@@ -120,8 +121,18 @@ def book_appointment(req: AppointmentBookingRequest, db: DatabaseSession = Depen
         confirmation_message=f"Successfully confirmed with {req.doctor} for {req.slot_time}."
     )
 
-@router.get("/appointments")
+@router.get("/appointments", dependencies=[Depends(verify_admin_token)])
 def get_scheduled_appointments(db: DatabaseSession = Depends(get_db)):
-    """Retrieves all scheduled patient appointments."""
+    """Retrieves all scheduled patient appointments with masked contact details."""
     rows = db.fetchall("SELECT * FROM p07_appointments ORDER BY created_at DESC LIMIT 50")
-    return {"appointments": rows, "count": len(rows)}
+    appointments = []
+    for r in rows:
+        d = dict(r)
+        if "patient_phone" in d:
+            d["patient_phone"] = mask_phone(d["patient_phone"])
+        if "phone" in d:
+            d["phone"] = mask_phone(d["phone"])
+        if "patient_email" in d:
+            d["patient_email"] = mask_email(d["patient_email"])
+        appointments.append(d)
+    return {"appointments": appointments, "count": len(appointments)}

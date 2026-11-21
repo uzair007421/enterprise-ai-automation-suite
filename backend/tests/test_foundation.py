@@ -11,7 +11,7 @@ from core.config import settings
 from core.db import init_db, DatabaseSession
 from core.security import SSRFProtection, RateLimiter, SessionIsolationManager
 from core.auth import create_access_token, verify_access_token
-from core.llm import llm
+from core.llm import llm, LLMNotConfigured
 from main import app
 
 # TestClient removed to avoid Python 3.14 starlette thread blocking issue on Windows
@@ -105,11 +105,29 @@ class SampleExtraction(BaseModel):
     confidence_score: int
     is_valid: bool
 
-def test_llm_structured_output():
-    """Verify LLM client structured parsing with Pydantic model validation."""
+def test_llm_structured_output(monkeypatch):
+    """Verify LLM client structured parsing with Pydantic model validation and unconfigured exception."""
     prompt = "Extract summary for verified corporate contract."
+    
+    # 1. Without API key -> raises LLMNotConfigured
+    monkeypatch.setattr(llm, "gemini_key", None)
+    monkeypatch.setattr(llm, "openai_key", None)
+    with pytest.raises(LLMNotConfigured):
+        llm.generate_structured(prompt, SampleExtraction)
+
+    # 2. With mocked provider response -> parses successfully
+    monkeypatch.setattr(llm, "gemini_key", "test-key-123")
+    monkeypatch.setattr(
+        llm,
+        "_call_gemini_sync",
+        lambda *args, **kwargs: (
+            '{"summary": "Verified contract terms", "confidence_score": 98, "is_valid": true}',
+            10,
+            20
+        )
+    )
     result = llm.generate_structured(prompt, SampleExtraction)
     assert isinstance(result, SampleExtraction)
-    assert hasattr(result, "summary")
-    assert hasattr(result, "confidence_score")
-    assert hasattr(result, "is_valid")
+    assert result.summary == "Verified contract terms"
+    assert result.confidence_score == 98
+    assert result.is_valid is True

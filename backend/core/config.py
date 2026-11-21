@@ -4,7 +4,7 @@ Pydantic v2 Settings with environment variable support, project feature flags, a
 """
 from typing import List, Optional
 from pydantic_settings import BaseSettings, SettingsConfigDict
-from pydantic import Field
+from pydantic import Field, model_validator
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
@@ -70,5 +70,14 @@ class Settings(BaseSettings):
     TWILIO_ACCOUNT_SID: Optional[str] = None
     TWILIO_AUTH_TOKEN: Optional[str] = None
     TWILIO_PHONE_NUMBER: Optional[str] = None
+    ADMIN_TOKEN: str = "admin-secret-token-change-in-prod"
+    APPROVAL_SIGNING_KEY: str = "finguard-signing-key-default-32bytes"
+    EMERGENCY_NUMBER: str = "911"
+
+    @model_validator(mode="after")
+    def validate_production_security(self) -> "Settings":
+        if self.APP_ENV == "production" and self.SECRET_KEY == "production-ai-suite-secret-key-change-in-prod-xyz123":
+            raise ValueError("SECRET_KEY must be changed from default in production environment.")
+        return self
 
 settings = Settings()

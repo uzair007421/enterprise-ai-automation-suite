@@ -14,6 +14,10 @@ from .config import settings
 
 logger = logging.getLogger("core.llm")
 
+class LLMNotConfigured(Exception):
+    """Raised when no live LLM API key is configured or provider is unavailable."""
+    pass
+
 T = TypeVar("T", bound=BaseModel)
 
 # Approximate Pricing Table per 1M Tokens (USD)
@@ -78,6 +82,11 @@ class LLMClient:
         if usage_meter.is_budget_exceeded():
             raise RuntimeError("Daily LLM budget cap reached ($10.00). Demo temporarily paused to prevent bill overrun.")
 
+        if (self.provider == "gemini" and not self.gemini_key) or (self.provider == "openai" and not self.openai_key):
+            raise LLMNotConfigured(f"No active LLM API key configured for provider '{self.provider}'.")
+        if self.provider not in ("gemini", "openai"):
+            raise LLMNotConfigured(f"Unsupported AI provider: '{self.provider}'.")
+
         schema = response_model.model_json_schema()
         schema_str = json.dumps(schema)
 
@@ -91,21 +100,18 @@ class LLMClient:
         last_error = None
         for attempt in range(1, max_retries + 1):
             try:
-                if self.provider == "gemini" and self.gemini_key:
+                if self.provider == "gemini":
                     raw_text, in_tok, out_tok = self._call_gemini_sync(
                         prompt=augmented_prompt,
                         system_instruction=system_instruction,
                         temperature=temperature
                     )
-                elif self.provider == "openai" and self.openai_key:
+                elif self.provider == "openai":
                     raw_text, in_tok, out_tok = self._call_openai_sync(
                         prompt=augmented_prompt,
                         system_instruction=system_instruction,
                         temperature=temperature
                     )
-                else:
-                    # Deterministic Sandbox Synthesizer when no live API key is configured
-                    raw_text, in_tok, out_tok = self._synthesize_fallback(prompt, response_model)
 
                 # Parse & Validate with Pydantic
                 clean_json = raw_text.strip()
@@ -121,6 +127,8 @@ class LLMClient:
                 validated_model = response_model.model_validate(parsed_dict)
                 return validated_model
 
+            except LLMNotConfigured:
+                raise
             except Exception as e:
                 last_error = e
                 logger.warning(f"LLM Attempt {attempt}/{max_retries} failed: {e}")
@@ -188,101 +196,5 @@ class LLMClient:
             out_tok = usage.get("completion_tokens", len(text) // 4)
             usage_meter.record_usage(self.openai_model, in_tok, out_tok)
             return text, in_tok, out_tok
-
-    def _synthesize_fallback(self, prompt: str, model_cls: Type[T]) -> tuple[str, int, int]:
-        """
-        When external API keys are not supplied in development environment,
-        synthesizes high-fidelity domain responses respecting nested schemas and field types.
-        """
-        schema = model_cls.model_json_schema()
-        defs = schema.get("$defs", {})
-
-        def build_obj(s: Dict[str, Any]) -> Dict[str, Any]:
-            props = s.get("properties", {})
-            out: Dict[str, Any] = {}
-            for k, p in props.items():
-                out[k] = build_value(k, p)
-            return out
-
-        def build_value(k: str, p: Dict[str, Any]) -> Any:
-            if "$ref" in p:
-                ref_key = p["$ref"].split("/")[-1]
-                return build_obj(defs.get(ref_key, {}))
-            
-            p_type = p.get("type", "string")
-            if p_type == "array":
-                item_spec = p.get("items", {})
-                if "$ref" in item_spec:
-                    ref_key = item_spec["$ref"].split("/")[-1]
-                    return [build_obj(defs.get(ref_key, {}))]
-                return ["Sample entry"]
-            elif p_type == "object":
-                return build_obj(p)
-            elif p_type in ["number", "integer"]:
-                if "sentiment" in k.lower():
-                    return 35
-                elif "subtotal" in k.lower():
-                    return 500.00
-                elif "tax" in k.lower():
-                    return 50.00
-                elif "total" in k.lower():
-                    return 550.00
-                elif "unit_price" in k.lower():
-                    return 250.00
-                elif "quantity" in k.lower():
-                    return 2.0
-                elif "line_total" in k.lower():
-                    return 500.00
-                elif "confidence" in k.lower() or "score" in k.lower():
-                    return 95
-                return 1.0 if p_type == "number" else 1
-            elif p_type == "boolean":
-                if "angry" in k.lower() or "escalat" in k.lower():
-                    hostile_words = ["scam", "chor", "dhoka", "bakwas", "fraud", "lawyer", "court", "ghatia", "loot", "sharam", "police", "horrible", "worst", "terrible"]
-                    return any(w in prompt.lower() for w in hostile_words)
-                if "duplicate" in k.lower() or "blocked" in k.lower():
-                    return False
-                return True
-            else:
-                # String heuristics based on prompt context
-                p_low = prompt.lower()
-                if "language" in k.lower():
-                    urdu_indicators = ["mera", "meri", "kahan", "kab", "paisa", "paise", "wapis", "hai", "bhai", "karo", "karein", "shukriya", "chahiye", "karwayen", "baat", "insaan", "bohat", "kitnay", "bheja", "salam", "aoa", "ghatia", "bakwas", "chor", "dhoka"]
-                    return "Roman Urdu" if any(w in p_low for w in urdu_indicators) else "English"
-                elif "plain_english" in k.lower() or "summary" in k.lower():
-                    if "429" in prompt:
-                        return "Upstream API rate limit throttled requests; exponential backoff applied."
-                    elif "401" in prompt:
-                        return "OAuth access token expired; refreshed credentials successfully."
-                    elif "504" in prompt:
-                        return "Downstream gateway timeout occurred; circuit breaker reset connection."
-                    return "Diagnostic summary indicating automated remediation success."
-                elif "intent" in k.lower():
-                    if any(w in p_low for w in ["track", "kahan", "kab", "parcel", "order"]):
-                        return "TRACK_ORDER"
-                    elif any(w in p_low for w in ["refund", "wapis", "paisa"]):
-                        return "REFUND_INQUIRY"
-                    elif any(w in p_low for w in ["salam", "hello", "hi", "hey", "aoa"]):
-                        return "GREETING"
-                    return "PRODUCT_QUESTION"
-                elif "sentiment" in k.lower():
-                    if any(w in p_low for w in ["scam", "chor", "dhoka", "bakwas", "lawyer"]):
-                        return "ANGRY"
-                    return "NEUTRAL"
-                elif "vendor" in k.lower():
-                    return "Acme Global Solutions"
-                elif "invoice_number" in k.lower():
-                    return "INV-89102"
-                elif "currency" in k.lower():
-                    return "USD"
-                elif "date" in k.lower():
-                    return "2026-11-20"
-                elif "status" in k.lower():
-                    return "APPROVED"
-                return f"Verified {k}"
-
-        res_dict = build_obj(schema)
-        raw = json.dumps(res_dict)
-        return raw, len(prompt) // 4, len(raw) // 4
 
 llm = LLMClient()

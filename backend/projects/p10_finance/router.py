@@ -5,10 +5,11 @@ Mounted under /api/ai/finance-agent-gate
 import time
 import json
 from typing import Dict, Any, List, Optional
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, HTTPException, status, Depends
 from core.events import event_broker
 from core.health import record_project_activity
 from core.db import DatabaseSession
+from core.security import verify_admin_token
 from .schemas import (
     AgentQueryRequest,
     AgentQueryResponse,
@@ -192,9 +193,9 @@ def approve_write_action(request: ApprovalExecutionRequest):
     finally:
         db.close()
 
-@router.get("/proposals")
+@router.get("/proposals", dependencies=[Depends(verify_admin_token)])
 def list_proposals(limit: int = 20):
-    """Lists proposals from SQLite database."""
+    """Lists proposals from SQLite database (admin access only)."""
     db = DatabaseSession()
     try:
         rows = db.fetchall("SELECT * FROM p10_proposals ORDER BY created_at DESC LIMIT ?", (limit,))

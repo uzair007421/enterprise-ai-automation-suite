@@ -7,7 +7,8 @@ import socket
 import time
 from typing import Dict, List, Optional, Tuple
 from urllib.parse import urlparse
-from fastapi import Request, HTTPException, status
+import re
+from fastapi import Request, HTTPException, status, Header
 from .config import settings
 
 class SSRFProtection:
@@ -139,3 +140,33 @@ async def check_rate_limit(request: Request):
             status_code=status.HTTP_429_TOO_MANY_REQUESTS,
             detail="Rate limit exceeded (30 requests/minute). Please wait 30 seconds."
         )
+
+def verify_admin_token(x_admin_token: Optional[str] = Header(None, alias="X-Admin-Token")):
+    """Gates administrative list endpoints behind X-Admin-Token header matching settings.ADMIN_TOKEN."""
+    if not x_admin_token or x_admin_token != settings.ADMIN_TOKEN:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Forbidden: Invalid or missing X-Admin-Token header."
+        )
+    return x_admin_token
+
+def mask_email(email: Optional[str]) -> Optional[str]:
+    """Masks email address for privacy compliance."""
+    if not email or "@" not in email:
+        return email
+    parts = email.split("@", 1)
+    user, domain = parts[0], parts[1]
+    if len(user) <= 2:
+        masked_user = user[0] + "***"
+    else:
+        masked_user = user[0] + "***" + user[-1]
+    return f"{masked_user}@{domain}"
+
+def mask_phone(phone: Optional[str]) -> Optional[str]:
+    """Masks phone number for privacy compliance."""
+    if not phone:
+        return phone
+    digits = re.sub(r'\D', '', phone)
+    if len(digits) >= 6:
+        return phone[:3] + " *** " + phone[-4:]
+    return "***-***"

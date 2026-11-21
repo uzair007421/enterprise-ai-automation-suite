@@ -47,6 +47,18 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+@app.middleware("http")
+async def rate_limit_middleware(request: Request, call_next):
+    if request.url.path.startswith("/api/ai") and not request.url.path.startswith("/api/ai/stream"):
+        client_ip = request.client.host if request.client else "unknown"
+        session_id = request.headers.get("X-Session-ID", client_ip)
+        if not rate_limiter.is_allowed(session_id):
+            return JSONResponse(
+                status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                content={"error": "RateLimitExceeded", "detail": "Rate limit exceeded (30 requests/minute). Please wait 30 seconds."}
+            )
+    return await call_next(request)
+
 # Mount Core Health Router
 app.include_router(health_router)
 app.include_router(p04_router)

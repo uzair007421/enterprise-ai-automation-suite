@@ -1,10 +1,12 @@
+Working prototypes. Rule-based engines by default; optional LLM mode with your own API key.
+
 # Enterprise AI Multi-Agent & Automation Engineering Portfolio
 **Architect:** Muhammad Uzair  
 **Portfolio Hub:** [https://uzairio.web.app/ai-automations](https://uzairio.web.app/ai-automations)  
 **Backend:** FastAPI 0.115+, Pydantic v2, SQLite WAL Mode  
 **Test Suite:** 52 / 52 Passed (100% Green)
 
-A production-grade portfolio of 10 genuine enterprise AI automation systems. Zero simulated numbers, zero hardcoded scenario buttons, and zero unverified claims. Every system executes live backend logic, enforces human-in-the-loop security gates, and logs to real database audit trails.
+A portfolio of 10 working enterprise AI automation prototypes. Every system executes live backend logic with rule-based fallbacks, enforces human-in-the-loop security gates, and logs to real database audit trails.
 
 ---
 
