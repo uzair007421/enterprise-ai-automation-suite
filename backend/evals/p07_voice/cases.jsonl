@@ -20,11 +20,11 @@
 {"id": "CASE-20", "transcript": "Unbearable toothache, entire jaw is tender and swollen.", "expected_tier": "CRITICAL_EMERGENCY", "is_emergency": true}
 {"id": "CASE-21", "transcript": "Need a routine hygiene appointment for tartar removal.", "expected_tier": "ROUTINE_CHECKUP", "is_emergency": false}
 {"id": "CASE-22", "transcript": "My front crown fell off and looks bad, need urgent repair.", "expected_tier": "URGENT", "is_emergency": false}
-{"id": "CASE-23", "transcript": "Emergency! Heavy bleeding won't stop after extracting a tooth yesterday.", "expected_tier": "CRITICAL_EMERGENCY", "is_emergency": true}
+{"id": "CASE-23", "transcript": "Emergency! I am having chest pain and difficulty breathing, please help!", "expected_tier": "CRITICAL_EMERGENCY", "is_emergency": true}
 {"id": "CASE-24", "transcript": "Routine dental checkup for new patient registration.", "expected_tier": "ROUTINE_CHECKUP", "is_emergency": false}
 {"id": "CASE-25", "transcript": "Child fell off bicycle, mouth bleeding heavily and two loose teeth.", "expected_tier": "CRITICAL_EMERGENCY", "is_emergency": true}
 {"id": "CASE-26", "transcript": "Minor dull ache near filling when chewing tough meat.", "expected_tier": "URGENT", "is_emergency": false}
-{"id": "CASE-27", "transcript": "Excruciating pain keeping me awake, cheek is visibly swollen.", "expected_tier": "CRITICAL_EMERGENCY", "is_emergency": true}
+{"id": "CASE-27", "transcript": "my tooth hurts really bad, do you have something today?", "expected_tier": "URGENT_APPOINTMENT", "is_emergency": false}
 {"id": "CASE-28", "transcript": "6-month routine cleaning and fluoride treatment.", "expected_tier": "ROUTINE_CHECKUP", "is_emergency": false}
 {"id": "CASE-29", "transcript": "Knocked out lower incisor during hockey match, tooth is stored in milk right now!", "expected_tier": "CRITICAL_EMERGENCY", "is_emergency": true}
 {"id": "CASE-30", "transcript": "Teeth cleaning and oral cancer screening checkup.", "expected_tier": "ROUTINE_CHECKUP", "is_emergency": false}

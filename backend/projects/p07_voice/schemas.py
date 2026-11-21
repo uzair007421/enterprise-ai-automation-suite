@@ -12,7 +12,9 @@ class VoiceTriageRequest(BaseModel):
 
 class VoiceTriageResponse(BaseModel):
     is_emergency: bool
-    urgency_tier: str  # "CRITICAL_EMERGENCY" | "URGENT" | "ROUTINE_CHECKUP"
+    urgency_tier: str  # "CRITICAL_EMERGENCY" | "URGENT" | "URGENT_APPOINTMENT" | "ROUTINE_CHECKUP"
+    intent: str = "ROUTINE_CHECKUP"  # "EMERGENCY" | "URGENT_APPOINTMENT" | "ROUTINE_CHECKUP"
+    format: str = "text_only"
     symptoms_detected: List[str]
     suggested_doctor: str
     recommended_slot: str
@@ -33,8 +35,9 @@ class AppointmentBookingResponse(BaseModel):
     patient_name: str
     doctor: str
     slot_time: str
-    status: str  # "CONFIRMED" | "CONFLICT_REJECTED"
+    status: str  # "CONFIRMED" | "CONFLICT_REJECTED" | "EMERGENCY_REJECTED"
     is_emergency: bool
-    sms_status: str  # "live_sent" | "sandbox_logged" | "not_configured"
-    calendar_sync_status: str  # "live_synced" | "db_persisted"
+    sms_status: str  # "live_sent" | "sandbox_logged" | "not_configured" | "not_sent"
+    calendar_sync_status: str  # "live_synced" | "db_persisted" | "conflict" | "not_synced"
     confirmation_message: str
+    alternate_slots: List[str] = Field(default_factory=list)

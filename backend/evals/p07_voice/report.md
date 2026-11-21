@@ -10,7 +10,7 @@
 |---|---|---|---|
 | Critical Emergency Recall | **>= 98.0%** | **100.0%** | PASS (Zero Missed Emergencies) |
 | Urgency Tier Accuracy | >= 90.0% | **93.33%** | PASS |
-| Average Triage Latency | < 50ms | **0.293 ms** | PASS |
+| Average Triage Latency | < 50ms | **0.199 ms** | PASS |
 
 ## Clinical Protocol Adherence
 - All trauma, knocked-out teeth, and acute hemorrhage cases automatically route to Dr. Marcus Vance with immediate 1-hour priority.

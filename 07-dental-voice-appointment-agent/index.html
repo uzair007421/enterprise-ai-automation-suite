@@ -6,6 +6,7 @@
   <title>AuraDent Voice | Telephony Receptionist & Emergency Triage Platform</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="config.js"></script>
   <style>
     ::-webkit-scrollbar { width: 5px; height: 5px; }
     ::-webkit-scrollbar-track { background: #0f172a; }
@@ -13,6 +14,10 @@
   </style>
 </head>
 <body class="bg-slate-950 text-slate-100 min-h-screen font-sans flex flex-col">
+  <!-- Backend Error Banner -->
+  <div id="backend-error-banner" class="hidden bg-rose-950 border-b border-rose-500 text-rose-200 text-xs px-4 py-2 text-center font-mono font-bold flex items-center justify-center gap-2">
+    <i class="fa-solid fa-triangle-exclamation text-rose-400"></i> <span id="backend-error-text">Backend unavailable</span>
+  </div>
 
   <!-- Production Header -->
   <header class="border-b border-slate-800 bg-slate-900/90 backdrop-blur sticky top-0 z-40">
@@ -318,9 +323,19 @@
       if (e.key === 'Enter') speakCallerInput();
     }
 
-    const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-      ? 'http://localhost:8000/api/ai/dental-voice'
-      : '/api/ai/dental-voice';
+    function showBackendError(msg) {
+      const banner = document.getElementById('backend-error-banner');
+      const text = document.getElementById('backend-error-text');
+      if (text) text.textContent = msg || 'Backend unavailable';
+      if (banner) banner.classList.remove('hidden');
+    }
+
+    function hideBackendError() {
+      const banner = document.getElementById('backend-error-banner');
+      if (banner) banner.classList.add('hidden');
+    }
+
+    const API_BASE = (window.AI_API_BASE || '') + '/api/ai/dental-voice';
 
     async function speakCallerInput() {
       const input = document.getElementById('caller-input');
@@ -345,7 +360,11 @@
           })
         });
 
-        if (!triageRes.ok) throw new Error(`HTTP Error: ${triageRes.status}`);
+        if (!triageRes.ok) {
+          showBackendError('Backend unavailable');
+          return;
+        }
+        hideBackendError();
         const triage = await triageRes.json();
 
         let reply = "";
@@ -378,6 +397,10 @@
             })
           });
 
+          if (!bookRes.ok) {
+            showBackendError('Backend unavailable');
+            return;
+          }
           const booking = await bookRes.json();
           reply = `Thank you. I have triaged your request as ${triage.urgency_tier}. Your appointment with ${triage.suggested_doctor} is ${booking.status} for ${triage.recommended_slot}. Twilio SMS status: ${booking.sms_status}.`;
 
@@ -414,102 +437,10 @@
         }
 
       } catch (err) {
-        console.warn("Backend API unavailable, using offline fallback:", err);
-        const fallback = generateReceptionistTurn(text);
-        transcript.push({
-          speaker: "receptionist",
-          text: fallback.reply,
-          time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-          isEmergency: fallback.isEmergency
-        });
-        saveState();
-        renderTranscript();
+        console.error("Backend API call failed:", err);
+        showBackendError('Backend unavailable');
+        return;
       }
-    }
-
-    function generateReceptionistTurn(rawText) {
-      const text = rawText.toLowerCase();
-
-      // 0. Greetings & Inquiries
-      if (text.includes('hello') || text.includes('hi') || text.includes('good morning') || text.includes('good afternoon') || text.includes('help')) {
-        return {
-          reply: "Hello and welcome to AuraDent Care Suites! I am your AI Clinical Telephony Assistant. I can schedule your dental checkup, connect you with Dr. Chen or Dr. Patel, or assist with dental pricing and emergency triage. How can I help you today?",
-          isEmergency: false
-        };
-      }
-
-      // 1. Clinical Emergency Check
-      if (text.includes('severe') || text.includes('unbearable') || text.includes('bleeding') || text.includes('fall') || text.includes('broken tooth') || text.includes('emergency') || text.includes('acute trauma')) {
-        document.getElementById('sms-status-tag').textContent = 'EMERGENCY DISPATCH TRIGGERED';
-        document.getElementById('sms-status-tag').className = 'text-[10px] font-mono text-rose-400 font-bold';
-
-        document.getElementById('sms-preview-card').innerHTML = `
-          <div class="space-y-1 text-rose-300">
-            <span class="text-[10px] uppercase font-bold text-rose-400 block"><i class="fa-solid fa-triangle-exclamation mr-1"></i> Emergency Clinical Dispatch (Twilio SMS):</span>
-            <p class="text-white">"AuraDent ALERT: Patient reporting acute trauma & bleeding. Transferred to On-Call Oral Surgeon Dr. Robert Harris. Expected arrival: Immediate Emergency Bay."</p>
-          </div>
-        `;
-
-        return {
-          reply: "I understand this is extremely painful and urgent. I am immediately flagging this as an acute clinical emergency and transferring your call directly to our on-call maxillofacial surgeon, Dr. Robert Harris. Please remain on the line while I patch you through right now.",
-          isEmergency: true
-        };
-      }
-
-      // 2. Routine Appointment Booking (Dynamic Slot Parsing)
-      if (text.includes('book') || text.includes('cleaning') || text.includes('appointment') || text.includes('checkup') || text.includes('pain') || text.includes('slot') || text.includes('doctor') || text.includes('schedule') || text.includes('timing')) {
-        // Dynamic time and day extraction
-        const days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
-        const foundDay = days.find(d => text.includes(d)) || 'Next Available Slot';
-        const capitalizedDay = foundDay.charAt(0).toUpperCase() + foundDay.slice(1);
-        
-        const timeMatch = text.match(/\b(\d{1,2}(?::\d{2})?\s*(?:am|pm)?)\b/i);
-        const bookedTime = timeMatch ? timeMatch[1].toUpperCase() : '2:30 PM';
-        const appointmentId = 'APT-' + Math.floor(10000 + Math.random() * 90000);
-        
-        // Book the slot dynamically
-        const slot = CLINIC_SCHEDULE.find(s => s.status === 'AVAILABLE') || CLINIC_SCHEDULE[0];
-        slot.status = 'BOOKED';
-        slot.patient = `Caller (${capitalizedDay} ${bookedTime})`;
-        slot.slot = `${capitalizedDay} @ ${bookedTime}`;
-        renderSchedule();
-
-        document.getElementById('sms-status-tag').textContent = `TWILIO SMS: DISPATCHED [ID: ${appointmentId}]`;
-        document.getElementById('sms-status-tag').className = 'text-[10px] font-mono text-emerald-400 font-bold';
-
-        document.getElementById('sms-preview-card').innerHTML = `
-          <div class="space-y-1 text-emerald-300">
-            <span class="text-[10px] uppercase font-bold text-emerald-400 block"><i class="fa-solid fa-comment-sms mr-1"></i> Patient SMS Dispatched (Twilio Telephony Gateway):</span>
-            <p class="text-white">"AuraDent Care: Appointment #${appointmentId} confirmed with ${slot.doctor} for ${capitalizedDay} at ${bookedTime}. Calendar invite synced to your phone."</p>
-          </div>
-        `;
-
-        return {
-          reply: `I have scheduled your consultation with ${slot.doctor} for ${capitalizedDay} at ${bookedTime}. A confirmation SMS with appointment ID #${appointmentId} and a calendar invite have just been dispatched to your mobile number. Would you like to confirm this?`,
-          isEmergency: false
-        };
-      }
-
-      // 3. Reschedule
-      if (text.includes('reschedule') || text.includes('tuesday') || text.includes('wednesday')) {
-        return {
-          reply: "Certainly! I have located your Tuesday record. I can move your reservation to Wednesday morning at 10:30 AM with Dr. Patel. I will update your calendar invite and send a revised SMS confirmation right away.",
-          isEmergency: false
-        };
-      }
-
-      // 4. Pricing / Insurance
-      if (text.includes('cost') || text.includes('price') || text.includes('insurance') || text.includes('implant')) {
-        return {
-          reply: "Our comprehensive implant consultation with 3D panoramic CT scan is typically $175, which is fully credited toward treatment if you proceed. We also accept all major PPO insurance plans including Delta, MetLife, and Cigna. Would you like me to book a consultation slot?",
-          isEmergency: false
-        };
-      }
-
-      return {
-        reply: "I can help you schedule an appointment with Dr. Chen or Dr. Patel, check accepted dental insurance, or transfer you to our emergency desk. What would you like to arrange today?",
-        isEmergency: false
-      };
     }
 
     function speakAudioOutLoud(text) {

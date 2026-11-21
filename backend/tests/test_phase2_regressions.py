@@ -488,4 +488,86 @@ Zero JavaScript, CSS, HTML, or React experience.
     assert data["recommendation"] in ["REJECT", "HOLD_FOR_REVIEW"]
 
 
+# ---------------------------------------------------------
+# P07 Dental Voice Regressions
+# ---------------------------------------------------------
+
+def test_p07_chest_pain_says_call_911_and_books_nothing():
+    """Verify chest pain and difficulty breathing instructs to call 911 and books zero slots."""
+    # 1. Triage endpoint
+    resp = client.post("/api/ai/dental-voice/transcribe-and-triage", json={
+        "transcript": "I am having chest pain and difficulty breathing",
+        "patient_name": "Emergency Patient"
+    })
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["is_emergency"] is True
+    assert data["intent"] == "EMERGENCY"
+    assert "911" in data["triage_notes"] or "911" in data["suggested_doctor"]
+
+    # 2. Booking endpoint refusal (zero slot booking)
+    session = DatabaseSession()
+    count_before = session.fetchone("SELECT count(*) as cnt FROM p07_appointments")["cnt"]
+
+    book_resp = client.post("/api/ai/dental-voice/book", json={
+        "patient_name": "Emergency Patient",
+        "patient_phone": "(555) 911-0000",
+        "doctor": "Dr. Marcus Vance",
+        "slot_time": "Today - 2:00 PM",
+        "reason": "I am having chest pain and difficulty breathing",
+        "is_emergency": True
+    })
+    assert book_resp.status_code == 200
+    book_data = book_resp.json()
+    assert book_data["status"] == "EMERGENCY_REJECTED"
+    assert "911" in book_data["confirmation_message"]
+
+    count_after = session.fetchone("SELECT count(*) as cnt FROM p07_appointments")["cnt"]
+    assert count_after == count_before
+    session.close()
+
+
+def test_p07_tooth_hurts_today_classified_as_urgent_appointment():
+    """Verify 'my tooth hurts really bad, do you have something today?' -> URGENT_APPOINTMENT, emergency: false."""
+    resp = client.post("/api/ai/dental-voice/transcribe-and-triage", json={
+        "transcript": "my tooth hurts really bad, do you have something today?",
+        "patient_name": "Urgent Patient"
+    })
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["is_emergency"] is False
+    assert data["intent"] == "URGENT_APPOINTMENT" or data["urgency_tier"] == "URGENT_APPOINTMENT"
+
+
+def test_p07_second_booking_of_same_slot_rejected_with_alternates():
+    """Verify second booking of same slot is rejected with alternates."""
+    slot = f"2026-11-29 16:00-{uuid.uuid4().hex[:6]}"
+    req1 = {
+        "patient_name": "Alice Cooper",
+        "patient_phone": "(555) 123-7777",
+        "doctor": "Dr. Elena Rostova",
+        "slot_time": slot,
+        "reason": "Routine cleaning",
+        "is_emergency": False
+    }
+    resp1 = client.post("/api/ai/dental-voice/book", json=req1)
+    assert resp1.status_code == 200
+    assert resp1.json()["status"] == "CONFIRMED"
+
+    req2 = {
+        "patient_name": "Bob Dylan",
+        "patient_phone": "(555) 123-8888",
+        "doctor": "Dr. Elena Rostova",
+        "slot_time": slot,
+        "reason": "Teeth checkup",
+        "is_emergency": False
+    }
+    resp2 = client.post("/api/ai/dental-voice/book", json=req2)
+    assert resp2.status_code == 200
+    data2 = resp2.json()
+    assert data2["status"] == "CONFLICT_REJECTED"
+    assert len(data2["alternate_slots"]) > 0
+
+
+
 

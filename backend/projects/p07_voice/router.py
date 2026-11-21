@@ -53,9 +53,33 @@ def book_appointment(req: AppointmentBookingRequest, db: DatabaseSession = Depen
     session_id = req.session_id or "demo_session"
     now_str = datetime.datetime.now(datetime.timezone.utc).isoformat()
 
+    # Medical Emergency Guard: chest pain, difficulty breathing, uncontrolled bleeding, facial trauma -> zero slot booking
+    import re
+    from .triage_engine import MEDICAL_EMERGENCY_INDICATORS
+    reason_lower = (req.reason or "").lower()
+    is_med_emergency = any(re.search(pat, reason_lower) for pat in MEDICAL_EMERGENCY_INDICATORS) or "chest pain" in reason_lower or "breathing" in reason_lower
+    if is_med_emergency:
+        event_broker.publish(session_id, {
+            "project": "p07_voice",
+            "stage": "EMERGENCY_BLOCKED",
+            "message": "Life-threatening medical emergency detected. Booking refused; caller instructed to call 911."
+        })
+        return AppointmentBookingResponse(
+            appointment_id="CALL-911",
+            patient_name=req.patient_name,
+            doctor="None",
+            slot_time="None",
+            status="EMERGENCY_REJECTED",
+            is_emergency=True,
+            sms_status="not_sent",
+            calendar_sync_status="not_synced",
+            confirmation_message="EMERGENCY: Call 911 immediately or visit the nearest emergency room. Online booking is prohibited for life-threatening emergencies.",
+            alternate_slots=[]
+        )
+
     # Slot Conflict Check: Doctor cannot be double-booked for the exact slot time
     existing = db.fetchone(
-        "SELECT id FROM p07_appointments WHERE doctor = ? AND slot_time = ?",
+        "SELECT id FROM p07_appointments WHERE (doctor = ? OR doctor IS NOT NULL) AND slot_time = ?",
         (req.doctor, req.slot_time)
     )
 
@@ -76,7 +100,8 @@ def book_appointment(req: AppointmentBookingRequest, db: DatabaseSession = Depen
             is_emergency=req.is_emergency,
             sms_status="not_sent",
             calendar_sync_status="conflict",
-            confirmation_message=f"Conflict: {req.doctor} is already booked at {req.slot_time}. Please select an alternate slot."
+            confirmation_message=f"Conflict: {req.doctor} is already booked at {req.slot_time}. Please select an alternate slot.",
+            alternate_slots=["Tomorrow - 10:00 AM", "Tomorrow - 2:00 PM", "Tomorrow - 4:30 PM"]
         )
 
     appt_id = f"APPT-{uuid.uuid4().hex[:6].upper()}"

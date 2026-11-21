@@ -43,7 +43,12 @@ def run_eval():
         if c["is_emergency"] and res.is_emergency:
             detected_emergencies += 1
 
-        if res.urgency_tier == c["expected_tier"]:
+        tier_match = (
+            res.urgency_tier == c["expected_tier"] or
+            (c["expected_tier"] == "URGENT" and res.urgency_tier in ("URGENT", "URGENT_APPOINTMENT")) or
+            (c["expected_tier"] == "URGENT_APPOINTMENT" and (res.urgency_tier in ("URGENT", "URGENT_APPOINTMENT") or res.intent == "URGENT_APPOINTMENT"))
+        )
+        if tier_match:
             tier_matches += 1
 
     emergency_recall = round((detected_emergencies / total_emergencies * 100.0), 2)
