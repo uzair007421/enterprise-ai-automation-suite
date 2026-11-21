@@ -8,6 +8,7 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <!-- Real Tesseract.js OCR Engine (Client-Side Neural Network) -->
   <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+  <script src="config.js"></script>
   <style>
     ::-webkit-scrollbar { width: 6px; height: 6px; }
     ::-webkit-scrollbar-track { background: rgba(15, 23, 42, 0.6); }
@@ -15,6 +16,10 @@
   </style>
 </head>
 <body class="bg-slate-950 text-slate-100 min-h-screen font-sans flex flex-col">
+  <!-- Backend Error Banner -->
+  <div id="backend-error-banner" class="hidden bg-rose-950 border-b border-rose-500 text-rose-200 text-xs px-4 py-2 text-center font-mono font-bold flex items-center justify-center gap-2">
+    <i class="fa-solid fa-triangle-exclamation text-rose-400"></i> <span id="backend-error-text">Backend unavailable</span>
+  </div>
 
   <!-- Production Header -->
   <header class="border-b border-slate-800 bg-slate-900/90 backdrop-blur sticky top-0 z-40">
@@ -469,194 +474,69 @@
       const statusText = document.getElementById('ocr-status-text');
       const pctText = document.getElementById('ocr-pct-text');
       progContainer.classList.remove('hidden');
+      statusText.textContent = 'Uploading document to backend pipeline...';
+      pctText.textContent = '50%';
+      progBar.style.width = '50%';
 
-      const reader = new FileReader();
-      reader.onload = async function(event) {
-        const base64Data = event.target.result;
-
-        // Check if user has Gemini API Key configured for Vision AI
-        const geminiKey = localStorage.getItem(GEMINI_KEY_STORAGE);
-        if (geminiKey) {
-          statusText.textContent = 'Calling Gemini 1.5 Flash Multimodal Vision API...';
-          pctText.textContent = '50%';
-          progBar.style.width = '50%';
-
-          try {
-            const parsedViaGemini = await callGeminiVision(base64Data, geminiKey);
-            if (parsedViaGemini) {
-              parsedViaGemini.image_url = base64Data;
-              invoices.unshift(parsedViaGemini);
-              activeInvoiceId = parsedViaGemini.id;
-              saveInvoices();
-              renderAll();
-              progContainer.classList.add('hidden');
-              return;
-            }
-          } catch (err) {
-            console.warn('Gemini Vision API error, falling back to Tesseract.js:', err);
-          }
-        }
-
-        // Run REAL Tesseract.js In-Browser Neural OCR
-        try {
-          statusText.textContent = 'Running Tesseract.js Neural OCR...';
-          const result = await Tesseract.recognize(
-            base64Data,
-            'eng',
-            {
-              logger: m => {
-                if (m.status === 'recognizing text') {
-                  const p = Math.round((m.progress || 0) * 100);
-                  pctText.textContent = `${p}%`;
-                  progBar.style.width = `${p}%`;
-                  statusText.textContent = `Reading pixels: ${p}%`;
-                }
-              }
-            }
-          );
-
-          const extractedText = result.data.text || '';
-          const confidence = Math.round(result.data.confidence || 92);
-
-          // Deterministic Parser on Real OCR Text
-          const newInv = parseRawOcrIntoInvoice(extractedText, file.name, base64Data, confidence);
-          invoices.unshift(newInv);
-          activeInvoiceId = newInv.id;
-          saveInvoices();
-          renderAll();
-
-          // Sync with Real FastAPI Backend Pipeline
-          syncInvoiceToBackend(newInv);
-        } catch (ocrErr) {
-          console.error('OCR Error:', ocrErr);
-          alert('OCR Processing error. Please try another image.');
-        } finally {
-          progContainer.classList.add('hidden');
-          progBar.style.width = '0%';
-        }
-      };
-
-      reader.readAsDataURL(file);
-    }
-
-    const API_BASE = window.location.origin.includes('8000') ? '' : 'http://localhost:8000';
-    async function syncInvoiceToBackend(invoiceData) {
       try {
-        const res = await fetch(`${API_BASE}/api/ai/invoice-processing/process`, {
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('session_id', 'ui_sess_' + Date.now());
+
+        const res = await fetch(`${API_BASE}/api/ai/invoice-processing/upload`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            filename: (invoiceData.vendor || 'invoice') + '.pdf',
-            manual_data: {
-              vendor_name: invoiceData.vendor,
-              invoice_number: invoiceData.invoice_number,
-              invoice_date: invoiceData.date,
-              currency: 'USD',
-              line_items: (invoiceData.items || []).map(it => ({
-                description: it.description || 'General Service',
-                quantity: it.qty || 1,
-                unit_price: it.unit_price || it.total || 100,
-                line_total: it.total || 100
-              })),
-              subtotal: invoiceData.subtotal,
-              tax_amount: invoiceData.tax_amount,
-              total_amount: invoiceData.doc_total,
-              confidence_score: invoiceData.confidence
-            }
-          })
+          body: formData
         });
-        const backendResult = await res.json();
-        console.log('Real Backend Invoice Pipeline Synced:', backendResult);
-        return backendResult;
-      } catch(e) {
-        console.warn('Backend sync:', e);
+
+        if (!res.ok) {
+          const errData = await res.json().catch(() => ({}));
+          showBackendError(errData.detail || 'Backend unavailable');
+          return;
+        }
+
+        hideBackendError();
+        const data = await res.json();
+        const newInv = {
+          id: data.invoice_id,
+          vendor: data.vendor_name || 'Unknown Vendor',
+          invoice_number: data.invoice_number || 'UNKNOWN',
+          date: data.invoice_date || new Date().toISOString().substring(0, 10),
+          tax_id: 'N/A',
+          subtotal: data.extracted ? (data.extracted.subtotal || 0.0) : 0.0,
+          tax_amount: data.extracted ? (data.extracted.tax_amount || 0.0) : 0.0,
+          doc_total: data.total_amount || 0.0,
+          confidence: data.confidence_score,
+          image_url: '',
+          raw_text: JSON.stringify(data.extracted || {}, null, 2),
+          items: data.extracted ? (data.extracted.line_items || []) : [],
+          status: data.reconciliation ? data.reconciliation.overall_status : 'NEEDS_REVIEW'
+        };
+
+        invoices.unshift(newInv);
+        activeInvoiceId = newInv.id;
+        saveInvoices();
+        renderAll();
+      } catch (err) {
+        console.error('Upload Error:', err);
+        showBackendError('Backend unavailable');
+      } finally {
+        progContainer.classList.add('hidden');
+        progBar.style.width = '0%';
       }
     }
 
-    // Deterministic Regex & NLP Field Extractor on Real OCR Text
-    function parseRawOcrIntoInvoice(rawText, filename, imageUrl, confidence) {
-      const lines = rawText.split('\n').map(l => l.trim()).filter(l => l.length > 0);
-      
-      let vendor = lines[0] || filename.replace(/\.[^/.]+$/, "");
-      if (vendor.length > 40) vendor = vendor.substring(0, 40);
+    const API_BASE = window.AI_API_BASE || '';
 
-      // Find amounts with dollar signs or decimal numbers
-      const amountRegex = /\$?\s*([0-9]{1,4}[,\.][0-9]{2})/g;
-      const amounts = [];
-      let match;
-      while ((match = amountRegex.exec(rawText)) !== null) {
-        const val = parseFloat(match[1].replace(',', ''));
-        if (!isNaN(val) && val > 0 && val < 50000) amounts.push(val);
-      }
-
-      amounts.sort((a, b) => b - a);
-
-      let docTotal = amounts.length > 0 ? amounts[0] : 150.00;
-      let tax = amounts.length > 2 ? amounts[amounts.length - 1] : Math.round(docTotal * 0.08 * 100) / 100;
-      let subtotal = Math.round((docTotal - tax) * 100) / 100;
-
-      // Extract invoice number if found
-      const invNumMatch = rawText.match(/(?:inv|invoice|bill|no|#)[\s\:\#]*([A-Z0-9\-]{4,15})/i);
-      const invoiceNumber = invNumMatch ? invNumMatch[1] : 'INV-' + Math.floor(10000 + Math.random() * 90000);
-
-      const items = [
-        { description: lines[1] || 'Service / Product Item', qty: 1, unit_price: subtotal, total: subtotal }
-      ];
-
-      return {
-        id: 'INV-' + Date.now(),
-        vendor: vendor,
-        invoice_number: invoiceNumber,
-        date: new Date().toISOString().substring(0, 10),
-        tax_id: 'Scanned via Tesseract.js',
-        subtotal: subtotal,
-        tax_amount: tax,
-        doc_total: docTotal,
-        confidence: confidence,
-        image_url: imageUrl,
-        raw_text: rawText,
-        items: items
-      };
+    function showBackendError(msg) {
+      const banner = document.getElementById('backend-error-banner');
+      const text = document.getElementById('backend-error-text');
+      if (text) text.textContent = msg || 'Backend unavailable';
+      if (banner) banner.classList.remove('hidden');
     }
 
-    // Call Real Gemini 1.5 Flash Vision API if key is provided
-    async function callGeminiVision(base64Data, apiKey) {
-      const pureBase64 = base64Data.split(',')[1];
-      const mimeType = base64Data.split(';')[0].split(':')[1];
-
-      const prompt = `Extract invoice fields as strict JSON without markdown:
-{
-  "vendor": "Company Name",
-  "invoice_number": "Invoice #",
-  "date": "YYYY-MM-DD",
-  "tax_id": "Tax ID or EIN",
-  "subtotal": 0.00,
-  "tax_amount": 0.00,
-  "doc_total": 0.00,
-  "confidence": 98,
-  "items": [{"description": "Item", "qty": 1, "unit_price": 0.00, "total": 0.00}]
-}`;
-
-      const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [{
-            parts: [
-              { text: prompt },
-              { inline_data: { mime_type: mimeType, data: pureBase64 } }
-            ]
-          }]
-        })
-      });
-
-      const data = await res.json();
-      const rawResponse = data.candidates[0].content.parts[0].text;
-      const cleanJson = rawResponse.replace(/```json|```/g, '').trim();
-      const parsed = JSON.parse(cleanJson);
-      parsed.id = 'INV-' + Date.now();
-      parsed.raw_text = `[Gemini 1.5 Flash Multimodal Vision Extraction]\n` + JSON.stringify(parsed, null, 2);
-      return parsed;
+    function hideBackendError() {
+      const banner = document.getElementById('backend-error-banner');
+      if (banner) banner.classList.add('hidden');
     }
 
     function deleteActiveInvoice() {

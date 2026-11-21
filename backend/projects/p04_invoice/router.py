@@ -2,15 +2,19 @@
 Invoice Processing & 4-Way Reconciliation Router
 Routes mounted under /api/ai/invoice-processing
 """
+import io
 import time
 import uuid
 from datetime import datetime, timezone
 from typing import Optional, List, Dict, Any
+import pypdf
 from fastapi import APIRouter, UploadFile, File, Form, HTTPException, Query, Response
 from pydantic import BaseModel
+from core.config import settings
 from core.db import DatabaseSession
 from core.events import event_broker
 from core.health import record_project_activity
+from core.llm import llm
 from .schemas import (
     InvoiceExtractedData,
     InvoiceProcessResponse,
@@ -43,9 +47,11 @@ def process_invoice_endpoint(request: InvoiceProcessRequest):
         "timestamp": time.time()
     })
 
+    engine = "rules"
     if request.manual_data:
         extracted = request.manual_data
         raw_bytes = str(extracted.model_dump()).encode("utf-8")
+        engine = "rules"
     elif request.raw_text:
         raw_bytes = request.raw_text.encode("utf-8")
         event_broker.publish(session_id, {
@@ -53,7 +59,7 @@ def process_invoice_endpoint(request: InvoiceProcessRequest):
             "detail": "Calling multimodal structured extraction engine...",
             "timestamp": time.time()
         })
-        extracted = extract_invoice_from_content(request.raw_text, request.filename or "document.txt")
+        extracted, engine = extract_invoice_from_content(request.raw_text, request.filename or "document.txt")
     else:
         raise HTTPException(status_code=400, detail="Either 'raw_text' or 'manual_data' must be supplied.")
 
@@ -61,9 +67,11 @@ def process_invoice_endpoint(request: InvoiceProcessRequest):
     invoice_id = f"INV-{uuid.uuid4().hex[:8].upper()}"
 
     # Step 2: 4-Way Math Reconciliation
+    sub_str = f"${extracted.subtotal}" if extracted.subtotal is not None else "None"
+    tot_str = f"${extracted.total_amount}" if extracted.total_amount is not None else "None"
     event_broker.publish(session_id, {
         "step": "MATH_RECONCILIATION",
-        "detail": f"Verifying {len(extracted.line_items)} line items against stated subtotal (${extracted.subtotal}) and total (${extracted.total_amount})",
+        "detail": f"Verifying {len(extracted.line_items)} line items against stated subtotal ({sub_str}) and total ({tot_str})",
         "timestamp": time.time()
     })
     reconciliation = reconcile_invoice_math(extracted)
@@ -77,7 +85,8 @@ def process_invoice_endpoint(request: InvoiceProcessRequest):
     duplicate_res = check_duplicate_invoice(
         file_sha256=file_hash,
         vendor_name=extracted.vendor_name,
-        invoice_number=extracted.invoice_number
+        invoice_number=extracted.invoice_number,
+        amount=extracted.total_amount
     )
 
     # Determine status & Save to SQLite
@@ -87,8 +96,8 @@ def process_invoice_endpoint(request: InvoiceProcessRequest):
             "sync_status": "rejected",
             "message": f"Rejected: {duplicate_res.match_reason}"
         }
-    elif reconciliation.overall_status != "APPROVED":
-        status_code = "REVIEW_REQUIRED"
+    elif reconciliation.overall_status in ("NEEDS_REVIEW", "DISCREPANCY", "NEEDS_MANUAL_REVIEW"):
+        status_code = "NEEDS_REVIEW"
         sync_result = accounting_adapter.sync_to_accounting(invoice_id, extracted, reconciliation)
     else:
         status_code = "APPROVED"
@@ -105,10 +114,10 @@ def process_invoice_endpoint(request: InvoiceProcessRequest):
             """,
             (
                 invoice_id,
-                extracted.vendor_name,
-                extracted.invoice_number,
-                extracted.invoice_date,
-                extracted.total_amount,
+                extracted.vendor_name or "UNKNOWN",
+                extracted.invoice_number or "UNKNOWN",
+                extracted.invoice_date or datetime.now(timezone.utc).strftime("%Y-%m-%d"),
+                extracted.total_amount or 0.0,
                 status_code,
                 "PASS" if reconciliation.line_items_vs_subtotal_matched else "FAIL",
                 "PASS" if reconciliation.subtotal_plus_tax_vs_total_matched else "FAIL",
@@ -140,7 +149,8 @@ def process_invoice_endpoint(request: InvoiceProcessRequest):
         duplicate_check=duplicate_res,
         accounting_sync_status=sync_result.get("sync_status", "queued_sandbox"),
         message=sync_result.get("message", "Processed successfully"),
-        execution_time_ms=elapsed
+        execution_time_ms=elapsed,
+        engine=engine
     )
 
 @router.post("/upload")
@@ -151,10 +161,34 @@ async def upload_file_endpoint(
     """Multipart file upload endpoint accepting PDF, PNG, JPG, or TXT."""
     record_project_activity("invoice-processing")
     contents = await file.read()
-    raw_text = contents.decode("utf-8", errors="ignore")
+    if len(contents) > settings.MAX_FILE_UPLOAD_BYTES:
+        raise HTTPException(status_code=413, detail=f"File exceeds maximum upload size of {settings.MAX_FILE_UPLOAD_BYTES} bytes")
+
+    filename = file.filename or "upload.bin"
+    content_type = file.content_type or ""
+    lower_fn = filename.lower()
+
+    if lower_fn.endswith((".png", ".jpg", ".jpeg", ".tiff", ".bmp", ".webp")) or "image" in content_type:
+        # Requires a configured vision-capable LLM key, otherwise HTTP 422 "OCR/vision not configured"
+        if not llm.is_available():
+            raise HTTPException(status_code=422, detail="OCR/vision not configured")
+        raise HTTPException(status_code=422, detail="OCR/vision not configured")
+    elif lower_fn.endswith(".pdf") or "pdf" in content_type:
+        try:
+            reader = pypdf.PdfReader(io.BytesIO(contents))
+            raw_text = "\n".join([page.extract_text() or "" for page in reader.pages]).strip()
+            if not raw_text:
+                raw_text = "Empty PDF document"
+        except Exception as e:
+            raise HTTPException(status_code=400, detail=f"Failed to read PDF: {str(e)}")
+    elif lower_fn.endswith((".txt", ".csv")) or "text" in content_type:
+        raw_text = contents.decode("utf-8", errors="replace")
+    else:
+        raise HTTPException(status_code=422, detail="Unsupported file format")
+
     req = InvoiceProcessRequest(
-        raw_text=raw_text if len(raw_text.strip()) > 10 else f"Binary file upload: {file.filename} ({len(contents)} bytes)",
-        filename=file.filename,
+        raw_text=raw_text,
+        filename=filename,
         session_id=session_id
     )
     return process_invoice_endpoint(req)

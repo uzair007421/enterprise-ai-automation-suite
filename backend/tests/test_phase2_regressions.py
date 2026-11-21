@@ -68,3 +68,74 @@ def test_tier0_g6_production_secret_guard():
     """Verify app fails startup when APP_ENV=production with default SECRET_KEY."""
     with pytest.raises(Exception):
         Settings(APP_ENV="production", SECRET_KEY="production-ai-suite-secret-key-change-in-prod-xyz123")
+
+
+# ==============================================================
+# TIER A: P04 INVOICE REGRESSIONS
+# ==============================================================
+
+def test_p04_three_inputs_return_different_results():
+    """Verify three different invoice texts return three distinct extraction results (no Acme fabrication)."""
+    t1 = "Vendor: Lahore Tea Traders\nInvoice Number: LTT-998\nDate: 2026-11-20\nSubtotal: $400.00\nTax: $40.00\nTotal: $440.00"
+    t2 = "Vendor: Zeta Cloud Solutions\nInvoice Number: ZETA-551\nDate: 2026-11-18\nSubtotal: $100.00\nTax: $20.00\nTotal: $120.00"
+    t3 = "hello this is not an invoice"
+
+    r1 = client.post("/api/ai/invoice-processing/process", json={"raw_text": t1, "filename": "ltt.txt"}).json()
+    r2 = client.post("/api/ai/invoice-processing/process", json={"raw_text": t2, "filename": "zeta.txt"}).json()
+    r3 = client.post("/api/ai/invoice-processing/process", json={"raw_text": t3, "filename": "gibberish.txt"}).json()
+
+    assert r1["vendor_name"] == "Lahore Tea Traders"
+    assert r1["invoice_number"] == "LTT-998"
+    assert r1["total_amount"] == 440.0
+
+    assert r2["vendor_name"] == "Zeta Cloud Solutions"
+    assert r2["invoice_number"] == "ZETA-551"
+    assert r2["total_amount"] == 120.0
+
+    assert r3["vendor_name"] is None
+    assert r3["invoice_number"] is None
+    assert r3["total_amount"] is None
+
+    # All three must be different
+    assert r1["vendor_name"] != r2["vendor_name"] != r3["vendor_name"]
+    assert r1["total_amount"] != r2["total_amount"]
+
+
+def test_p04_gibberish_returns_needs_review_and_low_confidence():
+    """Verify non-invoice gibberish returns NEEDS_REVIEW with null fields and confidence <= 30."""
+    t_bad = "hello this is not an invoice and has no numbers"
+    resp = client.post("/api/ai/invoice-processing/process", json={"raw_text": t_bad, "filename": "bad.txt"})
+    assert resp.status_code == 200
+    data = resp.json()
+
+    assert data["reconciliation"]["overall_status"] == "NEEDS_REVIEW"
+    assert data["confidence_score"] <= 30
+    assert data["extracted"]["vendor_name"] is None
+    assert data["extracted"]["invoice_number"] is None
+    assert data["extracted"]["total_amount"] is None
+
+
+def test_p04_png_upload_without_key_returns_422(monkeypatch):
+    """Verify PNG upload without vision LLM key returns HTTP 422 OCR/vision not configured."""
+    monkeypatch.setattr(llm, "gemini_key", None)
+    monkeypatch.setattr(llm, "openai_key", None)
+
+    fake_png_bytes = b"\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR"
+    resp = client.post(
+        "/api/ai/invoice-processing/upload",
+        files={"file": ("invoice.png", fake_png_bytes, "image/png")}
+    )
+    assert resp.status_code == 422
+    assert "OCR/vision not configured" in resp.json()["detail"]
+
+
+def test_p04_resubmit_same_bad_invoice_flags_duplicate():
+    """Verify resubmitting the exact same bad invoice flags it as a duplicate."""
+    import uuid
+    bad_text = f"arbitrary bad invoice text for duplication test {uuid.uuid4().hex}"
+    r1 = client.post("/api/ai/invoice-processing/process", json={"raw_text": bad_text, "filename": "dup_test.txt"}).json()
+    assert r1["duplicate_check"]["is_duplicate"] is False
+
+    r2 = client.post("/api/ai/invoice-processing/process", json={"raw_text": bad_text, "filename": "dup_test.txt"}).json()
+    assert r2["duplicate_check"]["is_duplicate"] is True
+    assert "Identical file content" in r2["duplicate_check"]["match_reason"]

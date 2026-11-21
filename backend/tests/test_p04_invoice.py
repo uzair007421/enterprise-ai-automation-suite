@@ -89,8 +89,10 @@ def test_math_reconciliation_total_mismatch():
 def test_duplicate_invoice_detection_and_ledger():
     """Verify cryptographic SHA-256 and vendor/invoice composite key duplicate detection."""
     from core.db import get_connection
+    req_text = "Invoice #INV-TEST-400 Vendor: TestCo Date: 2026-11-20 Subtotal: $500.00 Tax: $50.00 Total: $550.00"
+    file_hash = calculate_sha256(req_text.encode("utf-8"))
     with get_connection() as conn:
-        conn.execute("DELETE FROM p04_invoices WHERE invoice_number = 'INV-89102' OR vendor = 'TestCo'")
+        conn.execute("DELETE FROM p04_invoices WHERE invoice_number = 'INV-TEST-400' OR vendor = 'TestCo' OR file_hash = ?", (file_hash,))
 
     req1 = InvoiceProcessRequest(
         raw_text="Invoice #INV-TEST-400 Vendor: TestCo Date: 2026-11-20 Subtotal: $500.00 Tax: $50.00 Total: $550.00",

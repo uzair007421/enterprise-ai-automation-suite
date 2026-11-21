@@ -14,6 +14,21 @@ TOLERANCE = 0.02  # Two-cent tolerance for rounding
 def reconcile_invoice_math(extracted: InvoiceExtractedData) -> ReconciliationCheck:
     discrepancies: List[str] = []
 
+    # Check required fields
+    has_missing_fields = False
+    if not extracted.vendor_name:
+        discrepancies.append("Missing required field: vendor_name")
+        has_missing_fields = True
+    if not extracted.invoice_number:
+        discrepancies.append("Missing required field: invoice_number")
+        has_missing_fields = True
+    if extracted.total_amount is None:
+        discrepancies.append("Missing required field: total_amount")
+        has_missing_fields = True
+    if extracted.subtotal is None:
+        discrepancies.append("Missing required field: subtotal")
+        has_missing_fields = True
+
     # 1. Individual line items calculation
     calculated_subtotal = 0.0
     for idx, item in enumerate(extracted.line_items, 1):
@@ -26,39 +41,49 @@ def reconcile_invoice_math(extracted: InvoiceExtractedData) -> ReconciliationChe
         calculated_subtotal += item.line_total
 
     calculated_subtotal = round(calculated_subtotal, 2)
-    subtotal_delta = round(abs(calculated_subtotal - extracted.subtotal), 2)
-    line_subtotal_matched = subtotal_delta <= TOLERANCE
-
-    if not line_subtotal_matched and len(extracted.line_items) > 0:
-        discrepancies.append(
-            f"Sum of line items (${calculated_subtotal:.2f}) does not match stated subtotal (${extracted.subtotal:.2f}) "
-            f"[delta: ${subtotal_delta:.2f}]"
-        )
+    
+    if extracted.subtotal is not None:
+        subtotal_delta = round(abs(calculated_subtotal - extracted.subtotal), 2)
+        line_subtotal_matched = subtotal_delta <= TOLERANCE
+        if not line_subtotal_matched and len(extracted.line_items) > 0:
+            discrepancies.append(
+                f"Sum of line items (${calculated_subtotal:.2f}) does not match stated subtotal (${extracted.subtotal:.2f}) "
+                f"[delta: ${subtotal_delta:.2f}]"
+            )
+    else:
+        subtotal_delta = None
+        line_subtotal_matched = False
 
     # 2. Subtotal + Tax vs Stated Total
-    expected_total = round(extracted.subtotal + extracted.tax_amount, 2)
-    total_delta = round(abs(expected_total - extracted.total_amount), 2)
-    total_matched = total_delta <= TOLERANCE
-
-    if not total_matched:
-        discrepancies.append(
-            f"Subtotal (${extracted.subtotal:.2f}) + Tax (${extracted.tax_amount:.2f}) = ${expected_total:.2f}, "
-            f"does not match stated total (${extracted.total_amount:.2f}) [delta: ${total_delta:.2f}]"
-        )
+    tax_amount = extracted.tax_amount or 0.0
+    if extracted.subtotal is not None and extracted.total_amount is not None:
+        expected_total = round(extracted.subtotal + tax_amount, 2)
+        total_delta = round(abs(expected_total - extracted.total_amount), 2)
+        total_matched = total_delta <= TOLERANCE
+        if not total_matched:
+            discrepancies.append(
+                f"Subtotal (${extracted.subtotal:.2f}) + Tax (${tax_amount:.2f}) = ${expected_total:.2f}, "
+                f"does not match stated total (${extracted.total_amount:.2f}) [delta: ${total_delta:.2f}]"
+            )
+        # 4. Sanity checks (negatives or zero total)
+        if extracted.total_amount <= 0:
+            discrepancies.append(f"Invalid total amount: ${extracted.total_amount:.2f} must be greater than zero.")
+    else:
+        expected_total = None
+        total_delta = None
+        total_matched = False
 
     # 3. Tax rate calculation
     tax_rate = None
-    if extracted.subtotal > 0 and extracted.tax_amount > 0:
-        tax_rate = round((extracted.tax_amount / extracted.subtotal) * 100, 2)
-
-    # 4. Sanity checks (negatives or zero total)
-    if extracted.total_amount <= 0:
-        discrepancies.append(f"Invalid total amount: ${extracted.total_amount:.2f} must be greater than zero.")
+    if extracted.subtotal and extracted.subtotal > 0 and tax_amount > 0:
+        tax_rate = round((tax_amount / extracted.subtotal) * 100, 2)
 
     # Determine status
-    if len(discrepancies) == 0:
+    if has_missing_fields:
+        overall_status = "NEEDS_REVIEW"
+    elif len(discrepancies) == 0:
         overall_status = "APPROVED"
-    elif not total_matched or total_delta > 1.0:
+    elif not total_matched or (total_delta is not None and total_delta > 1.0):
         overall_status = "DISCREPANCY"
     else:
         overall_status = "NEEDS_MANUAL_REVIEW"

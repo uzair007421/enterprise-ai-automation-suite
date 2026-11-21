@@ -67,6 +67,14 @@ class LLMClient:
         self.openai_key = settings.OPENAI_API_KEY
         self.openai_model = settings.OPENAI_MODEL
 
+    def is_available(self) -> bool:
+        """Returns True if the configured provider has a valid non-empty API key."""
+        if self.provider == "gemini" and bool(self.gemini_key):
+            return True
+        if self.provider == "openai" and bool(self.openai_key):
+            return True
+        return False
+
     def generate_structured(
         self,
         prompt: str,

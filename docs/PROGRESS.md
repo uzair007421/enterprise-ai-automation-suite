@@ -18,6 +18,7 @@
 | **Phase 4** | **Portfolio Integration & Deliverables** (Clean URLs, Under the Hood SSE stream, Feature Table, Final Report) | **DONE** | None | 100% Complete |
 
 - Phase 2 Tier 0: Global fixes applied (Python 3.12 compatibility, LLM fabrication removed, truthful health, security middleware & admin gating, hygiene, honest reporting).
+- Phase 2 Tier A: P04 Invoice fixed (deterministic regex heuristic extraction, PDF/text/CSV upload handling with 422 for images without LLM, review-queue duplicate check, UI backend error banner, truthful eval runner).
 
 ---
 
