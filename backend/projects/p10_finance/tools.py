@@ -77,3 +77,12 @@ def execute_ledger_update(account: str, amount: float, direction: str, reference
         "direction": direction,
         "reference": reference
     }
+
+def execute_credit_limit_update(entity: str, amount: float) -> Dict[str, Any]:
+    """Updates credit facility limit for specified enterprise account."""
+    return {
+        "status": "MUTATION_EXECUTED",
+        "action": "CREDIT_LIMIT_UPDATE",
+        "entity": entity,
+        "amount": amount
+    }

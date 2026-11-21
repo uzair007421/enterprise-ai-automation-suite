@@ -6,10 +6,20 @@ RBAC signing, and tamper-evident SHA-256 audit blocks.
 from typing import Optional, Dict, Any, List
 from pydantic import BaseModel, Field
 
+class LoginRequest(BaseModel):
+    username: str
+    password: str
+
+class LoginResponse(BaseModel):
+    access_token: str
+    token_type: str = "bearer"
+    user_id: str
+    role: str
+
 class AgentQueryRequest(BaseModel):
     query: str = Field(description="User prompt or command (e.g. 'What is our treasury balance?' or 'Transfer $5,000 to AWS')")
-    user_id: str = Field(default="user_analyst_1", description="Identifier of the querying user")
-    role: str = Field(default="ANALYST", description="'ANALYST', 'MANAGER', or 'CFO'")
+    user_id: Optional[str] = Field(default="analyst", description="Identifier of the querying user (overridden by JWT)")
+    role: Optional[str] = Field(default="ANALYST", description="'ANALYST', 'MANAGER', or 'CFO' (overridden by JWT)")
     session_id: Optional[str] = "demo_session"
 
 class ToolCallProposal(BaseModel):
@@ -34,9 +44,9 @@ class AgentQueryResponse(BaseModel):
 
 class ApprovalExecutionRequest(BaseModel):
     proposal_id: str
-    approver_id: str = Field(default="cfo_user_99")
-    approver_role: str = Field(default="CFO", description="'MANAGER' or 'CFO'")
-    secret_key: Optional[str] = Field(default="finguard_secret_hmac_2026", description="HMAC signing secret")
+    approver_id: Optional[str] = Field(default=None, description="Approver ID (derived strictly from JWT)")
+    approver_role: Optional[str] = Field(default=None, description="Approver role (derived strictly from JWT)")
+    secret_key: Optional[str] = Field(default=None, description="Deprecated client key; server-held key is used")
     decision: str = Field(default="APPROVE", description="'APPROVE' or 'REJECT'")
     session_id: Optional[str] = "demo_session"
 

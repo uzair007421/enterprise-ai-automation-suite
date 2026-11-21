@@ -6,8 +6,13 @@
   <title>FinGuard AI | Enterprise Financial Agent Gate & Audit Ledger</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="config.js"></script>
 </head>
 <body class="bg-slate-950 text-slate-100 min-h-screen font-sans flex flex-col">
+  <!-- Backend Error Banner -->
+  <div id="backend-error-banner" class="hidden bg-rose-950 border-b border-rose-500 text-rose-200 text-xs px-4 py-2 text-center font-mono font-bold flex items-center justify-center gap-2">
+    <i class="fa-solid fa-triangle-exclamation text-rose-400"></i> <span id="backend-error-text">Backend unavailable</span>
+  </div>
 
   <!-- Header -->
   <header class="border-b border-slate-800 bg-slate-900/90 backdrop-blur sticky top-0 z-50">
@@ -316,6 +321,18 @@
       }).join('');
     }
 
+    function showBackendError(msg) {
+      const banner = document.getElementById('backend-error-banner');
+      const text = document.getElementById('backend-error-text');
+      if (text) text.textContent = msg || 'Backend unavailable';
+      if (banner) banner.classList.remove('hidden');
+    }
+
+    function hideBackendError() {
+      const banner = document.getElementById('backend-error-banner');
+      if (banner) banner.classList.add('hidden');
+    }
+
     async function sendPrompt(promptText) {
       const activeUserId = document.getElementById('user-selector').value;
       const user = USERS[activeUserId];
@@ -327,7 +344,8 @@
         content: promptText
       });
 
-      const API_BASE = window.location.origin.includes('8000') ? '' : 'http://localhost:8000';
+      const API_BASE = window.AI_API_BASE || '';
+      let bData = null;
       try {
         const res = await fetch(`${API_BASE}/api/ai/finance-agent-gate/query`, {
           method: 'POST',
@@ -338,75 +356,54 @@
             role: user.role === 'JUNIOR_ANALYST' ? 'ANALYST' : (user.role === 'CFO_ADMIN' ? 'CFO' : 'MANAGER')
           })
         });
-        if (res.ok) {
-          const bData = await res.json();
-          console.log('Real FinGuard Backend Response:', bData);
+        if (!res.ok) {
+          showBackendError('Backend unavailable');
+          return;
         }
+        hideBackendError();
+        bData = await res.json();
       } catch (err) {
-        console.warn('Backend query sync:', err);
+        console.error('Backend query failed:', err);
+        showBackendError('Backend unavailable');
+        return;
       }
 
-      // Deduct small cost
-      user.cost_used_today += 0.08;
-
-      // Analyze prompt
-      if (promptText.toLowerCase().includes('arr') || promptText.toLowerCase().includes('runway') || promptText.toLowerCase().includes('mrr')) {
-        state.chat_messages.push({
-          role: 'agent',
-          title: 'ReAct Agent [Tool: get_financial_summary]',
-          thought: 'User is requesting high-level SaaS financial metrics. Initiating read-only database query.',
-          tool: 'db_query("SELECT arr, mrr, cash_balance, burn_rate FROM corporate_ledger")',
-          content: `📊 Enterprise Financial Summary:\n• Annual Recurring Revenue (ARR): $4,200,000\n• Monthly Recurring Revenue (MRR): $350,000\n• Unencumbered Cash in Bank: $1,845,000 (Silicon Valley Bank)\n• Net Monthly Burn Rate: $130,000\n• Calculated Runway: 14.2 Months\n\nAll metrics verified against General Ledger reconciling as of 2026-11-20.`
-        });
-        await logAuditEvent(user.name, 'FINANCIAL_READ_DISPATCH', 'Corporate High-Level Ledger', 'LOW');
-      } else if (promptText.toLowerCase().includes('vanguard biotech') && promptText.toLowerCase().includes('balance')) {
-        state.chat_messages.push({
-          role: 'agent',
-          title: 'ReAct Agent [Tool: inspect_account_balance]',
-          thought: 'Looking up account ACC-903 in Accounts Receivable.',
-          tool: 'ar_query("ACC-903")',
-          content: `🏢 Account Inspection: Vanguard Biotech Corp (ACC-903)\n• Current Balance Due: $42,500.00 (Overdue: 14 days, Net-30 terms)\n• Existing Credit Limit: $75,000.00\n• Credit Utilization: 56.6%\n• Payment History: 94% on-time historical settlement score.`
-        });
-        await logAuditEvent(user.name, 'ACCOUNT_BALANCE_INSPECT', 'Vanguard Biotech (ACC-903)', 'LOW');
-      } else if (promptText.toLowerCase().includes('credit limit') || promptText.toLowerCase().includes('wire') || promptText.toLowerCase().includes('transfer') || promptText.toLowerCase().includes('update')) {
-        // Dangerous Write Tool! Check RBAC
-        if (!user.can_write) {
+      // Render what backend returned
+      if (bData.tool_proposal) {
+        const tp = bData.tool_proposal;
+        if (tp.requires_human_approval) {
           state.chat_messages.push({
             role: 'agent',
-            title: 'FinGuard Security Gate [RBAC DENIED]',
-            thought: `Attempted write operation by role "${user.role}". Policy rule POL-04 requires Senior Manager or CFO privilege.`,
-            tool: 'write_gate_blocked("CREDIT_LIMIT_MODIFICATION")',
-            content: `⛔ ACCESS DENIED: Role "${user.role}" does not have write authority to modify credit limits or disburse funds. This incident has been logged to the immutable security compliance ledger.`
+            title: `ReAct Agent [Suspended: ${tp.tool_name}]`,
+            thought: bData.agent_reasoning || 'Write tool intercepted by mandatory cryptographic write gate.',
+            tool: `${tp.tool_name}(${JSON.stringify(tp.parameters)})`,
+            content: bData.direct_answer || `🛡️ Cryptographic Write Gate Activated: Proposal ${tp.proposal_id} suspended in PENDING_HUMAN_APPROVAL state.`
           });
-          await logAuditEvent(user.name, 'RBAC_UNAUTHORIZED_WRITE_ATTEMPT', 'Vanguard Biotech Credit Limit', 'HIGH_ALERT');
+          state.pending_writes = [{
+            id: tp.proposal_id,
+            action: `${tp.tool_name}: ${JSON.stringify(tp.parameters)}`,
+            target_account: tp.parameters.entity || tp.parameters.destination || tp.parameters.account || 'Corporate Account',
+            requested_by: user.name,
+            role: user.role,
+            risk: `Requires authorization from CFO or Manager (Digest: ${tp.payload_sha256 ? tp.payload_sha256.substring(0, 10) : ''}...)`
+          }];
         } else {
           state.chat_messages.push({
             role: 'agent',
-            title: 'ReAct Agent [Suspended on Write Tool Gate]',
-            thought: 'Modifying credit limits is a high-impact write action. Halting autonomous loop and dispatching Human Permission Gate.',
-            tool: 'halt_for_human_gate("update_credit_limit", { account: "ACC-903", delta: "+$25,000" })',
-            content: `🛡️ Human Permission Gate Activated: Execution suspended. Please authorize or deny the credit limit adjustment in the right panel before changes are committed.`
+            title: `ReAct Agent [Autonomous Tool: ${tp.tool_name}]`,
+            thought: bData.agent_reasoning || 'Autonomous read query executed.',
+            tool: `${tp.tool_name}()`,
+            content: bData.direct_answer || JSON.stringify(tp.result)
           });
-
-          state.pending_writes = [{
-            id: 'pw_' + Date.now(),
-            action: 'Increase Credit Limit from $75,000 to $100,000',
-            target_account: 'Vanguard Biotech Corp (ACC-903)',
-            requested_by: user.name,
-            role: user.role,
-            risk: 'Moderate Exposure ($25,000 delta)'
-          }];
         }
       } else {
-        // Generic custom prompt
         state.chat_messages.push({
           role: 'agent',
-          title: 'ReAct Agent [Query Response]',
-          thought: 'Processing custom financial inquiry against company database and accounting policies.',
-          tool: 'semantic_financial_search(query)',
-          content: `Inquiry successfully analyzed: "${promptText}".\nAll related fiscal records and internal controls remain in standard compliance status. No anomalous variances detected.`
+          title: 'FinGuard Agent',
+          thought: bData.agent_reasoning || 'Query processed.',
+          tool: 'direct_response',
+          content: bData.direct_answer || 'No action needed.'
         });
-        logAuditEvent(user.name, 'CUSTOM_FINANCIAL_QUERY', promptText.substring(0, 30), 'LOW');
       }
 
       saveState();
@@ -431,36 +428,36 @@
       if (!state.pending_writes || state.pending_writes.length === 0) return;
       const pw = state.pending_writes[0];
 
-      const API_BASE = window.location.origin.includes('8000') ? '' : 'http://localhost:8000';
-      fetch(`${API_BASE}/api/ai/finance-agent-gate/approve`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          proposal_id: pw.id,
-          approver_id: pw.requested_by,
-          approver_role: 'CFO',
-          decision: decision === 'APPROVED' ? 'APPROVE' : 'REJECT'
-        })
-      }).catch(e => console.warn('Approve sync:', e));
-
-      if (decision === 'APPROVED') {
+      const API_BASE = window.AI_API_BASE || '';
+      try {
+        const res = await fetch(`${API_BASE}/api/ai/finance-agent-gate/approve`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            proposal_id: pw.id,
+            approver_id: 'cfo',
+            approver_role: 'CFO',
+            decision: decision === 'APPROVED' ? 'APPROVE' : 'REJECT'
+          })
+        });
+        if (!res.ok) {
+          const errData = await res.json().catch(() => ({}));
+          showBackendError(errData.detail || 'Approval request rejected by backend');
+          return;
+        }
+        hideBackendError();
+        const bData = await res.json();
         state.chat_messages.push({
           role: 'agent',
-          title: 'Write Action Committed',
-          thought: 'Human authorization received with cryptographic key verification.',
-          tool: 'db_commit("UPDATE accounts SET credit_limit = 100000 WHERE id = \'ACC-903\'")',
-          content: `✅ Authorization Confirmed: Credit limit for Vanguard Biotech Corp successfully updated to $100,000.00. Updated account ledger committed.`
+          title: decision === 'APPROVED' ? 'Write Action Committed' : 'Write Action Rejected',
+          thought: bData.message || 'Approval processed by backend.',
+          tool: bData.block_hash ? `audit_block(#${bData.block_index})` : 'action_rejected',
+          content: bData.message
         });
-        await logAuditEvent(pw.requested_by, 'WRITE_ACTION_COMMITTED', `${pw.target_account} -> $100k Limit`, 'MODERATE');
-      } else {
-        state.chat_messages.push({
-          role: 'agent',
-          title: 'Write Action Denied',
-          thought: 'Human operator rejected the write operation.',
-          tool: 'rollback_transaction()',
-          content: `❌ Write Denied: Transaction aborted by reviewer. No changes applied to Vanguard Biotech Corp.`
-        });
-        await logAuditEvent(pw.requested_by, 'WRITE_ACTION_REJECTED', pw.target_account, 'LOW');
+      } catch (err) {
+        console.error('Approve call failed:', err);
+        showBackendError('Backend unavailable');
+        return;
       }
 
       state.pending_writes = [];

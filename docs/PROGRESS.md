@@ -21,6 +21,7 @@
 - Phase 2 Tier A: P04 Invoice fixed (deterministic regex heuristic extraction, PDF/text/CSV upload handling with 422 for images without LLM, review-queue duplicate check, UI backend error banner, truthful eval runner).
 - Phase 2 Tier A: P03 Support fixed (order ownership verification, rule sentiment engine with frustration/human-request lexicon, unknown intent to OTHER, 110 evals, UI backend error banner).
 - Phase 2 Tier A: P05 Monitor fixed (40 distinct workflows, local chaos targets, exponential backoff, token refresh, circuit breaker, permanent 500/999 FAILED + alert attempt, UI G3 compliance, truthful 22-fault eval runner).
+- Phase 2 Tier A: P10 FinGuard fixed (JWT auth & login with fixed accounts, separation of duties, RBAC tiers, server HMAC signing key with canonical JSON, deterministic rule parser for Vanguard $100k, investment advice refusal, UI G3 compliance, 25 evals).
 
 ---
 

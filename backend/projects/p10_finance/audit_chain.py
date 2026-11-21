@@ -10,6 +10,7 @@ from datetime import datetime, timezone
 from typing import Dict, Any, List, Optional
 from core.db import DatabaseSession
 from .schemas import AuditBlock, AuditChainVerificationResponse
+from .crypto_gate import verify_approval_signature
 
 GENESIS_PREV_HASH = "0000000000000000000000000000000000000000000000000000000000000000"
 
@@ -78,7 +79,7 @@ class AuditChainManager:
         prev_hash = latest.get("block_hash", GENESIS_PREV_HASH)
         next_index = latest.get("block_index", 0) + 1
 
-        payload_json = json.dumps(payload, sort_keys=True)
+        payload_json = json.dumps(payload, sort_keys=True, separators=(',', ':'))
         timestamp = datetime.now(timezone.utc).isoformat()
         block_hash = compute_block_hash(
             previous_hash=prev_hash,
@@ -164,6 +165,41 @@ class AuditChainManager:
                         tampered_block_index=blk["block_index"],
                         audit_verdict=f"Hash mismatch at block {blk['block_index']}: content tampered or signature invalid."
                     )
+
+                # Verify HMAC approval signature if it's an approved execution
+                if blk["action_type"] in ("LEDGER_MUTATION_EXECUTED", "CREDIT_LIMIT_MUTATION_EXECUTED", "APPROVAL_EXECUTED"):
+                    try:
+                        p_data = json.loads(blk["payload_json"])
+                        if "signed_at" in p_data:
+                            prop_id = p_data.get("proposal_id", "")
+                            p_params = p_data.get("parameters", {})
+                            amount = float(p_params.get("amount", 0.0))
+                            approver = p_data.get("approver", blk["actor_role"])
+                            signed_ts = p_data.get("signed_at", blk["created_at"])
+                            if not verify_approval_signature(
+                                signature=blk["hmac_signature"],
+                                proposal_id=prop_id,
+                                amount=amount,
+                                approver=approver,
+                                timestamp=signed_ts
+                            ):
+                                return AuditChainVerificationResponse(
+                                    is_valid=False,
+                                    total_blocks=len(blocks),
+                                    genesis_hash=blocks[0]["block_hash"],
+                                    tip_hash=blocks[-1]["block_hash"],
+                                    tampered_block_index=blk["block_index"],
+                                    audit_verdict=f"HMAC signature tampering detected at block {blk['block_index']}."
+                                )
+                    except Exception as e:
+                        return AuditChainVerificationResponse(
+                            is_valid=False,
+                            total_blocks=len(blocks),
+                            genesis_hash=blocks[0]["block_hash"],
+                            tip_hash=blocks[-1]["block_hash"],
+                            tampered_block_index=blk["block_index"],
+                            audit_verdict=f"Signature verification error at block {blk['block_index']}: {str(e)}"
+                        )
 
             return AuditChainVerificationResponse(
                 is_valid=True,

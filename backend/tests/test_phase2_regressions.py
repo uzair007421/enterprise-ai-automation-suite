@@ -7,8 +7,14 @@ from fastapi.testclient import TestClient
 from main import app
 from core.llm import llm, LLMNotConfigured
 from core.config import settings, Settings
+from core.db import DatabaseSession
 
+import uuid
 client = TestClient(app)
+
+@pytest.fixture(autouse=True)
+def fresh_session_for_test():
+    client.headers["X-Session-ID"] = f"test-sess-{uuid.uuid4().hex}"
 
 # ==============================================================
 # TIER 0: GLOBAL FIXES REGRESSIONS
@@ -285,4 +291,128 @@ def test_p05_401_recovers_only_after_oauth_refresh():
     data = resp.json()
     assert data["final_status"] == "RECOVERED"
     assert data["recovery_strategy"] == "OAUTH_TOKEN_REFRESH"
+
+
+# ==============================================================
+# TIER A: P10 FINGUARD REGRESSIONS
+# ==============================================================
+
+def test_p10_analyst_cannot_approve_50k():
+    """Verify an analyst cannot approve a $50k write proposal over HTTP."""
+    # 1. Login as analyst
+    login_analyst = client.post("/api/ai/finance-agent-gate/login", json={"username": "analyst", "password": "analyst123"}).json()
+    analyst_token = login_analyst["access_token"]
+
+    # 2. Login as manager to create a $50k proposal
+    login_mgr = client.post("/api/ai/finance-agent-gate/login", json={"username": "manager", "password": "mgr123"}).json()
+    mgr_token = login_mgr["access_token"]
+    q_resp = client.post(
+        "/api/ai/finance-agent-gate/query",
+        headers={"Authorization": f"Bearer {mgr_token}"},
+        json={"query": "Transfer $50,000 to AWS infrastructure"}
+    ).json()
+    prop_id = q_resp["tool_proposal"]["proposal_id"]
+
+    # 3. Analyst attempts to approve -> 403 Forbidden
+    app_resp = client.post(
+        "/api/ai/finance-agent-gate/approve",
+        headers={"Authorization": f"Bearer {analyst_token}"},
+        json={"proposal_id": prop_id, "decision": "APPROVE"}
+    )
+    assert app_resp.status_code == 403
+    assert "read-only" in app_resp.json()["detail"].lower()
+
+
+def test_p10_creator_cannot_approve_own_proposal():
+    """Verify creator cannot approve their own proposal (separation of duties)."""
+    # Manager creates a proposal under $10k
+    login_mgr = client.post("/api/ai/finance-agent-gate/login", json={"username": "manager", "password": "mgr123"}).json()
+    mgr_token = login_mgr["access_token"]
+    q_resp = client.post(
+        "/api/ai/finance-agent-gate/query",
+        headers={"Authorization": f"Bearer {mgr_token}"},
+        json={"query": "Transfer $3,500 to vendor for software"}
+    ).json()
+    prop_id = q_resp["tool_proposal"]["proposal_id"]
+
+    # Manager attempts to approve their own proposal -> 403 Forbidden
+    app_resp = client.post(
+        "/api/ai/finance-agent-gate/approve",
+        headers={"Authorization": f"Bearer {mgr_token}"},
+        json={"proposal_id": prop_id, "decision": "APPROVE"}
+    )
+    assert app_resp.status_code == 403
+    assert "creator cannot approve" in app_resp.json()["detail"].lower()
+
+
+def test_p10_tampering_with_signature_fails_audit_chain_verify():
+    """Verify tampering with a block HMAC signature fails /audit-chain/verify."""
+    # 1. Login manager & CFO
+    login_mgr = client.post("/api/ai/finance-agent-gate/login", json={"username": "manager", "password": "mgr123"}).json()
+    login_cfo = client.post("/api/ai/finance-agent-gate/login", json={"username": "cfo", "password": "cfo123"}).json()
+    mgr_token = login_mgr["access_token"]
+    cfo_token = login_cfo["access_token"]
+
+    # 2. Manager creates proposal, CFO approves
+    q_resp = client.post(
+        "/api/ai/finance-agent-gate/query",
+        headers={"Authorization": f"Bearer {mgr_token}"},
+        json={"query": "Transfer $2,000 to vendor for hosting"}
+    ).json()
+    prop_id = q_resp["tool_proposal"]["proposal_id"]
+
+    app_resp = client.post(
+        "/api/ai/finance-agent-gate/approve",
+        headers={"Authorization": f"Bearer {cfo_token}"},
+        json={"proposal_id": prop_id, "decision": "APPROVE"}
+    )
+    assert app_resp.status_code == 200
+    b_idx = app_resp.json()["block_index"]
+
+    # 3. Tamper with HMAC signature of this block in SQLite
+    db = DatabaseSession()
+    orig_sig = None
+    try:
+        row = db.fetchone("SELECT * FROM p10_audit_chain WHERE block_index = ?", (b_idx,))
+        orig_sig = row["hmac_signature"]
+        db.execute("UPDATE p10_audit_chain SET hmac_signature = ? WHERE block_index = ?", ("tampered_invalid_sig_12345", b_idx))
+        db.commit()
+
+        # 4. Verification must fail
+        v_resp = client.get("/api/ai/finance-agent-gate/audit-chain/verify").json()
+        assert v_resp["is_valid"] is False
+        assert v_resp["tampered_block_index"] == b_idx
+    finally:
+        if orig_sig:
+            db.execute("UPDATE p10_audit_chain SET hmac_signature = ? WHERE block_index = ?", (orig_sig, b_idx))
+            db.commit()
+        db.close()
+
+
+def test_p10_vanguard_credit_limit_produces_right_tool_call_and_args():
+    """Verify 'increase Vanguard credit limit to $100k' produces update_credit_limit with entity and amount."""
+    resp = client.post("/api/ai/finance-agent-gate/query", json={
+        "query": "increase Vanguard credit limit to $100k"
+    })
+    assert resp.status_code == 200
+    data = resp.json()
+    tp = data["tool_proposal"]
+    assert tp is not None
+    assert tp["tool_name"] == "update_credit_limit"
+    assert tp["tool_type"] == "WRITE"
+    assert tp["parameters"]["entity"] == "Vanguard"
+    assert float(tp["parameters"]["amount"]) == 100000.0
+    assert tp["status"] == "PENDING_HUMAN_APPROVAL"
+
+
+def test_p10_investment_advice_refused_without_tool_call():
+    """Verify financial advice requests are refused politely with zero tool invocation."""
+    resp = client.post("/api/ai/finance-agent-gate/query", json={
+        "query": "can you recommend an investment portfolio?"
+    })
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["tool_proposal"] is None
+    assert "investment advice" in data["direct_answer"].lower() or "regulations" in data["direct_answer"].lower()
+
 
