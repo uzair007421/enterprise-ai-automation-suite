@@ -16,8 +16,14 @@
       background-size: 20px 20px;
     }
   </style>
+  <script src="config.js"></script>
 </head>
 <body class="bg-slate-950 text-slate-100 min-h-screen font-sans flex flex-col">
+  <!-- Backend Error Banner -->
+  <div id="backend-error-banner" class="hidden bg-rose-950 border-b border-rose-500 text-rose-200 text-xs px-4 py-2 text-center font-mono font-bold flex items-center justify-center gap-2">
+    <i class="fa-solid fa-triangle-exclamation text-rose-400"></i> <span id="backend-error-text">Backend unavailable</span>
+  </div>
+
 
   <!-- Production Header -->
   <header class="border-b border-slate-800 bg-slate-900/90 backdrop-blur sticky top-0 z-40">
@@ -366,7 +372,7 @@ I can assist you with live order status tracking, sizing, exchange policies, or 
       // Show typing indicator
       document.getElementById('typing-indicator').classList.remove('hidden');
 
-      const API_BASE = window.location.origin.includes('8000') ? '' : 'http://localhost:8000';
+      const API_BASE = window.AI_API_BASE || '';
       let botReply = '';
       try {
         const res = await fetch(`${API_BASE}/api/ai/ecommerce-support-bot/message`, {
@@ -377,23 +383,26 @@ I can assist you with live order status tracking, sizing, exchange policies, or 
             text: text
           })
         });
-        if (res.ok) {
-          const data = await res.json();
-          botReply = data.reply_text;
-          activeSentimentScore = data.sentiment_score;
-          updateSentimentUI();
-          if (data.escalated_to_human) {
-            triggerEscalation('Guardrail Escalation', data.refund_block_reason || 'Escalated to Supervisor');
-          }
+        if (!res.ok) {
+          showBackendError('Backend unavailable');
+          document.getElementById('typing-indicator').classList.add('hidden');
+          return;
+        }
+        hideBackendError();
+        const data = await res.json();
+        botReply = data.reply_text;
+        activeSentimentScore = data.sentiment_score;
+        updateSentimentUI();
+        if (data.escalated_to_human) {
+          triggerEscalation('Guardrail Escalation', data.refund_block_reason || 'Escalated to Supervisor');
         }
       } catch (err) {
-        console.warn('Backend call failed, using client fallback:', err);
+        console.error('Backend call failed:', err);
+        showBackendError('Backend unavailable');
+        document.getElementById('typing-indicator').classList.add('hidden');
+        return;
       }
 
-      if (!botReply) {
-        await new Promise(r => setTimeout(r, 600));
-        botReply = processInboundAIResponse(text);
-      }
       document.getElementById('typing-indicator').classList.add('hidden');
 
       const botTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -402,105 +411,16 @@ I can assist you with live order status tracking, sizing, exchange policies, or 
       renderMessages();
     }
 
-    function calculateDynamicSentiment(rawText) {
-      const text = rawText.toLowerCase();
-      let score = 55; // neutral baseline
-      const posWords = ['thank', 'good', 'great', 'awesome', 'helpful', 'fast', 'excellent', 'love', 'perfect', 'satisfied', 'thanks', 'wonderful'];
-      const negWords = ['bad', 'late', 'faulty', 'problem', 'delay', 'issue', 'broken', 'slow', 'defective', 'wrong', 'missing', 'irritated', 'annoyed'];
-      const criticalWords = ['fraud', 'scam', 'terrible', 'worst', 'court', 'police', 'cheater', 'sue', 'lawyer', 'consumer protection', 'horrible'];
-      
-      posWords.forEach(w => { if (text.includes(w)) score += 14; });
-      negWords.forEach(w => { if (text.includes(w)) score -= 16; });
-      criticalWords.forEach(w => { if (text.includes(w)) score -= 38; });
-      
-      if (rawText.includes('!') || rawText.includes('?!')) score -= 6;
-      if (rawText.length > 80 && score < 50) score -= 8;
-      
-      return Math.max(8, Math.min(96, score));
+    function showBackendError(msg) {
+      const banner = document.getElementById('backend-error-banner');
+      const text = document.getElementById('backend-error-text');
+      if (text) text.textContent = msg || 'Backend unavailable';
+      if (banner) banner.classList.remove('hidden');
     }
 
-    function processInboundAIResponse(rawText) {
-      const text = rawText.toLowerCase();
-
-      // Continuous Mathematical Polarity Scoring
-      activeSentimentScore = calculateDynamicSentiment(rawText);
-      updateSentimentUI();
-
-      // Critical Escalation Gate (< 35% polarity score)
-      if (activeSentimentScore < 35) {
-        triggerEscalation("CRITICAL_NEGATIVE_POLARITY", `Customer sentiment dropped to ${activeSentimentScore}%. Auto-containment triggered.`);
-        return "I sincerely apologize for the frustration caused. Because of the critical urgency of your issue, I have immediately paused automated replies and transferred this conversation to Senior Supervisor Hassan Raza on our escalation desk. He is reviewing your file right now.";
-      }
-
-      // 1. Greetings & Pleasantries
-      const greetingKeywords = ['salam', 'hi', 'hello', 'hey', 'good morning', 'good afternoon', 'good evening', 'help', 'start'];
-      if (greetingKeywords.some(k => text.includes(k)) && !text.includes('fraud') && !text.includes('scam')) {
-        return "Hello & welcome to NexusCart Support! 👋\nI am your automated AI Support Assistant.\n\nHow can I help you today?\n• Track your order status (e.g., enter #PK-8921)\n• Browse our featured product catalog & rates\n• Check delivery timelines & shipping rates\n• Learn about our 7-day easy exchange policy";
-      }
-
-      // 2. Products Catalog & Inventory Inquiries
-      const productKeywords = ['product', 'products', 'item', 'items', 'jacket', 'earbuds', 'shoes', 'leather', 'price', 'catalog', 'stock', 'list', 'buy', 'shop'];
-      if (productKeywords.some(k => text.includes(k))) {
-        return "🛍️ NexusCart Featured Catalog:\n\n1. Handcrafted Leather Jacket (Top-Grain / XL) — $65 USD (Rs. 18,500 PKR)\n2. ANC Wireless Pro Earbuds (Matte Black) — $25 USD (Rs. 7,200 PKR)\n3. Italian Oxford Dress Shoes — $50 USD (Rs. 14,000 PKR)\n\n✅ All items are 100% authentic with a 7-day doorstep exchange guarantee. Cash on Delivery (COD) and online checkout available! Would you like details on any specific item?";
-      }
-
-      // 3. Delivery Times & Shipping Rates
-      const shippingKeywords = ['delivery', 'shipping', 'charges', 'courier', 'free shipping', 'cost', 'timings', 'how long', 'days'];
-      if (shippingKeywords.some(k => text.includes(k))) {
-        return "🚚 NexusCart Delivery Information:\n\n• Delivery Timeline: 2 to 3 business days nationwide via express courier.\n• Standard Shipping: Rs. 200 flat rate.\n• Free Delivery: Orders above Rs. 3,000 qualify for 100% Free Shipping!\n• Orders placed before 3:00 PM are dispatched on the same business day.";
-      }
-
-      // 4. Payment Methods & COD
-      const paymentKeywords = ['cod', 'cash on delivery', 'payment', 'pay', 'bank', 'card', 'advance', 'credit', 'debit', 'wallet'];
-      if (paymentKeywords.some(k => text.includes(k))) {
-        return "💳 Accepted Payment Methods:\n\n1. Cash on Delivery (COD) — Pay directly upon parcel arrival.\n2. Online Bank Transfer (Direct Wire / Raast / IBFT).\n3. Digital Wallets & Mobile Pay.\n4. Visa, Mastercard & American Express debit/credit cards.";
-      }
-
-      // 5. Human Representative / Supervisor Request
-      const humanKeywords = ['human', 'agent', 'manager', 'supervisor', 'speak to person', 'representative', 'support agent'];
-      if (humanKeywords.some(k => text.includes(k))) {
-        triggerEscalation("CUSTOMER_REQUESTED_SUPERVISOR", "Customer requested human supervisor consultation.");
-        return "Certainly! I have alerted Senior Supervisor Hassan Raza on our Tier-2 desk. He has been assigned to your chat session and will reply directly through this window. Please hold for a moment.";
-      }
-
-      // 6. Check refund guardrail
-      const refundKeywords = ['refund', 'money back', 'return money', 'cashback', 'reimburse'];
-      if (refundKeywords.some(k => text.includes(k))) {
-        activeSentimentScore = 48;
-        updateSentimentUI();
-        return "NexusCart Refund Guardrail Notice:\n\nOur financial compliance policy strictly prohibits autonomous automated refund disbursements. To initiate a refund:\n\n1. Parcels must first undergo physical RMA inspection at our logistics center.\n2. Upon inspection approval, funds are refunded within 3 business days to your original payment method.\n\nI have opened RMA Inspection Request #RMA-8192 for our warehouse team. Would you like our manager to contact you?";
-      }
-
-      // 7. Check Order tracking
-      const orderMatch = rawText.match(/#?PK-?\d{4}/i);
-      if (orderMatch) {
-        const orderKey = orderMatch[0].toUpperCase().replace('PK', '#PK-').replace('--', '-');
-        const exactKey = Object.keys(SHOPIFY_DATABASE).find(k => k.includes(orderKey.replace('#', '')) || orderKey.includes(k));
-
-        if (exactKey && SHOPIFY_DATABASE[exactKey]) {
-          const ord = SHOPIFY_DATABASE[exactKey];
-          activeSentimentScore = 85;
-          updateSentimentUI();
-          renderShopifyCard(exactKey, ord);
-
-          return `Found your Shopify order ${exactKey}! ✅\n\n• Item: ${ord.item}\n• Current Status: ${ord.status}\n• Carrier: ${ord.courier} (Tracking: ${ord.tracking_number})\n• Estimated Arrival: ${ord.estimated_delivery}\n• Last Scan: ${ord.location_last_scan}\n\nPlease let me know if you need any additional assistance!`;
-        } else {
-          return "I searched our live Shopify database, but could not locate an order matching that reference. Please verify your order number (e.g. #PK-8921) from your confirmation email or SMS.";
-        }
-      }
-
-      // 8. Order tracking general inquiry (no order number given)
-      if (text.includes('order') || text.includes('track') || text.includes('parcel') || text.includes('status') || text.includes('where is')) {
-        return "Please provide your 4-digit order number (e.g., #PK-8921 or #PK-4012), and I will query our live Shopify database to provide your real-time tracking details immediately!";
-      }
-
-      // 9. Returns & Exchange Policy
-      if (text.includes('return') || text.includes('exchange') || text.includes('replace') || text.includes('size')) {
-        return "NexusCart 7-Day Exchange Policy:\n\n• Items can be exchanged within 7 days of delivery provided original tags and packaging are intact.\n• Complimentary doorstep courier pickup will be arranged.\n• What would you like to exchange? Please share your order number or item name.";
-      }
-
-      // 10. Intelligent Fallback with Helpful English Suggestions
-      return "I understand your inquiry. Here are the core tasks I can assist you with right away:\n\n1. 📦 Order Status (share your order number, e.g. #PK-8921)\n2. 🛍️ Product Catalog & Pricing\n3. 🚚 Shipping Timelines & Delivery Rates\n4. 🔄 7-Day Doorstep Exchange Policy\n\nWhich of these would you like to explore?";
+    function hideBackendError() {
+      const banner = document.getElementById('backend-error-banner');
+      if (banner) banner.classList.add('hidden');
     }
 
     function triggerEscalation(reason, details) {

@@ -62,8 +62,23 @@ def handle_customer_message(request: CustomerMessageRequest):
     else:
         # Step 4: Handle standard conversational intents
         target_order_id = classification.extracted_order_id
+        is_order_verified = False
         if target_order_id:
             order_info = shopify_adapter.get_order_by_id(target_order_id)
+            if order_info:
+                order_phone = (order_info.get("phone") or "").replace("+", "").replace("-", "").replace(" ", "")
+                order_last4 = order_phone[-4:] if len(order_phone) >= 4 else ""
+                order_email = (order_info.get("email") or "").strip().lower()
+
+                req_phone = (request.phone or "").replace("+", "").replace("-", "").replace(" ", "")
+                req_email = (getattr(request, "email", None) or "").strip().lower()
+                text_lower = request.text.lower()
+
+                # Verify ownership: last 4 digits of phone or matching email
+                if order_last4 and (req_phone.endswith(order_last4) or order_last4 in text_lower):
+                    is_order_verified = True
+                elif order_email and (req_email == order_email or order_email in text_lower):
+                    is_order_verified = True
 
         if classification.intent == "GREETING":
             if classification.language == "Roman Urdu":
@@ -73,18 +88,31 @@ def handle_customer_message(request: CustomerMessageRequest):
 
         elif classification.intent == "TRACK_ORDER":
             if order_info:
-                if classification.language == "Roman Urdu":
-                    reply_text = (
-                        f"Aapka order **{order_info['id']}** is waqt **{order_info['status']}** hai. "
-                        f"Courier service: **{order_info['courier']}** (Tracking ID: `{order_info['tracking_id']}`). "
-                        f"Total amount: ${order_info['total_usd']:.2f}."
-                    )
+                if not is_order_verified:
+                    order_info = None  # Never leak tracking details before verification
+                    if classification.language == "Roman Urdu":
+                        reply_text = (
+                            f"Order {target_order_id} ki tracking details dekhnay ke liye, barah-e-karam apna registered email "
+                            f"ya phone number ke aakhri 4 digits batayein."
+                        )
+                    else:
+                        reply_text = (
+                            f"For your privacy and security, please provide the registered email address or the last 4 digits "
+                            f"of the phone number for order {target_order_id} to verify ownership before tracking details can be shared."
+                        )
                 else:
-                    reply_text = (
-                        f"Order **{order_info['id']}** is currently **{order_info['status']}**. "
-                        f"Shipped via **{order_info['courier']}** (Tracking #: `{order_info['tracking_id']}`). "
-                        f"Total order value: ${order_info['total_usd']:.2f}."
-                    )
+                    if classification.language == "Roman Urdu":
+                        reply_text = (
+                            f"Aapka order **{order_info['id']}** is waqt **{order_info['status']}** hai. "
+                            f"Courier service: **{order_info['courier']}** (Tracking ID: `{order_info['tracking_id']}`). "
+                            f"Total amount: ${order_info['total_usd']:.2f}."
+                        )
+                    else:
+                        reply_text = (
+                            f"Order **{order_info['id']}** is currently **{order_info['status']}**. "
+                            f"Shipped via **{order_info['courier']}** (Tracking #: `{order_info['tracking_id']}`). "
+                            f"Total order value: ${order_info['total_usd']:.2f}."
+                        )
             else:
                 if classification.language == "Roman Urdu":
                     reply_text = "Mujhe aapka order number nahi mila ya record mein moujood nahi hai. Barah-e-karam apna 4-digit order number (maslan #1042) batayein."
@@ -107,6 +135,12 @@ def handle_customer_message(request: CustomerMessageRequest):
                     "Order cancellation request has been noted. Our warehouse dispatch team is processing it."
                 )
 
+        elif classification.intent == "OTHER":
+            if classification.language == "Roman Urdu":
+                reply_text = "Shukriya aapke sawal ka. Is sawal ke liye main aapko hamari customer support team se connect kar deta hoon. Agar aap order track karna chahte hain to barah-e-karam order number batayein."
+            else:
+                reply_text = "Thank you for reaching out. Let me connect you with our specialized customer support team for this request. If you have an order question, please share your order number."
+
         else:
             # Default helpful assistant reply
             if classification.language == "Roman Urdu":
@@ -121,6 +155,14 @@ def handle_customer_message(request: CustomerMessageRequest):
         "timestamp": time.time()
     })
 
+    has_refund_intent = (
+        classification.intent == "REFUND_INQUIRY" or
+        "refund" in request.text.lower() or
+        "wapis" in request.text.lower() or
+        "money back" in request.text.lower() or
+        any(k in request.text.lower() for k in ["system prompt", "developer mode", "override", "bypass", "sudo"])
+    )
+
     return BotResponse(
         session_id=session_id,
         reply_text=reply_text,
@@ -131,9 +173,10 @@ def handle_customer_message(request: CustomerMessageRequest):
         escalated_to_human=is_blocked,
         ticket_id=ticket_id,
         order_data=order_info,
-        refund_blocked=is_blocked,
-        refund_block_reason="Automated refunds strictly prohibited by financial code gate" if is_blocked else None,
-        execution_time_ms=elapsed
+        refund_blocked=is_blocked and has_refund_intent,
+        refund_block_reason="Automated refunds strictly prohibited by financial code gate" if (is_blocked and has_refund_intent) else None,
+        execution_time_ms=elapsed,
+        engine=classification.engine
     )
 
 @router.get("/orders", dependencies=[Depends(verify_admin_token)])

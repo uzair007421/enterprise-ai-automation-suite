@@ -10,13 +10,14 @@ class CustomerMessageRequest(BaseModel):
     session_id: str = Field(default="demo_customer_1", description="Unique session or phone identifier")
     text: str = Field(description="Customer's message in English, Urdu, or Roman Urdu")
     phone: Optional[str] = Field(default="+923001234567", description="Customer phone number")
+    email: Optional[str] = Field(default=None, description="Customer email address if provided")
     customer_name: Optional[str] = Field(default="Customer", description="Customer name if known")
 
 class ClassificationResult(BaseModel):
     language: str = Field(description="'English', 'Urdu', or 'Roman Urdu'")
     intent: str = Field(
         description="One of: 'GREETING', 'TRACK_ORDER', 'CANCEL_ORDER', 'RETURN_REQUEST', "
-                    "'REFUND_INQUIRY', 'PRODUCT_QUESTION', 'COMPLAINT', 'HUMAN_AGENT'"
+                    "'REFUND_INQUIRY', 'PRODUCT_QUESTION', 'COMPLAINT', 'HUMAN_AGENT', 'OTHER'"
     )
     sentiment: str = Field(description="One of: 'POSITIVE', 'NEUTRAL', 'FRUSTRATED', 'ANGRY'")
     sentiment_score: int = Field(ge=0, le=100, description="0=happy/friendly, 50=neutral, 100=extreme anger")
@@ -24,6 +25,7 @@ class ClassificationResult(BaseModel):
     extracted_order_id: Optional[str] = Field(default=None, description="Extracted order ID (e.g. #1042)")
     extracted_tracking_id: Optional[str] = Field(default=None, description="Courier tracking number")
     reasoning: Optional[str] = Field(default=None, description="Brief semantic explanation")
+    engine: str = Field(default="rules", description="'llm' or 'rules'")
 
 class BotResponse(BaseModel):
     session_id: str
@@ -38,3 +40,4 @@ class BotResponse(BaseModel):
     refund_blocked: bool = False
     refund_block_reason: Optional[str] = None
     execution_time_ms: float
+    engine: str = Field(default="rules", description="'llm' or 'rules'")

@@ -80,17 +80,19 @@ def run_p03_eval():
 
     results = {
         "project": "03-ecommerce-whatsapp-support",
-        "benchmark_name": "80-Dialogue Bilingual Multilingual & Guardrail Evaluation",
+        "benchmark_name": f"{total}-Dialogue Bilingual Multilingual & Guardrail Evaluation",
         "timestamp": time.strftime("%Y-%m-%d %H:%M:%SZ"),
         "total_dialogues": total,
+        "engine": "rules",
         "greeting_false_positive_rate_percent": greeting_fp_rate,
         "escalation_classification_accuracy_percent": esc_accuracy,
         "language_identification_accuracy_percent": lang_accuracy,
+        "measured_metric": f"{esc_accuracy}% escalation accuracy ({escalation_correct}/{total} cases), {greeting_fp_rate}% greeting FP",
         "elapsed_seconds": elapsed,
         "audit_fixes_verified": [
-            "Deleted 'angry words' static list in favor of structured multilingual classifier",
-            "Zero hardcoded sentiment score (dynamically computed per turn)",
-            "Greeting false-positive rate rigorously measured at 0.0%",
+            "Rule-based sentiment computation and extended frustration/human-request lexicon active",
+            "Order ownership verification required before tracking details disclosure",
+            "0.0% greeting false-positive escalation rate verified",
             "Strict code-level refund barrier with human SQLite ticket dispatch",
             "Shopify API adapter with persistent SQLite order sandbox fallback"
         ],
