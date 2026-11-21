@@ -1,18 +1,22 @@
 {
   "project": "05-marketing-self-healing-monitor",
-  "benchmark_name": "10-Fault Enterprise Chaos Injection & Autonomous Remediation Suite",
-  "timestamp": "2026-11-21 12:20:49Z",
-  "total_chaos_faults": 10,
-  "recovery_success_rate_percent": 100.0,
+  "benchmark_name": "22-Fault Enterprise Chaos Injection & Autonomous Remediation Suite",
+  "timestamp": "2026-11-22 01:08:17Z",
+  "total_chaos_faults": 22,
+  "recovered_faults": 14,
+  "failed_faults": 8,
+  "recovery_success_rate_percent": 63.64,
   "strategy_dispatch_accuracy_percent": 100.0,
-  "avg_recovery_latency_ms": 79.57,
-  "total_elapsed_seconds": 1.1412,
+  "avg_recovery_latency_ms": 112.14,
+  "total_elapsed_seconds": 2.8482,
+  "engine": "rules",
   "audit_fixes_verified": [
     "Replaced 40 for-loop mock workflows with distinct real production pipeline registry",
     "Eliminated static hardcoded 99.2% uptime and 4.2s recovery figures",
     "Real exponential backoff with full decorrelated jitter for HTTP 429",
     "Automated OAuth token refresh sequence for HTTP 401",
     "Circuit breaker state machine (CLOSED -> OPEN -> HALF-OPEN -> CLOSED) for HTTP 504",
+    "Permanent 500 and unknown faults terminate in FAILED with alert attempt",
     "Valid n8n workflow definition created in infra/n8n/self_healing_sentinel.json"
   ],
   "cases": [
@@ -22,10 +26,10 @@
       "fault": "HTTP_429_RATE_LIMIT",
       "expected_strategy": "EXPONENTIAL_BACKOFF_JITTER",
       "actual_strategy": "EXPONENTIAL_BACKOFF_JITTER",
-      "recovery_time_ms": 163.25,
+      "recovery_time_ms": 1031.05,
       "attempts": 3,
       "final_status": "RECOVERED",
-      "plain_english_summary": "Upstream API rate limit throttled requests; exponential backoff applied."
+      "plain_english_summary": "The upstream Meta Graph API v19.0 temporarily throttled our requests due to a sudden volume spike. The API key is valid, but request quota was momentarily exhausted."
     },
     {
       "id": "CHAOS-02",
@@ -33,10 +37,10 @@
       "fault": "HTTP_429_RATE_LIMIT",
       "expected_strategy": "EXPONENTIAL_BACKOFF_JITTER",
       "actual_strategy": "EXPONENTIAL_BACKOFF_JITTER",
-      "recovery_time_ms": 177.47,
+      "recovery_time_ms": 200.52,
       "attempts": 3,
       "final_status": "RECOVERED",
-      "plain_english_summary": "Upstream API rate limit throttled requests; exponential backoff applied."
+      "plain_english_summary": "The upstream Meta Graph API v19.0 temporarily throttled our requests due to a sudden volume spike. The API key is valid, but request quota was momentarily exhausted."
     },
     {
       "id": "CHAOS-03",
@@ -44,10 +48,10 @@
       "fault": "HTTP_401_TOKEN_EXPIRED",
       "expected_strategy": "OAUTH_TOKEN_REFRESH",
       "actual_strategy": "OAUTH_TOKEN_REFRESH",
-      "recovery_time_ms": 40.52,
+      "recovery_time_ms": 34.07,
       "attempts": 2,
       "final_status": "RECOVERED",
-      "plain_english_summary": "OAuth access token expired; refreshed credentials successfully."
+      "plain_english_summary": "Authentication token for HubSpot REST API expired after its standard TTL window. Access was temporarily denied until credentials could be refreshed."
     },
     {
       "id": "CHAOS-04",
@@ -55,10 +59,10 @@
       "fault": "HTTP_401_TOKEN_EXPIRED",
       "expected_strategy": "OAUTH_TOKEN_REFRESH",
       "actual_strategy": "OAUTH_TOKEN_REFRESH",
-      "recovery_time_ms": 40.18,
+      "recovery_time_ms": 39.51,
       "attempts": 2,
       "final_status": "RECOVERED",
-      "plain_english_summary": "OAuth access token expired; refreshed credentials successfully."
+      "plain_english_summary": "Authentication token for HubSpot REST API expired after its standard TTL window. Access was temporarily denied until credentials could be refreshed."
     },
     {
       "id": "CHAOS-05",
@@ -66,10 +70,10 @@
       "fault": "HTTP_504_GATEWAY_TIMEOUT",
       "expected_strategy": "CIRCUIT_BREAKER_RESET",
       "actual_strategy": "CIRCUIT_BREAKER_RESET",
-      "recovery_time_ms": 50.93,
+      "recovery_time_ms": 44.76,
       "attempts": 2,
       "final_status": "RECOVERED",
-      "plain_english_summary": "Downstream gateway timeout occurred; circuit breaker reset connection."
+      "plain_english_summary": "The external Stripe Webhooks API server took longer than 30 seconds to answer, indicating regional cloud congestion."
     },
     {
       "id": "CHAOS-06",
@@ -77,10 +81,10 @@
       "fault": "HTTP_504_GATEWAY_TIMEOUT",
       "expected_strategy": "CIRCUIT_BREAKER_RESET",
       "actual_strategy": "CIRCUIT_BREAKER_RESET",
-      "recovery_time_ms": 50.69,
+      "recovery_time_ms": 45.52,
       "attempts": 2,
       "final_status": "RECOVERED",
-      "plain_english_summary": "Downstream gateway timeout occurred; circuit breaker reset connection."
+      "plain_english_summary": "The external Stripe Webhooks API server took longer than 30 seconds to answer, indicating regional cloud congestion."
     },
     {
       "id": "CHAOS-07",
@@ -88,10 +92,10 @@
       "fault": "HTTP_429_RATE_LIMIT",
       "expected_strategy": "EXPONENTIAL_BACKOFF_JITTER",
       "actual_strategy": "EXPONENTIAL_BACKOFF_JITTER",
-      "recovery_time_ms": 181.08,
+      "recovery_time_ms": 200.65,
       "attempts": 3,
       "final_status": "RECOVERED",
-      "plain_english_summary": "Upstream API rate limit throttled requests; exponential backoff applied."
+      "plain_english_summary": "The upstream Google Ads API v16 temporarily throttled our requests due to a sudden volume spike. The API key is valid, but request quota was momentarily exhausted."
     },
     {
       "id": "CHAOS-08",
@@ -99,10 +103,10 @@
       "fault": "HTTP_401_TOKEN_EXPIRED",
       "expected_strategy": "OAUTH_TOKEN_REFRESH",
       "actual_strategy": "OAUTH_TOKEN_REFRESH",
-      "recovery_time_ms": 40.17,
+      "recovery_time_ms": 35.28,
       "attempts": 2,
       "final_status": "RECOVERED",
-      "plain_english_summary": "OAuth access token expired; refreshed credentials successfully."
+      "plain_english_summary": "Authentication token for Google Ads API v16 expired after its standard TTL window. Access was temporarily denied until credentials could be refreshed."
     },
     {
       "id": "CHAOS-09",
@@ -110,21 +114,153 @@
       "fault": "HTTP_504_GATEWAY_TIMEOUT",
       "expected_strategy": "CIRCUIT_BREAKER_RESET",
       "actual_strategy": "CIRCUIT_BREAKER_RESET",
-      "recovery_time_ms": 51.43,
+      "recovery_time_ms": 44.28,
       "attempts": 2,
       "final_status": "RECOVERED",
-      "plain_english_summary": "Downstream gateway timeout occurred; circuit breaker reset connection."
+      "plain_english_summary": "The external Shopify Fulfillment API server took longer than 30 seconds to answer, indicating regional cloud congestion."
     },
     {
       "id": "CHAOS-10",
-      "workflow_id": "wf_shopify_fulfill_05",
+      "workflow_id": "wf_slack_alerts_06",
+      "fault": "HTTP_429_RATE_LIMIT",
+      "expected_strategy": "EXPONENTIAL_BACKOFF_JITTER",
+      "actual_strategy": "EXPONENTIAL_BACKOFF_JITTER",
+      "recovery_time_ms": 222.12,
+      "attempts": 3,
+      "final_status": "RECOVERED",
+      "plain_english_summary": "The upstream Slack Incoming Webhooks temporarily throttled our requests due to a sudden volume spike. The API key is valid, but request quota was momentarily exhausted."
+    },
+    {
+      "id": "CHAOS-11",
+      "workflow_id": "wf_airtable_sync_07",
+      "fault": "HTTP_401_TOKEN_EXPIRED",
+      "expected_strategy": "OAUTH_TOKEN_REFRESH",
+      "actual_strategy": "OAUTH_TOKEN_REFRESH",
+      "recovery_time_ms": 52.24,
+      "attempts": 2,
+      "final_status": "RECOVERED",
+      "plain_english_summary": "Authentication token for Airtable Web API expired after its standard TTL window. Access was temporarily denied until credentials could be refreshed."
+    },
+    {
+      "id": "CHAOS-12",
+      "workflow_id": "wf_klaviyo_campaigns_08",
+      "fault": "HTTP_504_GATEWAY_TIMEOUT",
+      "expected_strategy": "CIRCUIT_BREAKER_RESET",
+      "actual_strategy": "CIRCUIT_BREAKER_RESET",
+      "recovery_time_ms": 69.94,
+      "attempts": 2,
+      "final_status": "RECOVERED",
+      "plain_english_summary": "The external Klaviyo Profiles API server took longer than 30 seconds to answer, indicating regional cloud congestion."
+    },
+    {
+      "id": "CHAOS-13",
+      "workflow_id": "wf_zendesk_tickets_09",
+      "fault": "HTTP_429_RATE_LIMIT",
+      "expected_strategy": "EXPONENTIAL_BACKOFF_JITTER",
+      "actual_strategy": "EXPONENTIAL_BACKOFF_JITTER",
+      "recovery_time_ms": 211.59,
+      "attempts": 3,
+      "final_status": "RECOVERED",
+      "plain_english_summary": "The upstream Zendesk Support API temporarily throttled our requests due to a sudden volume spike. The API key is valid, but request quota was momentarily exhausted."
+    },
+    {
+      "id": "CHAOS-14",
+      "workflow_id": "wf_salesforce_crm_10",
+      "fault": "HTTP_401_TOKEN_EXPIRED",
+      "expected_strategy": "OAUTH_TOKEN_REFRESH",
+      "actual_strategy": "OAUTH_TOKEN_REFRESH",
+      "recovery_time_ms": 37.78,
+      "attempts": 2,
+      "final_status": "RECOVERED",
+      "plain_english_summary": "Authentication token for Salesforce REST API expired after its standard TTL window. Access was temporarily denied until credentials could be refreshed."
+    },
+    {
+      "id": "CHAOS-15",
+      "workflow_id": "wf_meta_leads_01",
       "fault": "HTTP_500_SERVER_ERROR",
       "expected_strategy": "FAILOVER_RETRY",
       "actual_strategy": "FAILOVER_RETRY",
-      "recovery_time_ms": 0.01,
-      "attempts": 3,
-      "final_status": "RECOVERED",
-      "plain_english_summary": "Diagnostic summary indicating automated remediation success."
+      "recovery_time_ms": 47.92,
+      "attempts": 2,
+      "final_status": "FAILED",
+      "plain_english_summary": "The Meta Graph API v19.0 experienced an unrecoverable internal server error (HTTP 500). Automated retries failed."
+    },
+    {
+      "id": "CHAOS-16",
+      "workflow_id": "wf_hubspot_enrich_02",
+      "fault": "HTTP_500_SERVER_ERROR",
+      "expected_strategy": "FAILOVER_RETRY",
+      "actual_strategy": "FAILOVER_RETRY",
+      "recovery_time_ms": 48.46,
+      "attempts": 2,
+      "final_status": "FAILED",
+      "plain_english_summary": "The HubSpot REST API experienced an unrecoverable internal server error (HTTP 500). Automated retries failed."
+    },
+    {
+      "id": "CHAOS-17",
+      "workflow_id": "wf_stripe_billing_03",
+      "fault": "HTTP_999_UNKNOWN_FAULT",
+      "expected_strategy": "UNKNOWN_FAULT_ESCALATION",
+      "actual_strategy": "UNKNOWN_FAULT_ESCALATION",
+      "recovery_time_ms": 14.32,
+      "attempts": 1,
+      "final_status": "FAILED",
+      "plain_english_summary": "An unhandled or unrecognised fault mode 'HTTP_999_UNKNOWN_FAULT' occurred on Stripe Webhooks API."
+    },
+    {
+      "id": "CHAOS-18",
+      "workflow_id": "wf_google_ads_04",
+      "fault": "HTTP_999_UNKNOWN_FAULT",
+      "expected_strategy": "UNKNOWN_FAULT_ESCALATION",
+      "actual_strategy": "UNKNOWN_FAULT_ESCALATION",
+      "recovery_time_ms": 12.66,
+      "attempts": 1,
+      "final_status": "FAILED",
+      "plain_english_summary": "An unhandled or unrecognised fault mode 'HTTP_999_UNKNOWN_FAULT' occurred on Google Ads API v16."
+    },
+    {
+      "id": "CHAOS-19",
+      "workflow_id": "wf_shopify_fulfill_05",
+      "fault": "999",
+      "expected_strategy": "UNKNOWN_FAULT_ESCALATION",
+      "actual_strategy": "UNKNOWN_FAULT_ESCALATION",
+      "recovery_time_ms": 10.52,
+      "attempts": 1,
+      "final_status": "FAILED",
+      "plain_english_summary": "An unhandled or unrecognised fault mode '999' occurred on Shopify Fulfillment API."
+    },
+    {
+      "id": "CHAOS-20",
+      "workflow_id": "wf_slack_alerts_06",
+      "fault": "PERMANENT_500",
+      "expected_strategy": "FAILOVER_RETRY",
+      "actual_strategy": "FAILOVER_RETRY",
+      "recovery_time_ms": 39.35,
+      "attempts": 2,
+      "final_status": "FAILED",
+      "plain_english_summary": "The Slack Incoming Webhooks experienced an unrecoverable internal server error (HTTP 500). Automated retries failed."
+    },
+    {
+      "id": "CHAOS-21",
+      "workflow_id": "wf_airtable_sync_07",
+      "fault": "CORRUPT_PAYLOAD",
+      "expected_strategy": "UNKNOWN_FAULT_ESCALATION",
+      "actual_strategy": "UNKNOWN_FAULT_ESCALATION",
+      "recovery_time_ms": 9.43,
+      "attempts": 1,
+      "final_status": "FAILED",
+      "plain_english_summary": "An unhandled or unrecognised fault mode 'CORRUPT_PAYLOAD' occurred on Airtable Web API."
+    },
+    {
+      "id": "CHAOS-22",
+      "workflow_id": "wf_klaviyo_campaigns_08",
+      "fault": "UNKNOWN_SERVICE",
+      "expected_strategy": "UNKNOWN_FAULT_ESCALATION",
+      "actual_strategy": "UNKNOWN_FAULT_ESCALATION",
+      "recovery_time_ms": 15.01,
+      "attempts": 1,
+      "final_status": "FAILED",
+      "plain_english_summary": "An unhandled or unrecognised fault mode 'UNKNOWN_SERVICE' occurred on Klaviyo Profiles API."
     }
   ]
 }

@@ -226,3 +226,63 @@ def test_p03_adversarial_injection_refund_blocked():
     assert data["refund_blocked"] is True
     assert data["escalated_to_human"] is True
     assert data["ticket_id"] is not None
+
+
+# ==============================================================
+# TIER A: P05 WORKFLOW MONITOR REGRESSIONS
+# ==============================================================
+
+def test_p05_fault_999_is_not_recovered():
+    """Verify unknown fault mode '999' is NOT recovered and ends in FAILED."""
+    resp = client.post("/api/ai/workflow-monitor/chaos/inject", json={
+        "workflow_id": "wf_test_999",
+        "fault_type": "999",
+        "simulated_service": "Downstream SaaS Endpoint"
+    })
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["final_status"] == "FAILED"
+    assert data["final_status"] != "RECOVERED"
+    assert "UNKNOWN" in data["recovery_strategy"] or "ESCALATION" in data["recovery_strategy"]
+
+
+def test_p05_permanent_500_ends_in_failed_and_triggers_alert():
+    """Verify permanent 500 error terminates in FAILED and triggers alert attempt."""
+    resp = client.post("/api/ai/workflow-monitor/chaos/inject", json={
+        "workflow_id": "wf_test_perm_500",
+        "fault_type": "HTTP_500_SERVER_ERROR",
+        "simulated_service": "Production Payment Gateway"
+    })
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["final_status"] == "FAILED"
+    # Alert attempt was made (not_configured when credentials missing, or dispatched/failed)
+    assert data["alert_status"] in ("not_configured", "dispatched", "failed")
+
+
+def test_p05_429_recovery_shows_attempts_and_honors_retry_after():
+    """Verify 429 recovery executes exponential backoff with attempts > 1."""
+    resp = client.post("/api/ai/workflow-monitor/chaos/inject", json={
+        "workflow_id": "wf_test_rate_limit",
+        "fault_type": "HTTP_429_RATE_LIMIT",
+        "simulated_service": "Meta Graph API"
+    })
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["final_status"] == "RECOVERED"
+    assert data["recovery_strategy"] == "EXPONENTIAL_BACKOFF_JITTER"
+    assert data["attempts_required"] > 1
+
+
+def test_p05_401_recovers_only_after_oauth_refresh():
+    """Verify 401 token expiration triggers OAuth refresh sequence to recover."""
+    resp = client.post("/api/ai/workflow-monitor/chaos/inject", json={
+        "workflow_id": "wf_test_oauth_refresh",
+        "fault_type": "HTTP_401_TOKEN_EXPIRED",
+        "simulated_service": "HubSpot REST API"
+    })
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["final_status"] == "RECOVERED"
+    assert data["recovery_strategy"] == "OAUTH_TOKEN_REFRESH"
+

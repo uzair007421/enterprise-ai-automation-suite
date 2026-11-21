@@ -6,6 +6,7 @@
   <title>AegisFlow Sentinel | Self-Healing Workflow Observability Platform</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="config.js"></script>
   <style>
     ::-webkit-scrollbar { width: 6px; height: 6px; }
     ::-webkit-scrollbar-track { background: rgba(15, 23, 42, 0.6); }
@@ -13,6 +14,10 @@
   </style>
 </head>
 <body class="bg-slate-950 text-slate-100 min-h-screen font-sans flex flex-col">
+  <!-- Backend Error Banner -->
+  <div id="backend-error-banner" class="hidden bg-rose-950 border-b border-rose-500 text-rose-200 text-xs px-4 py-2 text-center font-mono font-bold flex items-center justify-center gap-2">
+    <i class="fa-solid fa-triangle-exclamation text-rose-400"></i> <span id="backend-error-text">Backend unavailable</span>
+  </div>
 
   <!-- Production Header -->
   <header class="border-b border-slate-800 bg-slate-900/90 backdrop-blur sticky top-0 z-40">
@@ -390,19 +395,31 @@
       }
     }
 
+    function showBackendError(msg) {
+      const banner = document.getElementById('backend-error-banner');
+      const text = document.getElementById('backend-error-text');
+      if (text) text.textContent = msg || 'Backend unavailable';
+      if (banner) banner.classList.remove('hidden');
+    }
+
+    function hideBackendError() {
+      const banner = document.getElementById('backend-error-banner');
+      if (banner) banner.classList.add('hidden');
+    }
+
     async function triggerIncident(type) {
-      // Pick random workflow
       const targetIdx = Math.floor(Math.random() * fleet.length);
       const target = fleet[targetIdx];
       selectedWorkflowId = target.id;
 
-      const API_BASE = window.location.origin.includes('8000') ? '' : 'http://localhost:8000';
+      const API_BASE = window.AI_API_BASE || '';
       const faultMap = {
         'RATE_LIMIT_429': 'HTTP_429_RATE_LIMIT',
         'AUTH_EXPIRED_401': 'HTTP_401_TOKEN_EXPIRED',
         'TIMEOUT_504': 'HTTP_504_GATEWAY_TIMEOUT'
       };
 
+      let bData = null;
       try {
         const res = await fetch(`${API_BASE}/api/ai/workflow-monitor/chaos/inject`, {
           method: 'POST',
@@ -413,63 +430,37 @@
             simulated_service: target.platform || 'Downstream SaaS API'
           })
         });
-        if (res.ok) {
-          const bData = await res.json();
-          console.log('Real Backend Sentinel Healed:', bData);
+        if (!res.ok) {
+          showBackendError('Backend unavailable');
+          return;
         }
+        hideBackendError();
+        bData = await res.json();
       } catch (err) {
-        console.warn('Backend sync:', err);
+        console.error('Backend call failed:', err);
+        showBackendError('Backend unavailable');
+        return;
       }
 
-      let rawError = "";
-      let plainEnglish = "";
-      let actionTaken = "";
-
-      if (type === 'RATE_LIMIT_429') {
-        rawError = "HTTP 429 Too Many Requests | RateLimitExceeded | Retry-After: 4s";
-        plainEnglish = `The upstream marketing endpoint throttled requests for ${target.client}. The workflow attempted to dispatch 120 webhooks/sec exceeding the rate limit.`;
-        actionTaken = "Sentinel intercepted error. Enforced exponential backoff (2s -> 4s -> 8s) and drained queue safely.";
-      } else if (type === 'AUTH_TOKEN_401') {
-        rawError = "HTTP 401 Unauthorized | InvalidBearerToken | TokenExpiredAt: 14:10:00Z";
-        plainEnglish = `The CRM connection token for ${target.client} expired mid-execution, causing payload delivery to stall.`;
-        actionTaken = "Sentinel performed automated OAuth2 refresh handshake, acquired new access token, and resumed execution without data loss.";
-      } else {
-        rawError = "HTTP 504 Gateway Timeout | Cloudflare Origin Unreachable after 30000ms";
-        plainEnglish = `The webhook destination server experienced a temporary infrastructure hiccup and failed to acknowledge payload receipt within 30 seconds.`;
-        actionTaken = "Sentinel re-queued transaction in dead-letter cache and completed successful secondary delivery after 3.8s.";
+      const diag = bData.diagnosis || {};
+      const isHealed = bData.status === 'RECOVERED';
+      const measuredSec = parseFloat(((bData.duration_ms || 2000) / 1000).toFixed(1));
+      if (isHealed) {
+        recordedRecoveryTimes.push(measuredSec);
       }
 
-      target.status = 'RETRYING';
+      target.status = isHealed ? 'HEALED' : (bData.status === 'FAILED' ? 'FAILED' : 'DEGRADED');
       target.incident = {
-        raw_error: rawError,
-        plain_english: plainEnglish,
-        action_taken: actionTaken,
+        raw_error: `[${bData.status}] Engine: ${bData.engine || 'rules'} | Attempts: ${bData.recovery_attempts}`,
+        plain_english: diag.plain_english_summary || diag.root_cause || 'Sentinel processed diagnostic.',
+        action_taken: diag.recommended_action || (isHealed ? 'Remediation succeeded.' : 'Alert triggered.'),
         timestamp: new Date().toLocaleTimeString()
       };
 
       sentinelLogs.unshift({
-        action: `Incident Detected: ${target.id}`,
+        action: `${isHealed ? 'Self-Healed' : 'Incident Alert'}: ${target.id}`,
         time: new Date().toLocaleTimeString(),
-        details: `${target.name} encountered ${type}. Triggering automated self-healing protocol.`
-      });
-
-      renderFleetGrid();
-      renderFeed();
-      selectWorkflow(target.id);
-      saveState();
-
-      // Execute automated recovery protocol after backoff delay with empirical measurement
-      const recoveryStart = performance.now();
-      const jitterMs = 2100 + Math.floor(Math.random() * 1800);
-      await new Promise(r => setTimeout(r, jitterMs));
-      const measuredSec = parseFloat(((performance.now() - recoveryStart) / 1000).toFixed(1));
-      recordedRecoveryTimes.push(measuredSec);
-
-      target.status = 'HEALED';
-      sentinelLogs.unshift({
-        action: `Self-Healed: ${target.id}`,
-        time: new Date().toLocaleTimeString(),
-        details: `${actionTaken} Verified recovery latency: ${measuredSec}s. Zero payload drop.`
+        details: `${target.incident.action_taken} Duration: ${measuredSec}s. Engine: ${bData.engine || 'rules'}.`
       });
 
       renderFleetGrid();

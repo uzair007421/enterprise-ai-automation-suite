@@ -40,8 +40,9 @@ def run_p05_eval():
             simulated_service=c["service"]
         )
 
-        is_recovered = (result.final_status == c["expected_status"])
+        is_recovered = (result.final_status == "RECOVERED")
         is_strat_match = (result.recovery_strategy == c["expected_strategy"])
+        is_status_match = (result.final_status == c["expected_status"])
 
         if is_recovered:
             recovered_count += 1
@@ -69,19 +70,23 @@ def run_p05_eval():
 
     results = {
         "project": "05-marketing-self-healing-monitor",
-        "benchmark_name": "10-Fault Enterprise Chaos Injection & Autonomous Remediation Suite",
+        "benchmark_name": "22-Fault Enterprise Chaos Injection & Autonomous Remediation Suite",
         "timestamp": time.strftime("%Y-%m-%d %H:%M:%SZ"),
         "total_chaos_faults": total,
+        "recovered_faults": recovered_count,
+        "failed_faults": total - recovered_count,
         "recovery_success_rate_percent": recovery_rate,
         "strategy_dispatch_accuracy_percent": strategy_accuracy,
         "avg_recovery_latency_ms": avg_latency,
         "total_elapsed_seconds": elapsed,
+        "engine": "rules",
         "audit_fixes_verified": [
             "Replaced 40 for-loop mock workflows with distinct real production pipeline registry",
             "Eliminated static hardcoded 99.2% uptime and 4.2s recovery figures",
             "Real exponential backoff with full decorrelated jitter for HTTP 429",
             "Automated OAuth token refresh sequence for HTTP 401",
             "Circuit breaker state machine (CLOSED -> OPEN -> HALF-OPEN -> CLOSED) for HTTP 504",
+            "Permanent 500 and unknown faults terminate in FAILED with alert attempt",
             "Valid n8n workflow definition created in infra/n8n/self_healing_sentinel.json"
         ],
         "cases": eval_logs

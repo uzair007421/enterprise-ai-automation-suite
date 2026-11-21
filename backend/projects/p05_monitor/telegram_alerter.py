@@ -1,8 +1,10 @@
 """
 Telegram Incident Alert Dispatcher
 Sends real-time incident reports to configured Telegram channel/chat.
+Reports truthful status: 'dispatched', 'not_configured', or 'failed'.
 """
 import logging
+from typing import Tuple
 import httpx
 from core.config import settings
 from .schemas import HealingExecutionResult
@@ -15,10 +17,14 @@ class TelegramAlerter:
         self.chat_id = settings.TELEGRAM_ALERT_CHAT_ID
         self.api_url = f"https://api.telegram.org/bot{self.bot_token}" if self.bot_token else None
 
-    def dispatch_incident_report(self, result: HealingExecutionResult) -> bool:
-        if not self.api_url or not self.chat_id:
-            logger.info("Telegram alerting not configured in .env. Skipping external dispatch.")
-            return False
+    def dispatch_incident_report(self, result: HealingExecutionResult) -> Tuple[bool, str]:
+        """
+        Dispatches alert if credentials exist.
+        Returns (is_dispatched, status_string).
+        """
+        if not self.bot_token or not self.chat_id:
+            logger.info("Telegram alerting not configured in .env. Status: not_configured.")
+            return False, "not_configured"
 
         message = (
             f"🚨 *Sentinel Self-Healing Incident Alert*\n\n"
@@ -40,9 +46,12 @@ class TelegramAlerter:
                         "parse_mode": "Markdown"
                     }
                 )
-                return resp.status_code == 200
+                if resp.status_code == 200:
+                    return True, "dispatched"
+                else:
+                    return False, f"failed_http_{resp.status_code}"
         except Exception as e:
             logger.error(f"Failed to post Telegram incident alert: {e}")
-            return False
+            return False, "failed_network_error"
 
 telegram_alerter = TelegramAlerter()

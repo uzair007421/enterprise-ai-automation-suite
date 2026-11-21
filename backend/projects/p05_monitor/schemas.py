@@ -32,13 +32,16 @@ class HealingExecutionResult(BaseModel):
     final_status: str  # "RECOVERED" | "CIRCUIT_OPEN" | "FAILED"
     diagnosis: DiagnosisReport
     telegram_dispatched: bool
+    alert_status: str = Field(default="not_configured", description="'dispatched' | 'not_configured' | 'failed'")
     persisted_telemetry_id: str
+    engine: str = Field(default="rules", description="'llm' or 'rules'")
 
 class WorkflowStatus(BaseModel):
     id: str
     name: str
     category: str
     target_service: str
+    target_url: Optional[str] = None
     health_status: str  # "HEALTHY" | "DEGRADED" | "RECOVERING" | "CRITICAL"
     circuit_state: str  # "CLOSED" | "OPEN" | "HALF_OPEN"
     last_probe_status: int
