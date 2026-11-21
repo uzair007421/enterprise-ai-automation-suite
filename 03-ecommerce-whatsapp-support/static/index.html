@@ -405,9 +405,9 @@ I can assist you with live order status tracking, sizing, exchange policies, or 
     function calculateDynamicSentiment(rawText) {
       const text = rawText.toLowerCase();
       let score = 55; // neutral baseline
-      const posWords = ['thank', 'shukriya', 'good', 'great', 'awesome', 'helpful', 'fast', 'behtareen', 'acha', 'zabardast', 'love', 'perfect', 'satisfied', 'thanks'];
+      const posWords = ['thank', 'good', 'great', 'awesome', 'helpful', 'fast', 'excellent', 'love', 'perfect', 'satisfied', 'thanks', 'wonderful'];
       const negWords = ['bad', 'late', 'faulty', 'problem', 'delay', 'issue', 'broken', 'slow', 'defective', 'wrong', 'missing', 'irritated', 'annoyed'];
-      const criticalWords = ['fraud', 'scam', 'bakwaas', 'bakwas', 'worst', 'court', 'police', 'chor', 'third class', 'cheaters', 'sue', 'lawyer', 'consumer court'];
+      const criticalWords = ['fraud', 'scam', 'terrible', 'worst', 'court', 'police', 'cheater', 'sue', 'lawyer', 'consumer protection', 'horrible'];
       
       posWords.forEach(w => { if (text.includes(w)) score += 14; });
       negWords.forEach(w => { if (text.includes(w)) score -= 16; });
