@@ -358,7 +358,7 @@
           tool: 'db_query("SELECT arr, mrr, cash_balance, burn_rate FROM corporate_ledger")',
           content: `📊 Enterprise Financial Summary:\n• Annual Recurring Revenue (ARR): $4,200,000\n• Monthly Recurring Revenue (MRR): $350,000\n• Unencumbered Cash in Bank: $1,845,000 (Silicon Valley Bank)\n• Net Monthly Burn Rate: $130,000\n• Calculated Runway: 14.2 Months\n\nAll metrics verified against General Ledger reconciling as of 2026-11-20.`
         });
-        logAuditEvent(user.name, 'FINANCIAL_READ_DISPATCH', 'Corporate High-Level Ledger', 'LOW');
+        await logAuditEvent(user.name, 'FINANCIAL_READ_DISPATCH', 'Corporate High-Level Ledger', 'LOW');
       } else if (promptText.toLowerCase().includes('vanguard biotech') && promptText.toLowerCase().includes('balance')) {
         state.chat_messages.push({
           role: 'agent',
@@ -367,7 +367,7 @@
           tool: 'ar_query("ACC-903")',
           content: `🏢 Account Inspection: Vanguard Biotech Corp (ACC-903)\n• Current Balance Due: $42,500.00 (Overdue: 14 days, Net-30 terms)\n• Existing Credit Limit: $75,000.00\n• Credit Utilization: 56.6%\n• Payment History: 94% on-time historical settlement score.`
         });
-        logAuditEvent(user.name, 'ACCOUNT_BALANCE_INSPECT', 'Vanguard Biotech (ACC-903)', 'LOW');
+        await logAuditEvent(user.name, 'ACCOUNT_BALANCE_INSPECT', 'Vanguard Biotech (ACC-903)', 'LOW');
       } else if (promptText.toLowerCase().includes('credit limit') || promptText.toLowerCase().includes('wire') || promptText.toLowerCase().includes('transfer') || promptText.toLowerCase().includes('update')) {
         // Dangerous Write Tool! Check RBAC
         if (!user.can_write) {
@@ -378,7 +378,7 @@
             tool: 'write_gate_blocked("CREDIT_LIMIT_MODIFICATION")',
             content: `⛔ ACCESS DENIED: Role "${user.role}" does not have write authority to modify credit limits or disburse funds. This incident has been logged to the immutable security compliance ledger.`
           });
-          logAuditEvent(user.name, 'RBAC_UNAUTHORIZED_WRITE_ATTEMPT', 'Vanguard Biotech Credit Limit', 'HIGH_ALERT');
+          await logAuditEvent(user.name, 'RBAC_UNAUTHORIZED_WRITE_ATTEMPT', 'Vanguard Biotech Credit Limit', 'HIGH_ALERT');
         } else {
           state.chat_messages.push({
             role: 'agent',
@@ -427,7 +427,7 @@
       sendPrompt('Update Vanguard Biotech credit limit from $75,000 to $100,000.');
     }
 
-    function resolveWriteAction(decision) {
+    async function resolveWriteAction(decision) {
       if (!state.pending_writes || state.pending_writes.length === 0) return;
       const pw = state.pending_writes[0];
 
@@ -451,7 +451,7 @@
           tool: 'db_commit("UPDATE accounts SET credit_limit = 100000 WHERE id = \'ACC-903\'")',
           content: `✅ Authorization Confirmed: Credit limit for Vanguard Biotech Corp successfully updated to $100,000.00. Updated account ledger committed.`
         });
-        logAuditEvent(pw.requested_by, 'WRITE_ACTION_COMMITTED', `${pw.target_account} -> $100k Limit`, 'MODERATE');
+        await logAuditEvent(pw.requested_by, 'WRITE_ACTION_COMMITTED', `${pw.target_account} -> $100k Limit`, 'MODERATE');
       } else {
         state.chat_messages.push({
           role: 'agent',
@@ -460,7 +460,7 @@
           tool: 'rollback_transaction()',
           content: `❌ Write Denied: Transaction aborted by reviewer. No changes applied to Vanguard Biotech Corp.`
         });
-        logAuditEvent(pw.requested_by, 'WRITE_ACTION_REJECTED', pw.target_account, 'LOW');
+        await logAuditEvent(pw.requested_by, 'WRITE_ACTION_REJECTED', pw.target_account, 'LOW');
       }
 
       state.pending_writes = [];
@@ -468,24 +468,31 @@
       updateUI();
     }
 
-    function logAuditEvent(actor, action, target, risk) {
-      const randomChars = '0123456789abcdef';
-      let auditHash = '';
-      for (let i = 0; i < 64; i++) {
-        auditHash += randomChars[Math.floor(Math.random() * randomChars.length)];
-      }
+    async function logAuditEvent(actor, action, target, risk) {
+      const prevHash = state.audit_trail.length > 0 ? state.audit_trail[0].hash : "0000000000000000000000000000000000000000000000000000000000000000";
+      const timestamp = new Date().toISOString().replace('T', ' ').substring(0, 19) + ' UTC';
+      const payload = `${prevHash}|${actor}|${action}|${target}|${risk}|${timestamp}`;
+      
+      // True Web Crypto API SHA-256 Merkle Chain Hash
+      const msgBuffer = new TextEncoder().encode(payload);
+      const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+      const hashArray = Array.from(new Uint8Array(hashBuffer));
+      const auditHash = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
 
       const event = {
         id: 'aud_' + Date.now(),
-        timestamp: new Date().toISOString().replace('T', ' ').substring(0, 19) + ' UTC',
+        timestamp: timestamp,
         actor: actor,
         action: action,
         target: target,
         risk_level: risk,
-        hash: auditHash
+        hash: auditHash,
+        prev_hash: prevHash
       };
 
       state.audit_trail.unshift(event);
+      saveState();
+      updateUI();
     }
 
     function exportAuditLedger() {

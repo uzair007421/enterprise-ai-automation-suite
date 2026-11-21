@@ -383,17 +383,33 @@ I can assist you with live order status tracking, sizing, exchange policies, or 
       renderMessages();
     }
 
+    function calculateDynamicSentiment(rawText) {
+      const text = rawText.toLowerCase();
+      let score = 55; // neutral baseline
+      const posWords = ['thank', 'shukriya', 'good', 'great', 'awesome', 'helpful', 'fast', 'behtareen', 'acha', 'zabardast', 'love', 'perfect', 'satisfied', 'thanks'];
+      const negWords = ['bad', 'late', 'kharab', 'problem', 'delay', 'issue', 'broken', 'slow', 'ghalat', 'wrong', 'missing', 'irritated', 'annoyed'];
+      const criticalWords = ['fraud', 'scam', 'bakwaas', 'bakwas', 'worst', 'court', 'police', 'chor', 'third class', 'cheaters', 'sue', 'lawyer', 'consumer court'];
+      
+      posWords.forEach(w => { if (text.includes(w)) score += 14; });
+      negWords.forEach(w => { if (text.includes(w)) score -= 16; });
+      criticalWords.forEach(w => { if (text.includes(w)) score -= 38; });
+      
+      if (rawText.includes('!') || rawText.includes('?!')) score -= 6;
+      if (rawText.length > 80 && score < 50) score -= 8;
+      
+      return Math.max(8, Math.min(96, score));
+    }
+
     function processInboundAIResponse(rawText) {
       const text = rawText.toLowerCase();
 
-      // Check sentiment analysis
-      const angryKeywords = ['fraud', 'scam', 'bakwaas', 'bakwas', 'worst', 'court', 'police', 'chor', 'third class', 'cheaters', 'sue'];
-      let isAngry = angryKeywords.some(k => text.includes(k));
+      // Continuous Mathematical Polarity Scoring
+      activeSentimentScore = calculateDynamicSentiment(rawText);
+      updateSentimentUI();
 
-      if (isAngry) {
-        activeSentimentScore = 15;
-        triggerEscalation("CRITICAL_NEGATIVE_SENTIMENT", "Customer expressing severe dissatisfaction or legal threat.");
-        updateSentimentUI();
+      // Critical Escalation Gate (< 35% polarity score)
+      if (activeSentimentScore < 35) {
+        triggerEscalation("CRITICAL_NEGATIVE_POLARITY", `Customer sentiment dropped to ${activeSentimentScore}%. Auto-containment triggered.`);
         return "I sincerely apologize for the frustration caused. Because of the critical urgency of your issue, I have immediately paused automated replies and transferred this conversation to Senior Supervisor Hassan Raza on our escalation desk. He is reviewing your file right now.";
       }
 

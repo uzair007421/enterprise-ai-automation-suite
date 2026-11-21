@@ -445,28 +445,36 @@
         };
       }
 
-      // 2. Routine Appointment Booking
-      if (text.includes('book') || text.includes('cleaning') || text.includes('friday') || text.includes('appointment')) {
-        // Book the slot
-        const slot = CLINIC_SCHEDULE.find(s => s.status === 'AVAILABLE');
-        if (slot) {
-          slot.status = 'BOOKED';
-          slot.patient = 'Inbound Caller (Confirmed)';
-          renderSchedule();
-        }
+      // 2. Routine Appointment Booking (Dynamic Slot Parsing)
+      if (text.includes('book') || text.includes('cleaning') || text.includes('appointment') || text.includes('checkup') || text.includes('pain') || text.includes('slot')) {
+        // Dynamic time and day extraction
+        const days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+        const foundDay = days.find(d => text.includes(d)) || 'Next Available Slot';
+        const capitalizedDay = foundDay.charAt(0).toUpperCase() + foundDay.slice(1);
+        
+        const timeMatch = text.match(/\b(\d{1,2}(?::\d{2})?\s*(?:am|pm)?)\b/i);
+        const bookedTime = timeMatch ? timeMatch[1].toUpperCase() : '2:30 PM';
+        const appointmentId = 'APT-' + Math.floor(10000 + Math.random() * 90000);
+        
+        // Book the slot dynamically
+        const slot = CLINIC_SCHEDULE.find(s => s.status === 'AVAILABLE') || CLINIC_SCHEDULE[0];
+        slot.status = 'BOOKED';
+        slot.patient = `Caller (${capitalizedDay} ${bookedTime})`;
+        slot.slot = `${capitalizedDay} @ ${bookedTime}`;
+        renderSchedule();
 
-        document.getElementById('sms-status-tag').textContent = 'SMS CONFIRMATION DISPATCHED';
+        document.getElementById('sms-status-tag').textContent = `TWILIO SMS: DISPATCHED [ID: ${appointmentId}]`;
         document.getElementById('sms-status-tag').className = 'text-[10px] font-mono text-emerald-400 font-bold';
 
         document.getElementById('sms-preview-card').innerHTML = `
           <div class="space-y-1 text-emerald-300">
-            <span class="text-[10px] uppercase font-bold text-emerald-400 block"><i class="fa-solid fa-comment-sms mr-1"></i> Patient SMS Dispatched (Twilio Gateway):</span>
-            <p class="text-white">"Metro Dental Care: Your cleaning with Dr. Sarah Chen is confirmed for Friday at 2:30 PM. Please arrive 10 minutes early with insurance card. Reply 1 to confirm, 2 to reschedule."</p>
+            <span class="text-[10px] uppercase font-bold text-emerald-400 block"><i class="fa-solid fa-comment-sms mr-1"></i> Patient SMS Dispatched (Twilio Telephony Gateway):</span>
+            <p class="text-white">"AuraDent Care: Appointment #${appointmentId} confirmed with ${slot.doctor} for ${capitalizedDay} at ${bookedTime}. Calendar invite synced to your phone."</p>
           </div>
         `;
 
         return {
-          reply: "I would be happy to arrange that! I have booked you for a comprehensive exam and cleaning with Dr. Sarah Chen this Friday at 2:30 PM. I have also dispatched an SMS confirmation to your mobile with calendar directions. Does this time work well for you?",
+          reply: `I have scheduled your consultation with ${slot.doctor} for ${capitalizedDay} at ${bookedTime}. A confirmation SMS with appointment ID #${appointmentId} and a calendar invite have just been dispatched to your mobile number. Would you like to confirm this?`,
           isEmergency: false
         };
       }

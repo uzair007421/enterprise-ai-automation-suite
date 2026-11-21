@@ -526,7 +526,11 @@
       document.getElementById('ingest-modal').classList.add('hidden');
     }
 
-    function handleManualCandidate(e) {
+    const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+      ? 'http://localhost:8000/api/ai/hr-recruiter'
+      : '/api/ai/hr-recruiter';
+
+    async function handleManualCandidate(e) {
       e.preventDefault();
       const name = document.getElementById('m-name').value.trim();
       const email = document.getElementById('m-email').value.trim();
@@ -534,47 +538,106 @@
       const stack = document.getElementById('m-stack').value.trim();
       const cv = document.getElementById('m-cv').value.trim();
 
-      // Automated Demographic Redaction: strips common names, gender words, year proxies
-      let redacted = cv
-        .replace(new RegExp(name, 'gi'), '[REDACTED_APPLICANT]')
-        .replace(/(he|she|him|her|his|hers)/gi, '[THEY/THEIR]')
-        .replace(/(19\d{2}|200\d)/g, '[YEAR_REDACTED]');
+      const combinedCV = `${name}\n${email}\nRole: Senior Engineer | Tech Stack: ${stack}\nYears Experience: ${exp}\n\nWork History:\n${cv}`;
 
-      // Objective scoring calculation
-      let techScore = Math.min(39, Math.max(20, exp * 4));
-      let archScore = Math.min(29, Math.max(14, exp * 3));
-      let algoScore = 17;
-      let commScore = 9;
-      let total = techScore + archScore + algoScore + commScore;
+      try {
+        const res = await fetch(`${API_BASE}/screen`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            raw_cv_text: combinedCV,
+            job_role: "Senior Full-Stack / AI Engineer",
+            session_id: "demo_session"
+          })
+        });
 
-      const newId = 'CAND-' + Math.floor(1000 + Math.random() * 9000);
-      candidates.unshift({
-        id: newId,
-        real_name: name,
-        email: email,
-        years_exp: exp,
-        stack: stack,
-        raw_cv: cv,
-        redacted_cv: redacted,
-        score: total,
-        breakdown: {
-          tech: techScore,
-          tech_note: `Candidate demonstrates verified proficiency in ${stack.split(',')[0]} with ${exp} years practical industry tenure.`,
-          arch: archScore,
-          arch_note: "Evaluated architectural patterns in uploaded work history.",
-          algo: algoScore,
-          algo_note: "Standard algorithmic baseline met.",
-          comm: commScore,
-          comm_note: "Clear technical descriptions in qualifications."
-        },
-        status: total >= 80 ? "SHORTLISTED" : "NOT_SHORTLISTED",
-        scheduled: false
-      });
+        if (!res.ok) throw new Error(`HTTP Error: ${res.status}`);
+        const data = await res.json();
+
+        candidates.unshift({
+          id: data.candidate_id,
+          real_name: name,
+          email: email,
+          years_exp: exp,
+          stack: stack,
+          raw_cv: cv,
+          redacted_cv: data.anonymized_cv,
+          score: data.rubric.total_score,
+          breakdown: {
+            tech: data.rubric.technical_skills,
+            tech_note: data.strengths[0] || "Competency evaluated via live rubric.",
+            arch: data.rubric.system_architecture,
+            arch_note: data.strengths[1] || "Distributed systems alignment checked.",
+            algo: data.rubric.impact_and_metrics,
+            algo_note: `Quantified Impact: ${data.rubric.impact_and_metrics}/30 pts.`,
+            comm: 8,
+            comm_note: data.growth_areas[0] || "Clear technical narrative."
+          },
+          status: data.recommendation === "ADVANCE_TO_INTERVIEW" ? "SHORTLISTED" : "NOT_SHORTLISTED",
+          scheduled: data.scheduled_slot !== null
+        });
+
+      } catch (err) {
+        console.warn("Backend API unavailable, using client-side rubric engine:", err);
+        const newId = 'CAND-' + Math.floor(1000 + Math.random() * 9000);
+        
+        // Dynamic PII Redaction
+        let redacted = cv
+          .replace(new RegExp(name, 'gi'), '[REDACTED_CANDIDATE_NAME]')
+          .replace(new RegExp(email, 'gi'), '[REDACTED_EMAIL]')
+          .replace(/[\w.-]+@[\w.-]+\.\w+/g, '[REDACTED_EMAIL]')
+          .replace(/(\+?\d{1,3}[-.\s]?)?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}/g, '[REDACTED_PHONE]');
+        
+        // 100-Point Dynamic Rubric Evaluation
+        const lowerCv = (cv + " " + stack).toLowerCase();
+        
+        // Category 1: Technical Stack Depth (35 pts max)
+        let techScore = 15;
+        const techKeywords = ['python', 'fastapi', 'react', 'docker', 'kubernetes', 'aws', 'postgres', 'llm', 'rag', 'typescript', 'redis'];
+        techKeywords.forEach(k => {
+          if (lowerCv.includes(k)) techScore = Math.min(35, techScore + 3);
+        });
+        
+        // Category 2: System Architecture & Experience (25 pts max)
+        let archScore = Math.min(25, Math.max(8, exp * 3));
+        
+        // Category 3: Quantified Impact & Metrics (30 pts max)
+        let impactScore = 10;
+        const metricMatches = cv.match(/\d+[%kKmM\$]|\$\d+|\d+\s*(users|requests|rps|reduction|increase|revenue|saved|boost)/gi);
+        if (metricMatches) {
+          impactScore = Math.min(30, 10 + metricMatches.length * 4);
+        }
+        
+        // Category 4: Structure & Communication (10 pts max)
+        const commScore = Math.min(10, Math.max(6, Math.floor(cv.length / 80)));
+        
+        const totalRubricScore = techScore + archScore + impactScore + commScore;
+        const isShortlist = totalRubricScore >= 75;
+        
+        candidates.unshift({
+          id: newId,
+          real_name: name,
+          email: email,
+          years_exp: exp,
+          stack: stack,
+          raw_cv: cv,
+          redacted_cv: redacted,
+          score: totalRubricScore,
+          breakdown: {
+            tech: techScore, tech_note: `Verified ${techKeywords.filter(k => lowerCv.includes(k)).length} core competencies.`,
+            arch: archScore, arch_note: `Experience scaled over ${exp} years production engineering.`,
+            algo: impactScore, algo_note: `Identified ${metricMatches ? metricMatches.length : 0} quantified business metrics.`,
+            comm: commScore, comm_note: "Resume structure clarity and engineering depth."
+          },
+          status: isShortlist ? "SHORTLISTED" : "NOT_SHORTLISTED",
+          scheduled: false
+        });
+      }
 
       saveState();
       closeIngestModal();
       renderAll();
-      selectCandidate(newId);
+      selectCandidate(candidates[0].id);
     }
 
     function exportAuditReport() {

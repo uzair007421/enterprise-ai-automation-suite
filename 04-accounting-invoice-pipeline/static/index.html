@@ -524,6 +524,9 @@
           activeInvoiceId = newInv.id;
           saveInvoices();
           renderAll();
+
+          // Sync with Real FastAPI Backend Pipeline
+          syncInvoiceToBackend(newInv);
         } catch (ocrErr) {
           console.error('OCR Error:', ocrErr);
           alert('OCR Processing error. Please try another image.');
@@ -534,6 +537,40 @@
       };
 
       reader.readAsDataURL(file);
+    }
+
+    const API_BASE = window.location.origin.includes('8000') ? '' : 'http://localhost:8000';
+    async function syncInvoiceToBackend(invoiceData) {
+      try {
+        const res = await fetch(`${API_BASE}/api/ai/invoice-processing/process`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            filename: (invoiceData.vendor || 'invoice') + '.pdf',
+            manual_data: {
+              vendor_name: invoiceData.vendor,
+              invoice_number: invoiceData.invoice_number,
+              invoice_date: invoiceData.date,
+              currency: 'USD',
+              line_items: (invoiceData.items || []).map(it => ({
+                description: it.description || 'General Service',
+                quantity: it.qty || 1,
+                unit_price: it.unit_price || it.total || 100,
+                line_total: it.total || 100
+              })),
+              subtotal: invoiceData.subtotal,
+              tax_amount: invoiceData.tax_amount,
+              total_amount: invoiceData.doc_total,
+              confidence_score: invoiceData.confidence
+            }
+          })
+        });
+        const backendResult = await res.json();
+        console.log('Real Backend Invoice Pipeline Synced:', backendResult);
+        return backendResult;
+      } catch(e) {
+        console.warn('Backend sync:', e);
+      }
     }
 
     // Deterministic Regex & NLP Field Extractor on Real OCR Text

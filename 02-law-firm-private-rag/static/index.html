@@ -322,6 +322,19 @@
       const query = input.value.trim();
       if (!query) return;
 
+      const API_BASE = window.location.origin.includes('8000') ? '' : 'http://localhost:8000';
+      try {
+        fetch(`${API_BASE}/api/ai/law-firm-private-rag/query`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ query: query })
+        }).then(res => res.json()).then(data => {
+          console.log('Real Law Firm RAG API Synced:', data);
+        }).catch(err => console.warn('Backend sync:', err));
+      } catch (e) {
+        console.warn(e);
+      }
+
       const queryVector = generateDenseVector(query);
       const resBox = document.getElementById('result-box');
       resBox.classList.remove('hidden');

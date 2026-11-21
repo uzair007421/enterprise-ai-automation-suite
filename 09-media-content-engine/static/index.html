@@ -454,25 +454,46 @@
       }
     }
 
-    function approveAsset(assetId) {
+    const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+      ? 'http://localhost:8000/api/ai/media-engine'
+      : '/api/ai/media-engine';
+
+    async function approveAsset(assetId) {
       const target = state.assets.find(a => a.asset_id === assetId);
       if (!target) return;
 
       target.status = 'APPROVED';
 
-      const endpoints = {
-        'TikTok / Reels / Shorts': 'POST https://api.socialflow.io/v1/video/publish',
-        'Medium / Dev.to / Corporate Blog': 'POST https://api.dev.to/api/articles',
-        'LinkedIn': 'POST https://api.linkedin.com/v2/ugcPosts',
-        'X (Twitter)': 'POST https://api.twitter.com/2/tweets'
-      };
+      try {
+        const res = await fetch(`${API_BASE}/publish`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            asset_id: target.asset_id,
+            platform: target.platform,
+            content: target.content,
+            session_id: "demo_session"
+          })
+        });
 
-      state.published_feed.unshift({
-        platform: target.platform,
-        title: target.title,
-        api_endpoint: endpoints[target.platform] || 'POST https://webhook.socialdispatch.io/v1/publish',
-        published_at: new Date().toISOString().replace('T', ' ').substring(0, 19) + ' UTC'
-      });
+        if (res.ok) {
+          const pubData = await res.json();
+          state.published_feed.unshift({
+            platform: target.platform,
+            title: target.title,
+            api_endpoint: `${pubData.status}: ${pubData.destination_url || 'https://api.socialflow.io/v1/publish'}`,
+            published_at: new Date().toISOString().replace('T', ' ').substring(0, 19) + ' UTC'
+          });
+        }
+      } catch (err) {
+        console.warn("Publishing API offline, fallback to sandbox view:", err);
+        state.published_feed.unshift({
+          platform: target.platform,
+          title: target.title,
+          api_endpoint: 'SANDBOX_PERSISTED: https://api.socialflow.io/v1/sandbox_record',
+          published_at: new Date().toISOString().replace('T', ' ').substring(0, 19) + ' UTC'
+        });
+      }
 
       saveState();
       updateUI();
@@ -512,7 +533,7 @@
       document.getElementById('ingest-modal').classList.add('hidden');
     }
 
-    function submitCustomTranscript() {
+    async function submitCustomTranscript() {
       const title = document.getElementById('input-video-title').value.trim() || 'Custom Ingested Keynote';
       const speaker = document.getElementById('input-video-speaker').value.trim() || 'Executive Speaker';
       const duration = document.getElementById('input-video-duration').value.trim() || '30.0 Mins';
@@ -520,66 +541,67 @@
 
       state.video = { title, speaker, duration };
 
-      // Generate 13 fresh repurposed assets from transcript
-      const baseHooks = [
-        "The #1 mistake leaders make in operations",
-        "How automated workflows 10x team output",
-        "The secret behind zero-latency data ingestion",
-        "Why manual approvals cost $50,000 in lost deals",
-        "The architecture shift everyone is ignoring",
-        "How to prevent hallucination in production pipelines",
-        "Why our engineering stack dropped cloud spend by 40%",
-        "The simplest way to scale customer response time",
-        "How deterministic verification safeguards enterprise data",
-        "The future of agentic AI execution"
-      ];
+      try {
+        const res = await fetch(`${API_BASE}/repurpose`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            source_title: title,
+            source_transcript: transcript || "Architectural briefing on deterministic verification and human-in-the-loop gates.",
+            session_id: "demo_session"
+          })
+        });
 
-      state.assets = baseHooks.map((h, i) => ({
-        asset_id: `clip_${Date.now()}_${i}`,
-        type: `Short Clip #${i + 1}`,
-        platform: "TikTok / Reels / Shorts",
-        title: h,
-        timestamps: `0${i * 2 + 1}:15 - 0${i * 2 + 2}:00 (45s)`,
-        viral_score: Math.floor(Math.random() * 11) + 88,
-        content: `HOOK (0-3s): ${h}.\n\nCORE (3-35s): ${transcript ? transcript.substring(0, 180) + '...' : 'When scaling mission-critical systems, decoupling verification loops from autonomous executors eliminates failure cascades.'}\n\nCTA (35-45s): Follow for deep-dive architectural breakdowns!`,
-        status: "PENDING_EDITOR_REVIEW"
-      }));
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
 
-      // Add SEO Blog
-      state.assets.push({
-        asset_id: `blog_${Date.now()}`,
-        type: "Long-Form Blog",
-        platform: "Medium / Dev.to / Corporate Blog",
-        title: `Comprehensive Analysis: ${title}`,
-        timestamps: "Full Transcript Digest",
-        viral_score: 92,
-        content: `# Executive Briefing: ${title}\n\n**Keynote Speaker**: ${speaker} (${duration})\n\n### Core Thesis\n${transcript ? transcript.substring(0, 300) : 'Modern operational systems require deterministic architecture and air-gapped verification.'}\n\n### Strategic Takeaways:\n1. Automate repetitive pipelines to unlock human strategic focus.\n2. Maintain immutable audit trails across all executions.\n3. Integrate human-in-the-loop gates for high-stakes workflows.`,
-        status: "PENDING_EDITOR_REVIEW"
-      });
+        state.assets = data.assets.map(a => ({
+          asset_id: a.asset_id,
+          type: a.headline,
+          platform: a.platform,
+          title: a.headline,
+          timestamps: `${a.estimated_reading_time_sec}s Read Time`,
+          viral_score: a.brand_voice_safety_score,
+          content: a.content,
+          status: "PENDING_EDITOR_REVIEW"
+        }));
 
-      // Add LinkedIn Post
-      state.assets.push({
-        asset_id: `social_li_${Date.now()}`,
-        type: "LinkedIn Post",
-        platform: "LinkedIn",
-        title: `Leadership Insights: ${title}`,
-        timestamps: "Keynote Digest",
-        viral_score: 93,
-        content: `3 critical takeaways from "${title}" with ${speaker}:\n\n1. Autonomous workflows must be backed by verifiable math and business rules.\n2. Human oversight is a feature, not a bottleneck, for compliance.\n3. Real-time feedback loops drive customer retention.\n\nWhat is your organization's biggest priority this quarter?`,
-        status: "PENDING_EDITOR_REVIEW"
-      });
-
-      // Add X Thread
-      state.assets.push({
-        asset_id: `social_x_${Date.now()}`,
-        type: "X / Twitter Thread",
-        platform: "X (Twitter)",
-        title: `Key Highlights Thread: ${title}`,
-        timestamps: "Thread Summary",
-        viral_score: 95,
-        content: `1/5 Just analyzed the transcript for "${title}" featuring ${speaker} 🧵👇\n\n2/5 Key insight: Autonomous execution without deterministic verification always introduces operational fragility.\n\n3/5 Solution: Decouple planning, tool-calling, and evaluation into isolated micro-agents.\n\n4/5 Result: Predictable latency, verifiable outputs, and 99.8% compliance.\n\n5/5 Retweet to share with your engineering network! 🚀`,
-        status: "PENDING_EDITOR_REVIEW"
-      });
+      } catch (err) {
+        console.warn("Backend API unavailable, executing client-side content repurposing:", err);
+        const excerpt = (transcript || "Enterprise AI Engineering & Deterministic Execution").substring(0, 300);
+        state.assets = [
+          {
+            asset_id: "tw_" + Date.now(),
+            type: "X / Twitter Thread",
+            platform: "X (Twitter)",
+            title: `Key Takeaways: ${title}`,
+            timestamps: "Thread (4 tweets)",
+            viral_score: 93,
+            content: `1/4 🧵 Executive Brief: ${title}\n\nKey Insights from ${speaker}:\n\n2/4 ${excerpt.substring(0, 180)}...\n\n3/4 Core Takeaway: Deterministic guardrails and automated workflows accelerate time-to-market while eliminating errors.\n\n4/4 Read the full breakdown on our technical engineering hub. 🚀`,
+            status: "PENDING_EDITOR_REVIEW"
+          },
+          {
+            asset_id: "li_" + Date.now(),
+            type: "LinkedIn Thought Leadership",
+            platform: "LinkedIn",
+            title: `Strategic Architecture: ${title}`,
+            timestamps: "45s Read Time",
+            viral_score: 95,
+            content: `Key findings on ${title} by ${speaker}:\n\n"${excerpt}"\n\nWhen scaling modern automated systems, moving from fragile single prompts to verified multi-stage pipelines is the key differentiator for high-growth teams.\n\nWhat are your thoughts on this approach?`,
+            status: "PENDING_EDITOR_REVIEW"
+          },
+          {
+            asset_id: "blog_" + Date.now(),
+            type: "Technical Dev.to Article",
+            platform: "Medium / Dev.to",
+            title: `Technical Deep-Dive: ${title}`,
+            timestamps: "3 min Read Time",
+            viral_score: 89,
+            content: `# ${title}\n*Keynote delivered by ${speaker} (${duration})*\n\n## Overview\n${excerpt}\n\n## Core System Design\n- Schema-validated output formats\n- High-throughput asynchronous queuing\n- Cryptographic verification gates\n\n## Implementation Summary\nProduction systems demand audit trails and deterministic evaluation benchmarks.`,
+            status: "PENDING_EDITOR_REVIEW"
+          }
+        ];
+      }
 
       state.published_feed = [];
       saveState();
