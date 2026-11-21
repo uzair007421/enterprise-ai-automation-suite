@@ -431,15 +431,15 @@
       const text = rawText.toLowerCase();
 
       // 0. Greetings & Inquiries
-      if (text.includes('salam') || text.includes('aoa') || text.includes('hello') || text.includes('hi') || text.includes('kese') || text.includes('kaise')) {
+      if (text.includes('hello') || text.includes('hi') || text.includes('good morning') || text.includes('good afternoon') || text.includes('help')) {
         return {
-          reply: "Assalam-o-Alaikum and welcome to AuraDent Care Suites! I am your AI Clinical Telephony Assistant. I can schedule your dental checkup, connect you with Dr. Chen or Dr. Patel, or assist with dental pricing and emergency triage. How can I help you today?",
+          reply: "Hello and welcome to AuraDent Care Suites! I am your AI Clinical Telephony Assistant. I can schedule your dental checkup, connect you with Dr. Chen or Dr. Patel, or assist with dental pricing and emergency triage. How can I help you today?",
           isEmergency: false
         };
       }
 
-      // 1. Clinical Emergency Check (English + Urdu: dard, khoon, toot gaya)
-      if (text.includes('severe') || text.includes('unbearable') || text.includes('bleeding') || text.includes('fall') || text.includes('broken tooth') || text.includes('emergency') || text.includes('khoon') || text.includes('dard') || text.includes('toot')) {
+      // 1. Clinical Emergency Check
+      if (text.includes('severe') || text.includes('unbearable') || text.includes('bleeding') || text.includes('fall') || text.includes('broken tooth') || text.includes('emergency') || text.includes('acute trauma')) {
         document.getElementById('sms-status-tag').textContent = 'EMERGENCY DISPATCH TRIGGERED';
         document.getElementById('sms-status-tag').className = 'text-[10px] font-mono text-rose-400 font-bold';
 
@@ -457,7 +457,7 @@
       }
 
       // 2. Routine Appointment Booking (Dynamic Slot Parsing)
-      if (text.includes('book') || text.includes('cleaning') || text.includes('appointment') || text.includes('checkup') || text.includes('pain') || text.includes('slot') || text.includes('doctor') || text.includes('milna') || text.includes('timing')) {
+      if (text.includes('book') || text.includes('cleaning') || text.includes('appointment') || text.includes('checkup') || text.includes('pain') || text.includes('slot') || text.includes('doctor') || text.includes('schedule') || text.includes('timing')) {
         // Dynamic time and day extraction
         const days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
         const foundDay = days.find(d => text.includes(d)) || 'Next Available Slot';

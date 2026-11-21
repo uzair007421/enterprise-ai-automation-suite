@@ -30,7 +30,7 @@
           <h1 class="text-base font-bold tracking-tight text-white flex items-center gap-2">
             NexusCart Support <span class="text-[10px] bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 px-2 py-0.5 rounded-full font-mono uppercase">Production v3.2</span>
           </h1>
-          <p class="text-xs text-slate-400">Bilingual English/Urdu AI Agent • Shopify Order Sync • Sentiment Escalation • Strict Refund Gate</p>
+          <p class="text-xs text-slate-400">Autonomous AI E-Commerce Support Agent • Shopify Order Sync • Sentiment Escalation • Strict Refund Gate</p>
         </div>
       </div>
       <div class="flex items-center gap-2">
@@ -101,7 +101,7 @@
             </div>
             <div>
               <h3 class="text-xs font-bold leading-tight">NexusCart Official</h3>
-              <p id="wa-header-status" class="text-[10px] text-emerald-400 font-mono">Bilingual AI Support • Online</p>
+              <p id="wa-header-status" class="text-[10px] text-emerald-400 font-mono">AI Support Agent • Online</p>
             </div>
           </div>
           <div class="flex items-center space-x-2 text-slate-300 text-xs">
@@ -127,7 +127,7 @@
         <div class="bg-[#202c33] p-2 flex items-center space-x-2 border-t border-[#2a3942]">
           <button class="text-slate-400 hover:text-slate-300 px-1 text-sm"><i class="fa-regular fa-face-smile"></i></button>
           <button class="text-slate-400 hover:text-slate-300 px-1 text-sm"><i class="fa-solid fa-paperclip"></i></button>
-          <input id="user-input" type="text" onkeydown="handleKeyPress(event)" placeholder="Type message in English or Urdu..." class="flex-1 bg-[#2a3942] text-white placeholder-slate-400 text-xs rounded-lg px-3 py-2 focus:outline-none">
+          <input id="user-input" type="text" onkeydown="handleKeyPress(event)" placeholder="Type message here (e.g., track order #PK-8921)..." class="flex-1 bg-[#2a3942] text-white placeholder-slate-400 text-xs rounded-lg px-3 py-2 focus:outline-none">
           <button onclick="sendMessage()" class="w-8 h-8 rounded-full bg-emerald-600 hover:bg-emerald-500 text-white flex items-center justify-center transition">
             <i class="fa-solid fa-paper-plane text-xs"></i>
           </button>
@@ -153,17 +153,17 @@
             <span class="font-bold text-emerald-400 block text-[11px] mb-0.5">English Order Tracking:</span>
             Track #PK-8921 via live Shopify API
           </button>
-          <button onclick="setTestMessage('Mera parcel #PK-4012 kab pohnchay ga? Bohot din ho gaye hain.')" class="text-left bg-slate-800/80 hover:bg-slate-800 border border-slate-700/80 hover:border-blue-500/50 p-2.5 rounded-xl transition text-slate-200">
-            <span class="font-bold text-blue-400 block text-[11px] mb-0.5">Urdu Order Tracking:</span>
-            Track #PK-4012 in Roman Urdu
+          <button onclick="setTestMessage('When will my parcel #PK-4012 arrive? It has been several days.')" class="text-left bg-slate-800/80 hover:bg-slate-800 border border-slate-700/80 hover:border-blue-500/50 p-2.5 rounded-xl transition text-slate-200">
+            <span class="font-bold text-blue-400 block text-[11px] mb-0.5">Standard Order Tracking:</span>
+            Track #PK-4012 via live Shopify database
           </button>
           <button onclick="setTestMessage('I want my full refund right now into my bank account!')" class="text-left bg-amber-950/20 hover:bg-amber-950/40 border border-amber-900/40 hover:border-amber-500/50 p-2.5 rounded-xl transition text-amber-200">
             <span class="font-bold text-amber-400 block text-[11px] mb-0.5">Strict Refund Guardrail:</span>
             Demand immediate money refund (Locks Autonomous Payout)
           </button>
-          <button onclick="setTestMessage('Worst fraud store ever! Bakwaas service, I will report you to consumer court!')" class="text-left bg-rose-950/20 hover:bg-rose-950/40 border border-rose-900/40 hover:border-rose-500/50 p-2.5 rounded-xl transition text-rose-200">
+          <button onclick="setTestMessage('Terrible service and defective product! I demand to speak to your manager right now!')" class="text-left bg-rose-950/20 hover:bg-rose-950/40 border border-rose-900/40 hover:border-rose-500/50 p-2.5 rounded-xl transition text-rose-200">
             <span class="font-bold text-rose-400 block text-[11px] mb-0.5">Negative Escalation Trigger:</span>
-            Severe angry feedback (Auto-Transfers to Human Desk)
+            High-friction complaint (Auto-Transfers to Human Desk)
           </button>
         </div>
       </div>
@@ -275,9 +275,9 @@
     let messages = [
       {
         sender: "bot",
-        text: "Assalam-o-Alaikum! Welcome to NexusCart Support 🛍️
+        text: "Hello & Welcome to NexusCart Support! 🛍️
 
-I can assist you with live order status tracking, sizing, exchange policies, or product specifications in English or Urdu. How can I help you today?",
+I can assist you with live order status tracking, sizing, exchange policies, or product specifications in English. How can I help you today?",
         time: "10:00 AM"
       }
     ];
@@ -432,45 +432,43 @@ I can assist you with live order status tracking, sizing, exchange policies, or 
         return "I sincerely apologize for the frustration caused. Because of the critical urgency of your issue, I have immediately paused automated replies and transferred this conversation to Senior Supervisor Hassan Raza on our escalation desk. He is reviewing your file right now.";
       }
 
-      // 1. Greetings & Pleasantries (Urdu, Roman Urdu, English)
-      const greetingKeywords = ['salam', 'aoa', 'assalam', 'hi', 'hello', 'hey', 'kese', 'kaise', 'kya haal', 'haal', 'morning', 'afternoon', 'evening', 'good'];
+      // 1. Greetings & Pleasantries
+      const greetingKeywords = ['salam', 'hi', 'hello', 'hey', 'good morning', 'good afternoon', 'good evening', 'help', 'start'];
       if (greetingKeywords.some(k => text.includes(k)) && !text.includes('fraud') && !text.includes('scam')) {
-        return "Wa Alaikum Assalam & Welcome to NexusCart Support! 👋\nMain aap ka AI E-Commerce Assistant hoon.\n\nMain aap ki kya madad karoon?\n• Order Status Track karain (e.g. #PK-8921 likhain)\n• Hamare Featured Products & Prices dekhain\n• Delivery Time & Cash on Delivery (COD) charges\n• 7-Day Easy Exchange Policy";
+        return "Hello & welcome to NexusCart Support! 👋\nI am your automated AI Support Assistant.\n\nHow can I help you today?\n• Track your order status (e.g., enter #PK-8921)\n• Browse our featured product catalog & rates\n• Check delivery timelines & shipping rates\n• Learn about our 7-day easy exchange policy";
       }
 
       // 2. Products Catalog & Inventory Inquiries
-      const productKeywords = ['product', 'products', 'item', 'items', 'jacket', 'earbuds', 'shoes', 'leather', 'price', 'qeemat', 'kya hai', 'kya bechtay', 'catalog', 'stock', 'list'];
+      const productKeywords = ['product', 'products', 'item', 'items', 'jacket', 'earbuds', 'shoes', 'leather', 'price', 'catalog', 'stock', 'list', 'buy', 'shop'];
       if (productKeywords.some(k => text.includes(k))) {
-        return "🛍️ NexusCart Top Selling Catalog:\n\n1. Handcrafted Leather Jacket (Top-Grain / XL) — Rs. 18,500 PKR\n2. ANC Wireless Pro Earbuds (Matte Black) — Rs. 7,200 PKR\n3. Italian Oxford Dress Shoes — Rs. 14,000 PKR\n\n✅ All items 100% genuine with 7-day doorstep exchange guarantee. Cash on Delivery (COD) available across Pakistan! Would you like details on any specific item?";
+        return "🛍️ NexusCart Featured Catalog:\n\n1. Handcrafted Leather Jacket (Top-Grain / XL) — $65 USD (Rs. 18,500 PKR)\n2. ANC Wireless Pro Earbuds (Matte Black) — $25 USD (Rs. 7,200 PKR)\n3. Italian Oxford Dress Shoes — $50 USD (Rs. 14,000 PKR)\n\n✅ All items are 100% authentic with a 7-day doorstep exchange guarantee. Cash on Delivery (COD) and online checkout available! Would you like details on any specific item?";
       }
 
       // 3. Delivery Times & Shipping Rates
-      const shippingKeywords = ['delivery', 'shipping', 'charges', 'kitnay din', 'kab tak', 'time lagay', 'courier', 'tcs', 'leopard', 'free shipping', 'cost'];
+      const shippingKeywords = ['delivery', 'shipping', 'charges', 'courier', 'free shipping', 'cost', 'timings', 'how long', 'days'];
       if (shippingKeywords.some(k => text.includes(k))) {
-        return "🚚 NexusCart Delivery Information:\n\n• Delivery Timeline: 2 to 3 working days across all cities in Pakistan via TCS & Leopard Courier.\n• Standard Shipping: Rs. 200 PKR.\n• Free Delivery: Orders above Rs. 3,000 PKR qualify for 100% Free Shipping!\n• Same-day dispatch on orders placed before 3:00 PM.";
+        return "🚚 NexusCart Delivery Information:\n\n• Delivery Timeline: 2 to 3 business days nationwide via express courier.\n• Standard Shipping: Rs. 200 flat rate.\n• Free Delivery: Orders above Rs. 3,000 qualify for 100% Free Shipping!\n• Orders placed before 3:00 PM are dispatched on the same business day.";
       }
 
       // 4. Payment Methods & COD
-      const paymentKeywords = ['cod', 'cash on delivery', 'payment', 'pay', 'jazzcash', 'easypaisa', 'bank', 'card', 'advance'];
+      const paymentKeywords = ['cod', 'cash on delivery', 'payment', 'pay', 'bank', 'card', 'advance', 'credit', 'debit', 'wallet'];
       if (paymentKeywords.some(k => text.includes(k))) {
-        return "💳 Accepted Payment Methods:\n\n1. Cash on Delivery (COD) — Pay cash to the courier rider upon parcel delivery.\n2. Online Bank Transfer (Raast / IBFT).\n3. JazzCash & EasyPaisa Wallets.\n4. Visa & Mastercard Debit/Credit Cards.";
+        return "💳 Accepted Payment Methods:\n\n1. Cash on Delivery (COD) — Pay directly upon parcel arrival.\n2. Online Bank Transfer (Direct Wire / Raast / IBFT).\n3. Digital Wallets & Mobile Pay.\n4. Visa, Mastercard & American Express debit/credit cards.";
       }
 
       // 5. Human Representative / Supervisor Request
-      const humanKeywords = ['human', 'agent', 'manager', 'supervisor', 'baat karni', 'call', 'representative', 'insan'];
+      const humanKeywords = ['human', 'agent', 'manager', 'supervisor', 'speak to person', 'representative', 'support agent'];
       if (humanKeywords.some(k => text.includes(k))) {
         triggerEscalation("CUSTOMER_REQUESTED_SUPERVISOR", "Customer requested human supervisor consultation.");
-        return "Certainly! I have alerted Senior Supervisor Hassan Raza on our Tier-2 desk. He has been assigned to your chat and will respond directly. Please hold for a moment.";
+        return "Certainly! I have alerted Senior Supervisor Hassan Raza on our Tier-2 desk. He has been assigned to your chat session and will reply directly through this window. Please hold for a moment.";
       }
 
       // 6. Check refund guardrail
-      const refundKeywords = ['refund', 'money back', 'paisa wapas', 'return money', 'cashback', 'reimburse'];
-      let isRefund = refundKeywords.some(k => text.includes(k));
-
-      if (isRefund) {
+      const refundKeywords = ['refund', 'money back', 'return money', 'cashback', 'reimburse'];
+      if (refundKeywords.some(k => text.includes(k))) {
         activeSentimentScore = 48;
         updateSentimentUI();
-        return "NexusCart Refund Guardrail Notice:\n\nOur financial compliance policy strictly prohibits automated AI refund dispatches. To request a refund:\n\n1. Parcels must first undergo physical RMA inspection at our logistics hub.\n2. Once approved, funds are transferred within 3 business days via bank transfer or original payment method.\n\nI have generated RMA Inspection Request #RMA-8192 for our warehouse team. Would you like our manager to contact you?";
+        return "NexusCart Refund Guardrail Notice:\n\nOur financial compliance policy strictly prohibits autonomous automated refund disbursements. To initiate a refund:\n\n1. Parcels must first undergo physical RMA inspection at our logistics center.\n2. Upon inspection approval, funds are refunded within 3 business days to your original payment method.\n\nI have opened RMA Inspection Request #RMA-8192 for our warehouse team. Would you like our manager to contact you?";
       }
 
       // 7. Check Order tracking
@@ -485,29 +483,24 @@ I can assist you with live order status tracking, sizing, exchange policies, or 
           updateSentimentUI();
           renderShopifyCard(exactKey, ord);
 
-          const isUrdu = text.includes('kab') || text.includes('mera') || text.includes('hai') || text.includes('karo');
-          if (isUrdu) {
-            return `Aap ka order ${exactKey} mil gaya hai! ✅\n\n• Item: ${ord.item}\n• Status: ${ord.status}\n• Courier: ${ord.courier} (${ord.tracking_number})\n• Tawaqo delivery: ${ord.estimated_delivery}\n\nAap ka parcel is waqt ${ord.location_last_scan} par hai. Mazid kuch maloom karna hai?`;
-          } else {
-            return `Found your Shopify order ${exactKey}! ✅\n\n• Item: ${ord.item}\n• Current Status: ${ord.status}\n• Carrier: ${ord.courier} (Tracking: ${ord.tracking_number})\n• Estimated Arrival: ${ord.estimated_delivery}\n• Last Scan: ${ord.location_last_scan}\n\nLet me know if you need anything else!`;
-          }
+          return `Found your Shopify order ${exactKey}! ✅\n\n• Item: ${ord.item}\n• Current Status: ${ord.status}\n• Carrier: ${ord.courier} (Tracking: ${ord.tracking_number})\n• Estimated Arrival: ${ord.estimated_delivery}\n• Last Scan: ${ord.location_last_scan}\n\nPlease let me know if you need any additional assistance!`;
         } else {
-          return "I checked our Shopify database, but could not locate an order matching that reference. Please verify your order number (e.g. #PK-8921) from your confirmation SMS or email.";
+          return "I searched our live Shopify database, but could not locate an order matching that reference. Please verify your order number (e.g. #PK-8921) from your confirmation email or SMS.";
         }
       }
 
       // 8. Order tracking general inquiry (no order number given)
-      if (text.includes('order') || text.includes('track') || text.includes('parcel') || text.includes('status')) {
-        return "Apna 4-digit order number share karein (e.g. #PK-8921 ya #PK-4012), main foran Shopify live database se courier tracking check kar ke batata hoon!";
+      if (text.includes('order') || text.includes('track') || text.includes('parcel') || text.includes('status') || text.includes('where is')) {
+        return "Please provide your 4-digit order number (e.g., #PK-8921 or #PK-4012), and I will query our live Shopify database to provide your real-time tracking details immediately!";
       }
 
       // 9. Returns & Exchange Policy
-      if (text.includes('return') || text.includes('exchange') || text.includes('badalna') || text.includes('size')) {
-        return "NexusCart 7-Day Exchange Policy:\n\n• Items can be exchanged within 7 days of delivery provided tags and packaging are intact.\n• Doorstep courier pickup will be arranged.\n• What would you like to exchange? Please share your order number or item name.";
+      if (text.includes('return') || text.includes('exchange') || text.includes('replace') || text.includes('size')) {
+        return "NexusCart 7-Day Exchange Policy:\n\n• Items can be exchanged within 7 days of delivery provided original tags and packaging are intact.\n• Complimentary doorstep courier pickup will be arranged.\n• What would you like to exchange? Please share your order number or item name.";
       }
 
-      // 10. Intelligent Fallback with Helpful Suggestions
-      return "Main aap ka sawal samajh raha hoon. Main in cheezon mein aap ki foran madad kar sakta hoon:\n\n1. 📦 Order Status (apna #PK-8921 order number likhain)\n2. 🛍️ Products Catalog & Prices\n3. 🚚 Delivery charges (Rs. 200, Free > 3k) & Timings\n4. 🔄 7-Day Doorstep Exchange Policy\n\nAap in mein se kya maloom karna chahtay hain?";
+      // 10. Intelligent Fallback with Helpful English Suggestions
+      return "I understand your inquiry. Here are the core tasks I can assist you with right away:\n\n1. 📦 Order Status (share your order number, e.g. #PK-8921)\n2. 🛍️ Product Catalog & Pricing\n3. 🚚 Shipping Timelines & Delivery Rates\n4. 🔄 7-Day Doorstep Exchange Policy\n\nWhich of these would you like to explore?";
     }
 
     function triggerEscalation(reason, details) {
@@ -599,7 +592,7 @@ I can assist you with live order status tracking, sizing, exchange policies, or 
       messages = [
         {
           sender: "bot",
-          text: "Assalam-o-Alaikum! Welcome to NexusCart Support 🛍️\n\nI can assist you with live order status tracking, sizing, exchange policies, or product specifications in English or Urdu. How can I help you today?",
+          text: "Hello & Welcome to NexusCart Support! 🛍️\n\nI can assist you with live order status tracking, sizing, exchange policies, or product specifications in English. How can I help you today?",
           time: "10:00 AM"
         }
       ];
@@ -608,7 +601,7 @@ I can assist you with live order status tracking, sizing, exchange policies, or 
       const mhi = document.getElementById('metric-handler-icon');
       if (mhi) mhi.className = 'w-8 h-8 rounded-lg bg-cyan-500/10 text-cyan-400 flex items-center justify-center';
       const whs = document.getElementById('wa-header-status');
-      if (whs) { whs.textContent = 'Bilingual AI Support • Online'; whs.className = 'text-[10px] text-emerald-400 font-mono'; }
+      if (whs) { whs.textContent = 'AI Support Agent • Online'; whs.className = 'text-[10px] text-emerald-400 font-mono'; }
       const wod = document.getElementById('wa-online-dot');
       if (wod) wod.className = 'w-2.5 h-2.5 rounded-full bg-emerald-400 border-2 border-[#202c33] absolute bottom-0 right-0';
       const eb = document.getElementById('escalation-badge');
