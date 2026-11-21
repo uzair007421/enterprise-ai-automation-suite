@@ -47,7 +47,7 @@ def screen_candidate(req: CandidateScreenRequest, db: DatabaseSession = Depends(
     })
 
     # Step 2: Competency-Based Rubric Scoring
-    rubric, recommendation, strengths, growth_areas, slot = evaluate_candidate_rubric(anonymized_text)
+    rubric, recommendation, strengths, growth_areas, slot = evaluate_candidate_rubric(anonymized_text, job_role=req.job_role)
     event_broker.publish(session_id, {
         "project": "p06_hr",
         "stage": "RUBRIC_EVALUATION",

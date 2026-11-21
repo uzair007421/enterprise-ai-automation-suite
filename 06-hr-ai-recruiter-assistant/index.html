@@ -6,6 +6,7 @@
   <title>FairHire AI | Bias-Free Recruiter & Technical Screening Engine</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="config.js"></script>
   <style>
     ::-webkit-scrollbar { width: 6px; height: 6px; }
     ::-webkit-scrollbar-track { background: rgba(15, 23, 42, 0.6); }
@@ -13,6 +14,10 @@
   </style>
 </head>
 <body class="bg-slate-950 text-slate-100 min-h-screen font-sans flex flex-col">
+  <!-- Backend Error Banner -->
+  <div id="backend-error-banner" class="hidden bg-rose-950 border-b border-rose-500 text-rose-200 text-xs px-4 py-2 text-center font-mono font-bold flex items-center justify-center gap-2">
+    <i class="fa-solid fa-triangle-exclamation text-rose-400"></i> <span id="backend-error-text">Backend unavailable</span>
+  </div>
 
   <!-- Production Header -->
   <header class="border-b border-slate-800 bg-slate-900/90 backdrop-blur sticky top-0 z-40">
@@ -527,9 +532,19 @@
       document.getElementById('ingest-modal').classList.add('hidden');
     }
 
-    const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-      ? 'http://localhost:8000/api/ai/hr-recruiter'
-      : '/api/ai/hr-recruiter';
+    function showBackendError(msg) {
+      const banner = document.getElementById('backend-error-banner');
+      const text = document.getElementById('backend-error-text');
+      if (text) text.textContent = msg || 'Backend unavailable';
+      if (banner) banner.classList.remove('hidden');
+    }
+
+    function hideBackendError() {
+      const banner = document.getElementById('backend-error-banner');
+      if (banner) banner.classList.add('hidden');
+    }
+
+    const API_BASE = (window.AI_API_BASE || '') + '/api/ai/hr-recruiter';
 
     async function handleManualCandidate(e) {
       e.preventDefault();
@@ -552,7 +567,11 @@
           })
         });
 
-        if (!res.ok) throw new Error(`HTTP Error: ${res.status}`);
+        if (!res.ok) {
+          showBackendError('Backend unavailable');
+          return;
+        }
+        hideBackendError();
         const data = await res.json();
 
         candidates.unshift({
@@ -579,60 +598,9 @@
         });
 
       } catch (err) {
-        console.warn("Backend API unavailable, using client-side rubric engine:", err);
-        const newId = 'CAND-' + Math.floor(1000 + Math.random() * 9000);
-        
-        // Dynamic PII Redaction
-        let redacted = cv
-          .replace(new RegExp(name, 'gi'), '[REDACTED_CANDIDATE_NAME]')
-          .replace(new RegExp(email, 'gi'), '[REDACTED_EMAIL]')
-          .replace(/[\w.-]+@[\w.-]+\.\w+/g, '[REDACTED_EMAIL]')
-          .replace(/(\+?\d{1,3}[-.\s]?)?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}/g, '[REDACTED_PHONE]');
-        
-        // 100-Point Dynamic Rubric Evaluation
-        const lowerCv = (cv + " " + stack).toLowerCase();
-        
-        // Category 1: Technical Stack Depth (35 pts max)
-        let techScore = 15;
-        const techKeywords = ['python', 'fastapi', 'react', 'docker', 'kubernetes', 'aws', 'postgres', 'llm', 'rag', 'typescript', 'redis'];
-        techKeywords.forEach(k => {
-          if (lowerCv.includes(k)) techScore = Math.min(35, techScore + 3);
-        });
-        
-        // Category 2: System Architecture & Experience (25 pts max)
-        let archScore = Math.min(25, Math.max(8, exp * 3));
-        
-        // Category 3: Quantified Impact & Metrics (30 pts max)
-        let impactScore = 10;
-        const metricMatches = cv.match(/\d+[%kKmM\$]|\$\d+|\d+\s*(users|requests|rps|reduction|increase|revenue|saved|boost)/gi);
-        if (metricMatches) {
-          impactScore = Math.min(30, 10 + metricMatches.length * 4);
-        }
-        
-        // Category 4: Structure & Communication (10 pts max)
-        const commScore = Math.min(10, Math.max(6, Math.floor(cv.length / 80)));
-        
-        const totalRubricScore = techScore + archScore + impactScore + commScore;
-        const isShortlist = totalRubricScore >= 75;
-        
-        candidates.unshift({
-          id: newId,
-          real_name: name,
-          email: email,
-          years_exp: exp,
-          stack: stack,
-          raw_cv: cv,
-          redacted_cv: redacted,
-          score: totalRubricScore,
-          breakdown: {
-            tech: techScore, tech_note: `Verified ${techKeywords.filter(k => lowerCv.includes(k)).length} core competencies.`,
-            arch: archScore, arch_note: `Experience scaled over ${exp} years production engineering.`,
-            algo: impactScore, algo_note: `Identified ${metricMatches ? metricMatches.length : 0} quantified business metrics.`,
-            comm: commScore, comm_note: "Resume structure clarity and engineering depth."
-          },
-          status: isShortlist ? "SHORTLISTED" : "NOT_SHORTLISTED",
-          scheduled: false
-        });
+        console.error("Backend API call failed:", err);
+        showBackendError('Backend unavailable');
+        return;
       }
 
       saveState();

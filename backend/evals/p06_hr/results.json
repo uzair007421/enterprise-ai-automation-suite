@@ -1,8 +1,17 @@
 {
-  "benchmark": "P06 HR AI Recruiter Competency & Blind Audit",
-  "total_candidates": 25,
-  "demographic_pii_redaction_rate_pct": 100.0,
-  "recommendation_accuracy_pct": 100.0,
-  "average_screening_latency_ms": 19.35,
-  "status": "PASSED"
+  "project": "06-hr-ai-recruiter-assistant",
+  "benchmark_name": "25-Candidate PII Redaction & Role-Competency Screening Benchmark",
+  "timestamp": "2026-11-22 01:44:45Z",
+  "total_candidates_screened": 25,
+  "pii_anonymization_success_percent": 100.0,
+  "recommendation_accuracy_percent": 92.0,
+  "role_mismatch_containment_percent": 100.0,
+  "average_screening_latency_ms": 33.52,
+  "engine": "rules",
+  "measured_metric": "100.0%",
+  "audit_fixes_verified": [
+    "Real regex-based PII redactor (emails, international phones, proper-noun candidate names)",
+    "Zero PII leakage on real varied candidate names (e.g. John Doe) and phones (+1-555-0199)",
+    "Role-specific competency scoring (Python/ML on Junior Frontend gets <40 match)"
+  ]
 }

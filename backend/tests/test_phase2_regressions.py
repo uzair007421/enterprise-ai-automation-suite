@@ -416,3 +416,76 @@ def test_p10_investment_advice_refused_without_tool_call():
     assert "investment advice" in data["direct_answer"].lower() or "regulations" in data["direct_answer"].lower()
 
 
+# ---------------------------------------------------------
+# P06 HR Recruiter Regressions
+# ---------------------------------------------------------
+
+def test_p06_john_doe_zero_pii_left():
+    """Verify John Doe input has zero PII left ([REDACTED_NAME] present, John and Doe absent)."""
+    cv_text = """John Doe
+john.doe@example.com
+Phone: (555) 123-4567
+
+Summary:
+Experienced software developer John Doe has 5 years building web applications.
+Contact John Doe directly at john.doe@example.com.
+"""
+    resp = client.post("/api/ai/hr-recruiter/screen", json={
+        "raw_cv_text": cv_text,
+        "job_role": "Senior Full-Stack / AI Engineer",
+        "session_id": "test_p06_pii"
+    })
+    assert resp.status_code == 200
+    data = resp.json()
+    redacted = data["anonymized_cv"]
+    assert "[REDACTED_NAME]" in redacted
+    assert "[REDACTED_EMAIL]" in redacted
+    assert "John" not in redacted
+    assert "Doe" not in redacted
+    assert "john.doe@example.com" not in redacted
+
+
+def test_p06_hyphenated_phone_redacted():
+    """Verify phone +1-555-0199 is redacted to [REDACTED_PHONE]."""
+    cv_text = """Jane Smith
+Email: jane.smith@techcorp.io
+Cell: +1-555-0199
+
+Senior Backend Engineer with 6 years experience in Python and PostgreSQL.
+"""
+    resp = client.post("/api/ai/hr-recruiter/screen", json={
+        "raw_cv_text": cv_text,
+        "job_role": "Senior Full-Stack / AI Engineer",
+        "session_id": "test_p06_phone"
+    })
+    assert resp.status_code == 200
+    data = resp.json()
+    redacted = data["anonymized_cv"]
+    assert "[REDACTED_PHONE]" in redacted
+    assert "+1-555-0199" not in redacted
+    assert "555-0199" not in redacted
+
+
+def test_p06_python_ml_candidate_on_junior_frontend_rejected():
+    """Verify Python/ML candidate on Junior Frontend gets total_score < 40 and recommendation REJECT/HOLD_FOR_REVIEW."""
+    cv_text = """Alex Mercer
+alex.m@mlresearch.org
++1 415-555-9012
+
+Machine Learning Researcher
+Specializing exclusively in PyTorch, Python, TensorFlow, CUDA kernels, HuggingFace transformers, distributed model training.
+Zero JavaScript, CSS, HTML, or React experience.
+"""
+    resp = client.post("/api/ai/hr-recruiter/screen", json={
+        "raw_cv_text": cv_text,
+        "job_role": "Junior Frontend Engineer",
+        "session_id": "test_p06_mismatch"
+    })
+    assert resp.status_code == 200
+    data = resp.json()
+    rubric = data["rubric"]
+    assert rubric["total_score"] < 40
+    assert data["recommendation"] in ["REJECT", "HOLD_FOR_REVIEW"]
+
+
+
