@@ -37,6 +37,9 @@
         <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
           <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span> WhatsApp Cloud API Active
         </span>
+        <a href="https://github.com/uzair007421/enterprise-ai-automation-suite/tree/main/backend/projects/p03_support" target="_blank" rel="noopener noreferrer" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-emerald-400 hover:text-white rounded-lg text-xs font-semibold border border-slate-700 transition flex items-center gap-1.5">
+          <i class="fa-brands fa-github text-xs"></i> GitHub Source
+        </a>
         <button onclick="exportChatTranscript()" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white rounded-lg text-xs font-semibold border border-slate-700 transition flex items-center gap-1.5">
           <i class="fa-solid fa-download text-[10px]"></i> Export Transcript
         </button>
@@ -101,10 +104,12 @@
               <p id="wa-header-status" class="text-[10px] text-emerald-400 font-mono">Bilingual AI Support • Online</p>
             </div>
           </div>
-          <div class="flex items-center space-x-3 text-slate-300 text-xs">
-            <i class="fa-solid fa-video cursor-pointer"></i>
-            <i class="fa-solid fa-phone cursor-pointer"></i>
-            <i class="fa-solid fa-ellipsis-vertical cursor-pointer"></i>
+          <div class="flex items-center space-x-2 text-slate-300 text-xs">
+            <button onclick="resetWhatsAppChat()" title="Reset to New Conversation" class="px-2 py-1 rounded-md bg-[#2a3942] hover:bg-[#374955] text-[11px] text-emerald-400 font-mono font-bold flex items-center gap-1 transition border border-[#3b4e5a]">
+              <i class="fa-solid fa-rotate-right text-[10px]"></i> New Chat
+            </button>
+            <i class="fa-solid fa-video cursor-pointer hidden sm:inline"></i>
+            <i class="fa-solid fa-phone cursor-pointer hidden sm:inline"></i>
           </div>
         </div>
 
@@ -339,9 +344,23 @@ I can assist you with live order status tracking, sizing, exchange policies, or 
       saveChat();
       renderMessages();
 
+      // If user requests reset
+      if (text.toLowerCase() === 'reset' || text.toLowerCase() === 'clear' || text.toLowerCase() === 'new chat') {
+        resetWhatsAppChat();
+        return;
+      }
+
       // If escalated to human supervisor
       if (isEscalated) {
-        return; // Human must respond from the cockpit
+        document.getElementById('typing-indicator').classList.remove('hidden');
+        await new Promise(r => setTimeout(r, 600));
+        document.getElementById('typing-indicator').classList.add('hidden');
+        const alertReply = "⚠️ [Supervisor Hassan Raza assigned]: Your message has been received on the human escalation desk. He is actively reviewing it and will reply directly through this window. You can also click 'Reset Chat' above to return to automated assistant.";
+        const botTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        messages.push({ sender: "supervisor", text: alertReply, time: botTime });
+        saveChat();
+        renderMessages();
+        return;
       }
 
       // Show typing indicator
@@ -413,24 +432,48 @@ I can assist you with live order status tracking, sizing, exchange policies, or 
         return "I sincerely apologize for the frustration caused. Because of the critical urgency of your issue, I have immediately paused automated replies and transferred this conversation to Senior Supervisor Hassan Raza on our escalation desk. He is reviewing your file right now.";
       }
 
-      // Check refund guardrail
+      // 1. Greetings & Pleasantries (Urdu, Roman Urdu, English)
+      const greetingKeywords = ['salam', 'aoa', 'assalam', 'hi', 'hello', 'hey', 'kese', 'kaise', 'kya haal', 'haal', 'morning', 'afternoon', 'evening', 'good'];
+      if (greetingKeywords.some(k => text.includes(k)) && !text.includes('fraud') && !text.includes('scam')) {
+        return "Wa Alaikum Assalam & Welcome to NexusCart Support! 👋\nMain aap ka AI E-Commerce Assistant hoon.\n\nMain aap ki kya madad karoon?\n• Order Status Track karain (e.g. #PK-8921 likhain)\n• Hamare Featured Products & Prices dekhain\n• Delivery Time & Cash on Delivery (COD) charges\n• 7-Day Easy Exchange Policy";
+      }
+
+      // 2. Products Catalog & Inventory Inquiries
+      const productKeywords = ['product', 'products', 'item', 'items', 'jacket', 'earbuds', 'shoes', 'leather', 'price', 'qeemat', 'kya hai', 'kya bechtay', 'catalog', 'stock', 'list'];
+      if (productKeywords.some(k => text.includes(k))) {
+        return "🛍️ NexusCart Top Selling Catalog:\n\n1. Handcrafted Leather Jacket (Top-Grain / XL) — Rs. 18,500 PKR\n2. ANC Wireless Pro Earbuds (Matte Black) — Rs. 7,200 PKR\n3. Italian Oxford Dress Shoes — Rs. 14,000 PKR\n\n✅ All items 100% genuine with 7-day doorstep exchange guarantee. Cash on Delivery (COD) available across Pakistan! Would you like details on any specific item?";
+      }
+
+      // 3. Delivery Times & Shipping Rates
+      const shippingKeywords = ['delivery', 'shipping', 'charges', 'kitnay din', 'kab tak', 'time lagay', 'courier', 'tcs', 'leopard', 'free shipping', 'cost'];
+      if (shippingKeywords.some(k => text.includes(k))) {
+        return "🚚 NexusCart Delivery Information:\n\n• Delivery Timeline: 2 to 3 working days across all cities in Pakistan via TCS & Leopard Courier.\n• Standard Shipping: Rs. 200 PKR.\n• Free Delivery: Orders above Rs. 3,000 PKR qualify for 100% Free Shipping!\n• Same-day dispatch on orders placed before 3:00 PM.";
+      }
+
+      // 4. Payment Methods & COD
+      const paymentKeywords = ['cod', 'cash on delivery', 'payment', 'pay', 'jazzcash', 'easypaisa', 'bank', 'card', 'advance'];
+      if (paymentKeywords.some(k => text.includes(k))) {
+        return "💳 Accepted Payment Methods:\n\n1. Cash on Delivery (COD) — Pay cash to the courier rider upon parcel delivery.\n2. Online Bank Transfer (Raast / IBFT).\n3. JazzCash & EasyPaisa Wallets.\n4. Visa & Mastercard Debit/Credit Cards.";
+      }
+
+      // 5. Human Representative / Supervisor Request
+      const humanKeywords = ['human', 'agent', 'manager', 'supervisor', 'baat karni', 'call', 'representative', 'insan'];
+      if (humanKeywords.some(k => text.includes(k))) {
+        triggerEscalation("CUSTOMER_REQUESTED_SUPERVISOR", "Customer requested human supervisor consultation.");
+        return "Certainly! I have alerted Senior Supervisor Hassan Raza on our Tier-2 desk. He has been assigned to your chat and will respond directly. Please hold for a moment.";
+      }
+
+      // 6. Check refund guardrail
       const refundKeywords = ['refund', 'money back', 'paisa wapas', 'return money', 'cashback', 'reimburse'];
       let isRefund = refundKeywords.some(k => text.includes(k));
 
       if (isRefund) {
         activeSentimentScore = 48;
         updateSentimentUI();
-        return "NexusCart Refund Guardrail Notice:
-
-Our financial compliance policy strictly prohibits automated AI refund dispatches. To request a refund:
-
-1. Parcels must first undergo physical RMA inspection at our hub.
-2. Once approved, funds are transferred within 3 business days via bank transfer or original payment method.
-
-I have generated RMA Inspection Request #RMA-8192 for our warehouse team. Would you like our manager to contact you?";
+        return "NexusCart Refund Guardrail Notice:\n\nOur financial compliance policy strictly prohibits automated AI refund dispatches. To request a refund:\n\n1. Parcels must first undergo physical RMA inspection at our logistics hub.\n2. Once approved, funds are transferred within 3 business days via bank transfer or original payment method.\n\nI have generated RMA Inspection Request #RMA-8192 for our warehouse team. Would you like our manager to contact you?";
       }
 
-      // Check Order tracking
+      // 7. Check Order tracking
       const orderMatch = rawText.match(/#?PK-?\d{4}/i);
       if (orderMatch) {
         const orderKey = orderMatch[0].toUpperCase().replace('PK', '#PK-').replace('--', '-');
@@ -444,38 +487,27 @@ I have generated RMA Inspection Request #RMA-8192 for our warehouse team. Would 
 
           const isUrdu = text.includes('kab') || text.includes('mera') || text.includes('hai') || text.includes('karo');
           if (isUrdu) {
-            return `Aap ka order ${exactKey} mil gaya hai! ✅
-
-• Item: ${ord.item}
-• Status: ${ord.status}
-• Courier: ${ord.courier} (${ord.tracking_number})
-• Tawaqo delivery: ${ord.estimated_delivery}
-
-Aap ka parcel is waqt ${ord.location_last_scan} par hai. Mazid kuch maloom karna hai?`;
+            return `Aap ka order ${exactKey} mil gaya hai! ✅\n\n• Item: ${ord.item}\n• Status: ${ord.status}\n• Courier: ${ord.courier} (${ord.tracking_number})\n• Tawaqo delivery: ${ord.estimated_delivery}\n\nAap ka parcel is waqt ${ord.location_last_scan} par hai. Mazid kuch maloom karna hai?`;
           } else {
-            return `Found your Shopify order ${exactKey}! ✅
-
-• Item: ${ord.item}
-• Current Status: ${ord.status}
-• Carrier: ${ord.courier} (Tracking: ${ord.tracking_number})
-• Estimated Arrival: ${ord.estimated_delivery}
-• Last Scan: ${ord.location_last_scan}
-
-Let me know if you need anything else!`;
+            return `Found your Shopify order ${exactKey}! ✅\n\n• Item: ${ord.item}\n• Current Status: ${ord.status}\n• Carrier: ${ord.courier} (Tracking: ${ord.tracking_number})\n• Estimated Arrival: ${ord.estimated_delivery}\n• Last Scan: ${ord.location_last_scan}\n\nLet me know if you need anything else!`;
           }
         } else {
           return "I checked our Shopify database, but could not locate an order matching that reference. Please verify your order number (e.g. #PK-8921) from your confirmation SMS or email.";
         }
       }
 
-      // General Inquiries
-      if (text.includes('return') || text.includes('exchange') || text.includes('badalna')) {
-        return "NexusCart Exchange Policy:
-
-Items can be exchanged within 7 days of delivery provided tags are intact. Courier pickup is arranged from your doorstep. Would you like to initiate an exchange for an existing order?";
+      // 8. Order tracking general inquiry (no order number given)
+      if (text.includes('order') || text.includes('track') || text.includes('parcel') || text.includes('status')) {
+        return "Apna 4-digit order number share karein (e.g. #PK-8921 ya #PK-4012), main foran Shopify live database se courier tracking check kar ke batata hoon!";
       }
 
-      return "Understood! Could you please provide your 4-digit Order Number (e.g. #PK-8921) or specify the product name you have questions about? I am here to assist!";
+      // 9. Returns & Exchange Policy
+      if (text.includes('return') || text.includes('exchange') || text.includes('badalna') || text.includes('size')) {
+        return "NexusCart 7-Day Exchange Policy:\n\n• Items can be exchanged within 7 days of delivery provided tags and packaging are intact.\n• Doorstep courier pickup will be arranged.\n• What would you like to exchange? Please share your order number or item name.";
+      }
+
+      // 10. Intelligent Fallback with Helpful Suggestions
+      return "Main aap ka sawal samajh raha hoon. Main in cheezon mein aap ki foran madad kar sakta hoon:\n\n1. 📦 Order Status (apna #PK-8921 order number likhain)\n2. 🛍️ Products Catalog & Prices\n3. 🚚 Delivery charges (Rs. 200, Free > 3k) & Timings\n4. 🔄 7-Day Doorstep Exchange Policy\n\nAap in mein se kya maloom karna chahtay hain?";
     }
 
     function triggerEscalation(reason, details) {
@@ -560,33 +592,33 @@ Items can be exchanged within 7 days of delivery provided tags are intact. Couri
       a.click();
     }
 
-    function resetChatSession() {
-      if (confirm("Reset WhatsApp chat history back to initial state?")) {
-        localStorage.removeItem(CHAT_STORAGE_KEY);
-        isEscalated = false;
-        activeSentimentScore = 88;
-        messages = [
-          {
-            sender: "bot",
-            text: "Assalam-o-Alaikum! Welcome to NexusCart Support 🛍️
-
-I can assist you with live order status tracking, sizing, exchange policies, or product specifications in English or Urdu. How can I help you today?",
-            time: "10:00 AM"
-          }
-        ];
-        document.getElementById('metric-handler').textContent = 'AUTONOMOUS AI';
-        document.getElementById('metric-handler').className = 'text-base font-black text-cyan-400 mt-0.5';
-        document.getElementById('metric-handler-icon').className = 'w-8 h-8 rounded-lg bg-cyan-500/10 text-cyan-400 flex items-center justify-center';
-        document.getElementById('wa-header-status').textContent = 'Bilingual AI Support • Online';
-        document.getElementById('wa-header-status').className = 'text-[10px] text-emerald-400 font-mono';
-        document.getElementById('wa-online-dot').className = 'w-2.5 h-2.5 rounded-full bg-emerald-400 border-2 border-[#202c33] absolute bottom-0 right-0';
-        document.getElementById('escalation-badge').textContent = 'STANDBY';
-        document.getElementById('escalation-badge').className = 'text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-slate-800 text-slate-400 font-mono';
-        document.getElementById('human-reply-area').classList.add('hidden');
-        updateSentimentUI();
-        renderMessages();
-      }
+    function resetWhatsAppChat() {
+      localStorage.removeItem(CHAT_STORAGE_KEY);
+      isEscalated = false;
+      activeSentimentScore = 88;
+      messages = [
+        {
+          sender: "bot",
+          text: "Assalam-o-Alaikum! Welcome to NexusCart Support 🛍️\n\nI can assist you with live order status tracking, sizing, exchange policies, or product specifications in English or Urdu. How can I help you today?",
+          time: "10:00 AM"
+        }
+      ];
+      const mh = document.getElementById('metric-handler');
+      if (mh) { mh.textContent = 'AUTONOMOUS AI'; mh.className = 'text-base font-black text-cyan-400 mt-0.5'; }
+      const mhi = document.getElementById('metric-handler-icon');
+      if (mhi) mhi.className = 'w-8 h-8 rounded-lg bg-cyan-500/10 text-cyan-400 flex items-center justify-center';
+      const whs = document.getElementById('wa-header-status');
+      if (whs) { whs.textContent = 'Bilingual AI Support • Online'; whs.className = 'text-[10px] text-emerald-400 font-mono'; }
+      const wod = document.getElementById('wa-online-dot');
+      if (wod) wod.className = 'w-2.5 h-2.5 rounded-full bg-emerald-400 border-2 border-[#202c33] absolute bottom-0 right-0';
+      const eb = document.getElementById('escalation-badge');
+      if (eb) { eb.textContent = 'STANDBY'; eb.className = 'text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-slate-800 text-slate-400 font-mono'; }
+      const hra = document.getElementById('human-reply-area');
+      if (hra) hra.classList.add('hidden');
+      updateSentimentUI();
+      renderMessages();
     }
+    const resetChatSession = resetWhatsAppChat;
 
     window.addEventListener('DOMContentLoaded', initChat);
   </script>
