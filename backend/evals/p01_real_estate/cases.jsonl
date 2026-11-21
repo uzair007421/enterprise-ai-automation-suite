@@ -1,0 +1,30 @@
+{"id": "CASE-01", "inquiry": "Hi, I am David Chen. Looking for a 3-bedroom home in Austin, TX with a budget of $650,000. Pre-approved and ready to buy within 30 days.", "expected_tier": "HOT", "expected_city": "Austin, TX"}
+{"id": "CASE-02", "inquiry": "My name is Sarah Miller, looking for 3 beds in Austin around $600k. Cash buyer, ready ASAP.", "expected_tier": "HOT", "expected_city": "Austin, TX"}
+{"id": "CASE-03", "inquiry": "Just casually browsing, budget is $180,000 for a 4 bedroom in downtown Austin.", "expected_tier": "DISQUALIFIED", "expected_city": "Austin, TX"}
+{"id": "CASE-04", "inquiry": "Hello, Elena Rostova here. 2 bedroom condo in Seattle, WA. Budget $650,000, preapproved loan.", "expected_tier": "HOT", "expected_city": "Seattle, WA"}
+{"id": "CASE-05", "inquiry": "Hi, I am James Wright. Moving to Austin in 60 days. Need 3 bedrooms, budget $580,000. Preapproved with Chase.", "expected_tier": "HOT", "expected_city": "Austin, TX"}
+{"id": "CASE-06", "inquiry": "Looking for properties in Seattle, WA. 3 bed craftsman, budget $750,000. Preapproved.", "expected_tier": "HOT", "expected_city": "Seattle, WA"}
+{"id": "CASE-07", "inquiry": "Just curious what houses cost in Austin, not buying anytime soon, maybe next year.", "expected_tier": "COLD", "expected_city": "Austin, TX"}
+{"id": "CASE-08", "inquiry": "Robert Fox, looking for 4 bedroom luxury home in Austin, TX. Budget $900,000. Cash.", "expected_tier": "HOT", "expected_city": "Austin, TX"}
+{"id": "CASE-09", "inquiry": "Looking to buy in Seattle. 2br, $620k budget. Ready within 60 days.", "expected_tier": "WARM", "expected_city": "Seattle, WA"}
+{"id": "CASE-10", "inquiry": "Student looking for rent under $1000 in Austin.", "expected_tier": "DISQUALIFIED", "expected_city": "Austin, TX"}
+{"id": "CASE-11", "inquiry": "Dr. Angela Patel, looking for 3 bed in Austin up to $640,000. Verified pre-approval letter in hand.", "expected_tier": "HOT", "expected_city": "Austin, TX"}
+{"id": "CASE-12", "inquiry": "Marcus Brody, 3 bedroom in Austin TX, budget $450k, taking my time to decide.", "expected_tier": "WARM", "expected_city": "Austin, TX"}
+{"id": "CASE-13", "inquiry": "Samantha Cole, seeking 2 bedroom in Seattle WA, budget $700,000. Closing in 30 days.", "expected_tier": "HOT", "expected_city": "Seattle, WA"}
+{"id": "CASE-14", "inquiry": "Hello, need 3 bed in Austin under $300k, not pre-approved yet.", "expected_tier": "COLD", "expected_city": "Austin, TX"}
+{"id": "CASE-15", "inquiry": "Cash investor John Wick looking for 3 bed in Austin TX up to $650,000, ready to close this week.", "expected_tier": "HOT", "expected_city": "Austin, TX"}
+{"id": "CASE-16", "inquiry": "Thinking about moving to Seattle next summer, budget maybe $500k.", "expected_tier": "COLD", "expected_city": "Seattle, WA"}
+{"id": "CASE-17", "inquiry": "Jennifer Lawrence, 3 bed in Austin TX, budget $625,000, pre-approved with Wells Fargo.", "expected_tier": "HOT", "expected_city": "Austin, TX"}
+{"id": "CASE-18", "inquiry": "Tom Hardy, 4 bed home in Austin TX, $880,000 budget, moving for tech job in 3 weeks.", "expected_tier": "HOT", "expected_city": "Austin, TX"}
+{"id": "CASE-19", "inquiry": "Need cheap land in Texas under $20k.", "expected_tier": "DISQUALIFIED", "expected_city": "Austin, TX"}
+{"id": "CASE-20", "inquiry": "Gary Oldman, 2 bed Seattle, budget $660,000, pre-approved.", "expected_tier": "HOT", "expected_city": "Seattle, WA"}
+{"id": "CASE-21", "inquiry": "Natalie Portman, 3 bed Austin, budget $600,000, 30 day timeline, pre-approved.", "expected_tier": "HOT", "expected_city": "Austin, TX"}
+{"id": "CASE-22", "inquiry": "Casual inquiry about Austin housing trends, not looking to buy.", "expected_tier": "COLD", "expected_city": "Austin, TX"}
+{"id": "CASE-23", "inquiry": "Morgan Freeman, 3 bed in Austin, budget $590,000, closing in 45 days, pre-approved.", "expected_tier": "HOT", "expected_city": "Austin, TX"}
+{"id": "CASE-24", "inquiry": "Christian Bale, Seattle 3 bed, budget $730,000, cash buyer ready now.", "expected_tier": "HOT", "expected_city": "Seattle, WA"}
+{"id": "CASE-25", "inquiry": "Want a 5-bedroom mansion in Austin for $200k.", "expected_tier": "DISQUALIFIED", "expected_city": "Austin, TX"}
+{"id": "CASE-26", "inquiry": "Emily Blunt, 3 bed Austin, budget $630,000, pre-approved, need closing in 30 days.", "expected_tier": "HOT", "expected_city": "Austin, TX"}
+{"id": "CASE-27", "inquiry": "Brad Pitt, 4 bed Austin luxury, budget $890,000, preapproved letter attached.", "expected_tier": "HOT", "expected_city": "Austin, TX"}
+{"id": "CASE-28", "inquiry": "Just window shopping zillow listings, no budget set.", "expected_tier": "COLD", "expected_city": "Austin, TX"}
+{"id": "CASE-29", "inquiry": "Emma Stone, 2 bed Seattle, budget $640,000, pre-approved, ready to put an offer.", "expected_tier": "HOT", "expected_city": "Seattle, WA"}
+{"id": "CASE-30", "inquiry": "Leonardo DiCaprio, 3 bed Austin, budget $670,000, cash buyer, closing ASAP.", "expected_tier": "HOT", "expected_city": "Austin, TX"}

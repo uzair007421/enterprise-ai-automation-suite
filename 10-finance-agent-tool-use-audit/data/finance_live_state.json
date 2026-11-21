@@ -1,0 +1,151 @@
+{
+  "metrics": {
+    "annual_recurring_revenue": 3450000,
+    "monthly_recurring_revenue": 287500,
+    "cash_in_bank": 1820000,
+    "monthly_burn_rate": 115000,
+    "runway_months": 15.8,
+    "gross_margin_pct": 78.4
+  },
+  "client_accounts": [
+    {
+      "account_id": "ACC-901",
+      "company": "Apex Global Logistics",
+      "tier": "Enterprise",
+      "mrr": 18500,
+      "credit_limit": 50000,
+      "balance_due": 18500,
+      "status": "Current"
+    },
+    {
+      "account_id": "ACC-902",
+      "company": "Hyperion Media Labs",
+      "tier": "Growth",
+      "mrr": 6200,
+      "credit_limit": 15000,
+      "balance_due": 0,
+      "status": "Current"
+    },
+    {
+      "account_id": "ACC-903",
+      "company": "Vanguard Biotech Corp",
+      "tier": "Enterprise",
+      "mrr": 24000,
+      "credit_limit": 100000,
+      "balance_due": 48000,
+      "status": "Overdue (30 Days)"
+    }
+  ],
+  "users": {
+    "usr_analyst": {
+      "user_id": "usr_analyst",
+      "name": "Alex Rivera",
+      "role": "JUNIOR_ANALYST",
+      "daily_budget_limit": 5.0,
+      "cost_used_today": 0.429,
+      "permissions": [
+        "READ_DATABASE",
+        "GENERATE_REPORTS",
+        "DRAFT_EMAILS"
+      ]
+    },
+    "usr_manager": {
+      "user_id": "usr_manager",
+      "name": "Samantha Reed",
+      "role": "SENIOR_FINANCE_MANAGER",
+      "daily_budget_limit": 20.0,
+      "cost_used_today": 1.8545,
+      "permissions": [
+        "READ_DATABASE",
+        "GENERATE_REPORTS",
+        "DRAFT_EMAILS",
+        "REQUEST_WRITE_ACTIONS"
+      ]
+    },
+    "usr_cfo": {
+      "user_id": "usr_cfo",
+      "name": "Marcus Vance (CFO)",
+      "role": "CFO_ADMIN",
+      "daily_budget_limit": 100.0,
+      "cost_used_today": 3.2,
+      "permissions": [
+        "READ_DATABASE",
+        "GENERATE_REPORTS",
+        "DRAFT_EMAILS",
+        "REQUEST_WRITE_ACTIONS",
+        "APPROVE_WRITES",
+        "OVERRIDE_BUDGET"
+      ]
+    }
+  },
+  "audit_log": [
+    {
+      "timestamp": "2026-11-16 08:41:43 UTC",
+      "user_id": "usr_cfo",
+      "action": "WRITE_ACTION_COMMITTED",
+      "tool_name": "update_client_credit_limit",
+      "params": {
+        "write_id": "WRT-3712",
+        "requested_by": "Samantha Reed",
+        "role": "SENIOR_FINANCE_MANAGER",
+        "target_account": "Vanguard Biotech Corp (ACC-903)",
+        "action": "Increase Credit Limit from $75,000 to $100,000",
+        "new_credit_limit": 100000,
+        "timestamp": "2026-11-16 08:41:43 UTC",
+        "status": "EXECUTED_DATABASE_WRITTEN"
+      },
+      "outcome": "SUCCESS_DATABASE_COMMITTED",
+      "cost_usd": 0.0,
+      "signature_hash": "b800affb5c4b36f2",
+      "prev_hash": "01ec3345"
+    },
+    {
+      "timestamp": "2026-11-16 08:41:43 UTC",
+      "user_id": "usr_manager",
+      "action": "WRITE_ACTION_SUSPENDED",
+      "tool_name": "update_client_credit_limit",
+      "params": {
+        "write_id": "WRT-3712",
+        "requested_by": "Samantha Reed",
+        "role": "SENIOR_FINANCE_MANAGER",
+        "target_account": "Vanguard Biotech Corp (ACC-903)",
+        "action": "Increase Credit Limit from $75,000 to $100,000",
+        "new_credit_limit": 100000,
+        "timestamp": "2026-11-16 08:41:43 UTC",
+        "status": "PENDING_HUMAN_CONFIRMATION"
+      },
+      "outcome": "AWAITING_HUMAN_SIGN_OFF",
+      "cost_usd": 0.0045,
+      "signature_hash": "01ec3345f3b8c4fc",
+      "prev_hash": "605fadd6"
+    },
+    {
+      "timestamp": "2026-11-16 08:41:43 UTC",
+      "user_id": "usr_analyst",
+      "action": "RBAC_VIOLATION_BLOCKED",
+      "tool_name": "update_client_credit_limit",
+      "params": {
+        "prompt": "Update credit limit to ,000"
+      },
+      "outcome": "ACCESS_DENIED_JUNIOR_ROLE",
+      "cost_usd": 0.0045,
+      "signature_hash": "605fadd6d108d835",
+      "prev_hash": "22f201b2"
+    },
+    {
+      "timestamp": "2026-11-16 08:41:43 UTC",
+      "user_id": "usr_analyst",
+      "action": "TOOL_EXECUTE",
+      "tool_name": "query_financial_database",
+      "params": {
+        "metric": "core"
+      },
+      "outcome": "SUCCESS_READ",
+      "cost_usd": 0.0045,
+      "signature_hash": "22f201b25caecf8f",
+      "prev_hash": "00000000"
+    }
+  ],
+  "pending_writes": [],
+  "previous_hash": "b800affb5c4b36f25687f22beaa25cc622f7005cfd40251f2f8336acf9d73d8c"
+}

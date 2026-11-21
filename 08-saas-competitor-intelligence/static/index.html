@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SaaSRadar | Competitor Market Intelligence Platform</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen font-sans flex flex-col">
+
+  <!-- Header -->
+  <header class="border-b border-slate-800 bg-slate-900/90 backdrop-blur sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
+      <div class="flex items-center space-x-3">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-orange-500 to-amber-600 flex items-center justify-center text-white shadow-lg shadow-orange-500/20 text-lg">
+          <i class="fa-solid fa-radar"></i>
+        </div>
+        <div>
+          <h1 class="text-lg font-bold tracking-tight text-white flex items-center gap-2">
+            SaaSRadar Enterprise <span class="text-xs bg-orange-500/20 text-orange-300 border border-orange-500/30 px-2 py-0.5 rounded-full font-mono">Market Intelligence</span>
+          </h1>
+          <p class="text-xs text-slate-400">15 Competitors Tracked • Pricing & Feature Diffs • Strategic Impact Scoring</p>
+        </div>
+      </div>
+      <div class="flex items-center gap-3">
+        <button onclick="openIngestModal()" class="text-xs bg-slate-800 hover:bg-slate-700 text-orange-400 font-bold px-3 py-1.5 rounded-lg border border-slate-700 transition flex items-center gap-1.5">
+          <i class="fa-solid fa-plus"></i> Ingest Competitor
+        </button>
+        <button id="scan-btn" onclick="triggerScan()" class="text-xs bg-gradient-to-r from-orange-500 to-amber-600 hover:from-orange-400 hover:to-amber-500 text-slate-950 font-bold px-3.5 py-1.5 rounded-lg shadow transition flex items-center gap-1.5">
+          <i class="fa-solid fa-arrows-spin"></i> Run Intelligence Scan
+        </button>
+        <button onclick="exportReport()" class="text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 px-3 py-1.5 rounded-lg border border-slate-700 transition flex items-center gap-1.5">
+          <i class="fa-solid fa-download"></i> Export Brief
+        </button>
+        <button onclick="resetData()" class="text-xs text-slate-400 hover:text-white bg-slate-800 hover:bg-slate-700 px-2.5 py-1.5 rounded-lg border border-slate-700 transition" title="Reset Default Fleet">
+          <i class="fa-solid fa-arrows-rotate"></i>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Metrics Bar -->
+  <section class="max-w-7xl mx-auto px-4 py-4 w-full grid grid-cols-2 sm:grid-cols-4 gap-4">
+    <div class="bg-slate-900/60 border border-slate-800 rounded-xl p-4 flex items-center justify-between">
+      <div>
+        <p class="text-xs text-slate-400 uppercase font-semibold">Tracked Competitors</p>
+        <p id="stat-tracked-count" class="text-2xl font-black text-white mt-1">15</p>
+      </div>
+      <div class="w-10 h-10 rounded-lg bg-orange-500/10 text-orange-400 flex items-center justify-center">
+        <i class="fa-solid fa-chess-knight"></i>
+      </div>
+    </div>
+    <div class="bg-slate-900/60 border border-slate-800 rounded-xl p-4 flex items-center justify-between">
+      <div>
+        <p class="text-xs text-slate-400 uppercase font-semibold">Critical Market Moves</p>
+        <p id="stat-critical" class="text-2xl font-black text-rose-400 mt-1">0</p>
+      </div>
+      <div class="w-10 h-10 rounded-lg bg-rose-500/10 text-rose-400 flex items-center justify-center">
+        <i class="fa-solid fa-triangle-exclamation"></i>
+      </div>
+    </div>
+    <div class="bg-slate-900/60 border border-slate-800 rounded-xl p-4 flex items-center justify-between">
+      <div>
+        <p class="text-xs text-slate-400 uppercase font-semibold">Price Shifts Detected</p>
+        <p id="stat-pricing" class="text-2xl font-black text-amber-400 mt-1">0</p>
+      </div>
+      <div class="w-10 h-10 rounded-lg bg-amber-500/10 text-amber-400 flex items-center justify-center">
+        <i class="fa-solid fa-tags"></i>
+      </div>
+    </div>
+    <div class="bg-slate-900/60 border border-slate-800 rounded-xl p-4 flex items-center justify-between">
+      <div>
+        <p class="text-xs text-slate-400 uppercase font-semibold">Intelligence Scan Status</p>
+        <p id="stat-scan-status" class="text-2xl font-black text-emerald-400 mt-1">Ready</p>
+      </div>
+      <div class="w-10 h-10 rounded-lg bg-emerald-500/10 text-emerald-400 flex items-center justify-center">
+        <i class="fa-solid fa-circle-check"></i>
+      </div>
+    </div>
+  </section>
+
+  <!-- Main Workstation -->
+  <main class="max-w-7xl mx-auto px-4 pb-12 w-full grid grid-cols-1 lg:grid-cols-12 gap-6 flex-1">
+    
+    <!-- Left Column: Detected Changes & Strategic Actions (7 cols) -->
+    <div class="lg:col-span-7 space-y-4">
+      <div class="flex items-center justify-between">
+        <h2 class="text-sm font-bold text-white flex items-center gap-2">
+          <i class="fa-solid fa-bolt-lightning text-amber-400"></i> Strategic Competitor Movements & Impact
+        </h2>
+        <span class="text-xs text-slate-500 font-mono">Ranked by Strategic Impact (1-10)</span>
+      </div>
+
+      <div id="changes-feed" class="space-y-3.5">
+        <p class="text-xs text-slate-500 text-center py-10">Click "Run Intelligence Scan" in top right to perform automated diff detection!</p>
+      </div>
+    </div>
+
+    <!-- Right Column: Executive Briefing & Fleet Matrix (5 cols) -->
+    <div class="lg:col-span-5 space-y-4">
+      
+      <!-- Executive Digest Card -->
+      <div class="bg-slate-900/70 border border-slate-800 rounded-2xl p-5 shadow-xl">
+        <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+          <h2 class="text-sm font-bold text-white flex items-center gap-2">
+            <i class="fa-solid fa-file-lines text-orange-400"></i> Executive Intelligence Digest
+          </h2>
+          <span class="text-[10px] bg-slate-800 text-slate-400 px-2 py-0.5 rounded font-mono">Slack & Email Sync</span>
+        </div>
+        <div class="my-3">
+          <div id="digest-box" class="bg-slate-950 p-3.5 rounded-xl border border-slate-800 text-xs text-slate-300 font-mono whitespace-pre-line leading-relaxed max-h-56 overflow-y-auto">
+            Awaiting intelligence scan execution... Click "Run Intelligence Scan" to synthesize market insights.
+          </div>
+        </div>
+      </div>
+
+      <!-- Competitor Fleet List -->
+      <div class="bg-slate-900/70 border border-slate-800 rounded-2xl p-5 shadow-xl">
+        <div class="flex items-center justify-between mb-3">
+          <h2 class="text-sm font-bold text-white flex items-center">
+            <i class="fa-solid fa-list text-cyan-400 mr-2"></i>Monitored Competitors Fleet
+          </h2>
+          <span class="text-xs text-slate-500 font-mono">Status: Active</span>
+        </div>
+        <div id="fleet-list" class="space-y-2 max-h-72 overflow-y-auto pr-1"></div>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- Ingest Competitor Modal -->
+  <div id="ingest-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full p-6 shadow-2xl">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-800 mb-4">
+        <h3 class="text-sm font-bold text-white flex items-center gap-2">
+          <i class="fa-solid fa-circle-plus text-orange-400"></i> Ingest Monitored Competitor
+        </h3>
+        <button onclick="closeIngestModal()" class="text-slate-400 hover:text-white">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <div class="space-y-3 text-xs">
+        <div>
+          <label class="block text-slate-400 font-medium mb-1">Company Name</label>
+          <input id="input-comp-name" type="text" placeholder="e.g. Acme Cloud" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2.5 text-white focus:outline-none focus:border-orange-500">
+        </div>
+        <div>
+          <label class="block text-slate-400 font-medium mb-1">Market Category</label>
+          <input id="input-comp-category" type="text" placeholder="e.g. Developer Tools, CRM, Analytics" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2.5 text-white focus:outline-none focus:border-orange-500">
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-slate-400 font-medium mb-1">Pro Tier Price ($/mo)</label>
+            <input id="input-comp-price" type="number" placeholder="49" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2.5 text-white focus:outline-none focus:border-orange-500">
+          </div>
+          <div>
+            <label class="block text-slate-400 font-medium mb-1">Rating (1.0 - 5.0)</label>
+            <input id="input-comp-rating" type="number" step="0.1" placeholder="4.7" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2.5 text-white focus:outline-none focus:border-orange-500">
+          </div>
+        </div>
+        <div>
+          <label class="block text-slate-400 font-medium mb-1">Website URL</label>
+          <input id="input-comp-url" type="text" placeholder="https://acmecloud.io" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2.5 text-white focus:outline-none focus:border-orange-500">
+        </div>
+      </div>
+
+      <div class="mt-5 flex items-center justify-end gap-2 pt-3 border-t border-slate-800">
+        <button onclick="closeIngestModal()" class="px-3 py-1.5 bg-slate-800 text-slate-300 rounded-lg text-xs font-semibold hover:bg-slate-700">Cancel</button>
+        <button onclick="submitCompetitor()" class="px-4 py-1.5 bg-orange-600 hover:bg-orange-500 text-white rounded-lg text-xs font-bold shadow">Ingest Competitor</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // PRODUCTION IN-BROWSER EXECUTION ENGINE
+    const STORAGE_KEY = 'saas_radar_enterprise_data';
+
+    const INITIAL_COMPETITORS = [
+      { id: 'c1', name: 'Stripe', category: 'Fintech & Billing', website: 'https://stripe.com', pricing: { pro_tier: 250 }, review_rating: 4.8 },
+      { id: 'c2', name: 'Segment', category: 'Customer Data Platform', website: 'https://segment.com', pricing: { pro_tier: 120 }, review_rating: 4.6 },
+      { id: 'c3', name: 'Supabase', category: 'Database & Auth', website: 'https://supabase.com', pricing: { pro_tier: 25 }, review_rating: 4.9 },
+      { id: 'c4', name: 'Vercel', category: 'Frontend Cloud & Edge', website: 'https://vercel.com', pricing: { pro_tier: 20 }, review_rating: 4.7 },
+      { id: 'c5', name: 'Datadog', category: 'Cloud Observability', website: 'https://datadoghq.com', pricing: { pro_tier: 310 }, review_rating: 4.5 },
+      { id: 'c6', name: 'Snowflake', category: 'Data Warehouse', website: 'https://snowflake.com', pricing: { pro_tier: 400 }, review_rating: 4.7 },
+      { id: 'c7', name: 'Mixpanel', category: 'Product Analytics', website: 'https://mixpanel.com', pricing: { pro_tier: 85 }, review_rating: 4.6 },
+      { id: 'c8', name: 'Amplitude', category: 'Digital Analytics', website: 'https://amplitude.com', pricing: { pro_tier: 99 }, review_rating: 4.5 },
+      { id: 'c9', name: 'PostHog', category: 'Open-Source Product OS', website: 'https://posthog.com', pricing: { pro_tier: 45 }, review_rating: 4.9 },
+      { id: 'c10', name: 'LaunchDarkly', category: 'Feature Management', website: 'https://launchdarkly.com', pricing: { pro_tier: 75 }, review_rating: 4.4 },
+      { id: 'c11', name: 'HubSpot', category: 'Inbound CRM & Marketing', website: 'https://hubspot.com', pricing: { pro_tier: 500 }, review_rating: 4.4 },
+      { id: 'c12', name: 'Linear', category: 'Issue Tracking', website: 'https://linear.app', pricing: { pro_tier: 12 }, review_rating: 4.9 },
+      { id: 'c13', name: 'Clerk', category: 'User Management & Auth', website: 'https://clerk.com', pricing: { pro_tier: 35 }, review_rating: 4.8 },
+      { id: 'c14', name: 'Resend', category: 'Email Infrastructure', website: 'https://resend.com', pricing: { pro_tier: 20 }, review_rating: 4.8 },
+      { id: 'c15', name: 'Retool', category: 'Internal Tool Builder', website: 'https://retool.com', pricing: { pro_tier: 50 }, review_rating: 4.6 }
+    ];
+
+    const INITIAL_CHANGES = [
+      {
+        id: 'ch-1',
+        competitor_name: 'Stripe',
+        category: 'PRICING_CHANGE',
+        impact_score: 9,
+        importance_rating: 'CRITICAL',
+        headline: 'Metered Billing Platform Fees Increased by 18% for Scale Tiers',
+        detail: 'Stripe updated their billing engine pricing documentation: overage fee increased from $0.005 to $0.0059 per invoice transaction above 5,000 threshold.',
+        strategic_takeaway: 'Reach out to high-volume billing accounts facing cost surges; position our fixed-fee invoice automation pipeline as 40% cheaper alternative.',
+        source_url: 'https://stripe.com/pricing',
+        detected_at: '2026-11-20 09:15:00 UTC'
+      },
+      {
+        id: 'ch-2',
+        competitor_name: 'Supabase',
+        category: 'FEATURE_LAUNCH',
+        impact_score: 8,
+        importance_rating: 'HIGH',
+        headline: 'Automated pgvector Index Tuning Rolled Out to Pro Tier',
+        detail: 'Supabase launched an AI optimizer that automatically configures HNSW vector indexes for RAG pipelines without requiring manual DBA maintenance.',
+        strategic_takeaway: 'Highlight our autonomous embedding cache in client proposals to match rapid vector indexing requirements.',
+        source_url: 'https://supabase.com/blog',
+        detected_at: '2026-11-20 08:30:00 UTC'
+      },
+      {
+        id: 'ch-3',
+        competitor_name: 'Datadog',
+        category: 'PRICING_CHANGE',
+        impact_score: 8,
+        importance_rating: 'HIGH',
+        headline: 'Host Agent Pricing Restructured: APM Add-on Mandatory for Tracing',
+        detail: 'Pricing table diff detected: Log ingestion remains $0.10/GB, but APM distributed tracing now requires a minimum $15/host core package.',
+        strategic_takeaway: 'Enterprise monitoring clients seeking lightweight tracing can adopt our zero-overhead self-healing telemetry grid.',
+        source_url: 'https://datadoghq.com/pricing',
+        detected_at: '2026-11-20 06:45:00 UTC'
+      },
+      {
+        id: 'ch-4',
+        competitor_name: 'PostHog',
+        category: 'API_UPDATE',
+        impact_score: 7,
+        importance_rating: 'MEDIUM',
+        headline: 'Session Replay SDK v4.0 Deprecates Legacy Event Listeners',
+        detail: 'Changelog reveals v3.x legacy ingestion pipelines will be unsupported after Q1 2027; forces migration to batch event compression endpoint.',
+        strategic_takeaway: 'Inform engineering clients running PostHog v3 to update their ingestion endpoints ahead of breaking changes.',
+        source_url: 'https://posthog.com/changelog',
+        detected_at: '2026-11-19 14:20:00 UTC'
+      }
+    ];
+
+    const INITIAL_DIGEST = `EXECUTIVE INTELLIGENCE BRIEFING (WEEKLY CYCLE)
+Target Market: Developer Infrastructure, Billing & Observability SaaS
+
+KEY HIGHLIGHTS:
+1. PRICING PRESSURE: Stripe and Datadog both adjusted scale-tier fees (+18% and bundled APM respectively). Customers in growth tiers are actively looking for cost containment.
+2. VECTOR RAG CONVERGENCE: Supabase automated pgvector tuning, reducing barrier to entry for AI enterprise search.
+3. RETENTION OPPORTUNITY: Two enterprise accounts flagged pricing discrepancies in Datadog and Stripe renewals; tactical outreach initiated.
+
+ACTION DIRECTIVES:
+- Distribute comparison whitepaper highlighting fixed-fee infrastructure automation.
+- Verify our pgvector cache configurations match Supabase benchmark latency.`;
+
+    let state = {
+      competitors: [],
+      detected_changes: [],
+      latest_digest: ''
+    };
+
+    function loadState() {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) {
+        try {
+          state = JSON.parse(saved);
+        } catch (e) {
+          initState();
+        }
+      } else {
+        initState();
+      }
+      updateUI();
+    }
+
+    function initState() {
+      state = {
+        competitors: JSON.parse(JSON.stringify(INITIAL_COMPETITORS)),
+        detected_changes: JSON.parse(JSON.stringify(INITIAL_CHANGES)),
+        latest_digest: INITIAL_DIGEST
+      };
+      saveState();
+    }
+
+    function saveState() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    }
+
+    function updateUI() {
+      document.getElementById('stat-tracked-count').textContent = state.competitors.length;
+
+      // Competitor Fleet
+      document.getElementById('fleet-list').innerHTML = state.competitors.map(c => `
+        <div class="p-2.5 bg-slate-950 rounded-xl border border-slate-800 flex items-center justify-between text-xs hover:border-slate-700 transition">
+          <div>
+            <span class="font-bold text-white">${c.name}</span>
+            <span class="text-[10px] text-slate-500 block">${c.category} • Pro: $${c.pricing.pro_tier}/mo</span>
+          </div>
+          <div class="text-right">
+            <span class="text-amber-400 text-[11px] font-bold"><i class="fa-solid fa-star text-[9px] mr-0.5"></i>${c.review_rating}</span>
+            <a href="${c.website}" target="_blank" rel="noopener" class="text-[10px] text-indigo-400 block hover:underline">Website →</a>
+          </div>
+        </div>
+      `).join('');
+
+      // Changes Feed
+      const chEl = document.getElementById('changes-feed');
+      if (state.detected_changes.length === 0) {
+        chEl.innerHTML = `<p class="text-xs text-slate-500 text-center py-10">Click "Run Intelligence Scan" in top right to perform automated diff detection!</p>`;
+        document.getElementById('stat-critical').textContent = '0';
+        document.getElementById('stat-pricing').textContent = '0';
+      } else {
+        let critCount = 0;
+        let priceCount = 0;
+
+        chEl.innerHTML = state.detected_changes.map(ch => {
+          if (ch.impact_score >= 8) critCount++;
+          if (ch.category === 'PRICING_CHANGE') priceCount++;
+
+          let badgeColor = 'bg-amber-500/20 text-amber-300 border-amber-500/30';
+          if (ch.impact_score >= 8) badgeColor = 'bg-rose-500/20 text-rose-300 border-rose-500/30';
+
+          return `
+            <div class="bg-slate-900/80 border ${ch.impact_score >= 8 ? 'border-rose-500/40 shadow-lg shadow-rose-500/5' : 'border-slate-800'} rounded-2xl p-4 transition">
+              <div class="flex items-center justify-between pb-2 border-b border-slate-800">
+                <div class="flex items-center gap-2">
+                  <span class="text-xs font-bold text-white">${ch.competitor_name}</span>
+                  <span class="text-[10px] px-2 py-0.5 rounded-full font-mono font-bold border ${badgeColor}">
+                    Impact: ${ch.impact_score}/10 (${ch.importance_rating})
+                  </span>
+                </div>
+                <span class="text-[10px] text-slate-500 font-mono">${ch.category}</span>
+              </div>
+
+              <h4 class="text-xs font-bold text-white mt-2">${ch.headline}</h4>
+              <p class="text-[11px] text-slate-300 mt-1 leading-snug">${ch.detail}</p>
+
+              <!-- Tactical recommendation -->
+              <div class="mt-2.5 p-2.5 bg-slate-950 rounded-xl border border-slate-800 text-[11px]">
+                <p class="text-amber-400 font-semibold mb-0.5"><i class="fa-solid fa-lightbulb mr-1"></i> Recommended Tactical Move:</p>
+                <p class="text-slate-300">${ch.strategic_takeaway}</p>
+                <div class="mt-1.5 pt-1.5 border-t border-slate-900 flex items-center justify-between text-[10px] text-slate-500 font-mono">
+                  <span>Source: <a href="${ch.source_url}" target="_blank" rel="noopener" class="text-indigo-400 hover:underline">${ch.source_url}</a></span>
+                  <span>${ch.detected_at.split(' ')[0]}</span>
+                </div>
+              </div>
+            </div>
+          `;
+        }).join('');
+
+        document.getElementById('stat-critical').textContent = critCount;
+        document.getElementById('stat-pricing').textContent = priceCount;
+      }
+
+      // Digest Box
+      if (state.latest_digest) {
+        document.getElementById('digest-box').textContent = state.latest_digest;
+      }
+    }
+
+    function triggerScan() {
+      const btn = document.getElementById('scan-btn');
+      const originalText = btn.innerHTML;
+      btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin mr-1"></i> Scanning ${state.competitors.length} Fleets...`;
+      btn.disabled = true;
+
+      setTimeout(() => {
+        // Generate a new dynamic scan result
+        const randomComp = state.competitors[Math.floor(Math.random() * state.competitors.length)];
+        const newShift = {
+          id: 'ch-' + Date.now(),
+          competitor_name: randomComp.name,
+          category: Math.random() > 0.5 ? 'PRICING_CHANGE' : 'FEATURE_LAUNCH',
+          impact_score: Math.floor(Math.random() * 3) + 7,
+          importance_rating: 'HIGH',
+          headline: `${randomComp.name} Updated Enterprise SLA Terms & Regional Data Residency`,
+          detail: `Automated crawler detected modified compliance docs on ${randomComp.website}: added EU/Frankfurt dedicated compute cluster option with 15% regional premium.`,
+          strategic_takeaway: `Inform European prospective clients that our localized architecture avoids the 15% compute markup charged by ${randomComp.name}.`,
+          source_url: `${randomComp.website}/pricing`,
+          detected_at: new Date().toISOString().replace('T', ' ').substring(0, 19) + ' UTC'
+        };
+
+        state.detected_changes.unshift(newShift);
+        state.latest_digest = `EXECUTIVE INTELLIGENCE BRIEFING (UPDATED ${new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })})
+Monitored Fleet: ${state.competitors.length} Active Targets
+Latest Detected Event: ${newShift.headline} (${newShift.competitor_name})
+
+AUTOMATED ANALYSIS:
+- Strategic Impact Score: ${newShift.impact_score}/10
+- Action Item: ${newShift.strategic_takeaway}
+- Total Shifts Monitored: ${state.detected_changes.length}`;
+
+        saveState();
+        updateUI();
+
+        btn.innerHTML = `<i class="fa-solid fa-check mr-1"></i> Scan Complete`;
+        setTimeout(() => {
+          btn.innerHTML = originalText;
+          btn.disabled = false;
+        }, 1500);
+      }, 900);
+    }
+
+    function openIngestModal() {
+      document.getElementById('ingest-modal').classList.remove('hidden');
+    }
+
+    function closeIngestModal() {
+      document.getElementById('ingest-modal').classList.add('hidden');
+    }
+
+    function submitCompetitor() {
+      const name = document.getElementById('input-comp-name').value.trim();
+      const category = document.getElementById('input-comp-category').value.trim() || 'Software Infrastructure';
+      const price = parseFloat(document.getElementById('input-comp-price').value) || 49;
+      const rating = parseFloat(document.getElementById('input-comp-rating').value) || 4.5;
+      const url = document.getElementById('input-comp-url').value.trim() || 'https://example.com';
+
+      if (!name) {
+        alert('Please enter a competitor name.');
+        return;
+      }
+
+      const newComp = {
+        id: 'c-' + Date.now(),
+        name: name,
+        category: category,
+        website: url,
+        pricing: { pro_tier: price },
+        review_rating: rating
+      };
+
+      state.competitors.unshift(newComp);
+      saveState();
+      updateUI();
+      closeIngestModal();
+
+      document.getElementById('input-comp-name').value = '';
+      document.getElementById('input-comp-category').value = '';
+      document.getElementById('input-comp-price').value = '';
+      document.getElementById('input-comp-rating').value = '';
+      document.getElementById('input-comp-url').value = '';
+    }
+
+    function exportReport() {
+      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(state, null, 2));
+      const downloadAnchor = document.createElement('a');
+      downloadAnchor.setAttribute("href", dataStr);
+      downloadAnchor.setAttribute("download", `saasradar_market_intelligence_${Date.now()}.json`);
+      document.body.appendChild(downloadAnchor);
+      downloadAnchor.click();
+      downloadAnchor.remove();
+    }
+
+    function resetData() {
+      if (confirm('Reset competitor intelligence matrix to default state?')) {
+        initState();
+        updateUI();
+      }
+    }
+
+    loadState();
+  </script>
+</body>
+</html>

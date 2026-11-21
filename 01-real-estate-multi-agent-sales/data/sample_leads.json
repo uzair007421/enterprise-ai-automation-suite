@@ -1,0 +1,44 @@
+[
+  {
+    "lead_id": "LEAD-FB-4091",
+    "source": "Facebook Ad (Form)",
+    "name": "Sarah Jenkins",
+    "email": "sarah.jenkins@example.com",
+    "phone": "+1 555-019-2831",
+    "raw_inquiry": "Hi, we are looking for a 4 bedroom family home in Greenwood Suburbs. Budget is around $500k to $600k. We are pre-approved for mortgage and want to move within 45 days.",
+    "budget_max": 600000,
+    "budget_min": 500000,
+    "desired_location": "Greenwood Suburbs",
+    "bedrooms_needed": 4,
+    "timeline": "30-45 days",
+    "pre_approved": true
+  },
+  {
+    "lead_id": "LEAD-WA-8820",
+    "source": "WhatsApp Business",
+    "name": "Tariq Mahmood",
+    "email": "tariq.m@example.com",
+    "phone": "+92 300 1234567",
+    "raw_inquiry": "AOA! I am an investor looking for a luxury penthouse or apartment in Downtown Metro with high rental yield or skyline view. Budget around $800k - $900k cash buyer.",
+    "budget_max": 900000,
+    "budget_min": 750000,
+    "desired_location": "Downtown Metro",
+    "bedrooms_needed": 3,
+    "timeline": "Immediate (Cash)",
+    "pre_approved": true
+  },
+  {
+    "lead_id": "LEAD-WEB-1102",
+    "source": "Website Contact Form",
+    "name": "Marcus Vance",
+    "email": "marcus.v@example.com",
+    "phone": "+1 555-442-9901",
+    "raw_inquiry": "Looking for something cheap, maybe around $150k near the beach. Not sure about financing yet, just casually browsing options.",
+    "budget_max": 180000,
+    "budget_min": 100000,
+    "desired_location": "Coast",
+    "bedrooms_needed": 2,
+    "timeline": "Casual / Not sure",
+    "pre_approved": false
+  }
+]

@@ -1,0 +1,131 @@
+{
+  "contacts": {
+    "LEAD-FB-4091": {
+      "lead_id": "LEAD-FB-4091",
+      "name": "Sarah Jenkins",
+      "email": "sarah.jenkins@example.com",
+      "phone": "+1 555-019-2831",
+      "source": "Facebook Ad (Form)",
+      "stage": "Offer Sent to Buyer",
+      "created_at": "2026-11-16T08:22:10.592056",
+      "notes": [
+        "Lead acquired via Facebook Ad (Form). Inquiry: Hi, we are looking for a 4 bedroom family home in Greenwood Suburbs. Budget is around $500k to $600k. We are pre-approved for mortgage and want to move within 45 days."
+      ],
+      "qualification": {
+        "lead_id": "LEAD-FB-4091",
+        "qualification_status": "HOT",
+        "score": 98,
+        "buyer_intent": "High-Intent Active Buyer",
+        "budget_feasibility": "Well-Aligned",
+        "urgency_level": "High",
+        "key_strengths": [
+          "Substantial buying power ($600,000 ceiling)",
+          "Verified mortgage pre-approval / Cash buyer status",
+          "High purchase urgency (30-45 days)"
+        ],
+        "risk_factors": [],
+        "qualifier_notes": "Lead evaluated from Facebook Ad (Form). Buyer Sarah Jenkins expresses desire for 4 BR in Greenwood Suburbs. Financing certainty is High.",
+        "recommended_action": "Fast-track property matching & immediate broker outreach"
+      },
+      "property_matches": [
+        {
+          "property_id": "PROP-102",
+          "title": "Modern Suburban Family Villa",
+          "price": 550000,
+          "location": "Greenwood Suburbs",
+          "match_score": 99,
+          "match_reasons": [
+            "Price ($550,000) is perfectly inside lead's target range",
+            "Prime location match in Greenwood Suburbs",
+            "Meets bedroom requirement (4 Beds vs 4 requested)"
+          ],
+          "concessions_suggested": "Exclusive VIP buyer incentive: $7,500 rate buy-down credit included."
+        },
+        {
+          "property_id": "PROP-103",
+          "title": "Cozy Waterfront Lakeview Cottage",
+          "price": 420000,
+          "location": "Lakeview Bay",
+          "match_score": 50,
+          "match_reasons": [
+            "Price ($420,000) is within 10% flexible range",
+            "Nearby district (Lakeview Bay)"
+          ],
+          "concessions_suggested": "Standard seller closing assistance (up to $5,000) or 1-year home warranty."
+        },
+        {
+          "property_id": "PROP-104",
+          "title": "Contemporary Minimalist Townhouse",
+          "price": 380000,
+          "location": "Oakridge District",
+          "match_score": 50,
+          "match_reasons": [
+            "Price ($380,000) is within 10% flexible range",
+            "Nearby district (Oakridge District)"
+          ],
+          "concessions_suggested": "Standard seller closing assistance (up to $5,000) or 1-year home warranty."
+        }
+      ]
+    }
+  },
+  "deals": {
+    "OFFER-F4D80B": {
+      "offer_id": "OFFER-F4D80B",
+      "lead_id": "LEAD-FB-4091",
+      "property_id": "PROP-102",
+      "headline": "Exclusive Preview & Acquisition Offer: Modern Suburban Family Villa",
+      "proposed_price": 539000.0,
+      "incentives": "2% Fast-Close Incentive + $5,000 Broker Closing Credit + Priority Title Escrow",
+      "status": "APPROVED",
+      "created_at": "2026-11-16T08:22:10.599335",
+      "reviewed_by": "Senior Broker",
+      "review_comments": "Terms confirmed",
+      "reviewed_at": "2026-11-16T08:22:10.601255"
+    }
+  },
+  "activity_log": [
+    {
+      "timestamp": "2026-11-16 08:22:10 UTC",
+      "lead_id": "LEAD-FB-4091",
+      "action": "OFFER_DISPATCHED",
+      "details": "Offer package dispatched successfully via Email to sarah.jenkins@example.com"
+    },
+    {
+      "timestamp": "2026-11-16 08:22:10 UTC",
+      "lead_id": "LEAD-FB-4091",
+      "action": "HUMAN_REVIEW_APPROVED",
+      "details": "Licensed broker Senior Broker marked offer as APPROVED. Notes: Terms confirmed"
+    },
+    {
+      "timestamp": "2026-11-16 08:22:10 UTC",
+      "lead_id": "LEAD-FB-4091",
+      "action": "OFFER_DRAFTED",
+      "details": "Agent 3 created draft offer for PROP-102 at $539,000.0. Sent to Broker Review Desk."
+    },
+    {
+      "timestamp": "2026-11-16 08:22:10 UTC",
+      "lead_id": "LEAD-FB-4091",
+      "action": "MATCHES_FOUND",
+      "details": "Agent 2 identified 3 suitable properties: Modern Suburban Family Villa (99%), Cozy Waterfront Lakeview Cottage (50%)"
+    },
+    {
+      "timestamp": "2026-11-16 08:22:10 UTC",
+      "lead_id": "LEAD-FB-4091",
+      "action": "QUALIFICATION_COMPLETED",
+      "details": "Agent 1 evaluated lead as HOT (Score: 98/100). Recommendation: Fast-track property matching & immediate broker outreach"
+    },
+    {
+      "timestamp": "2026-11-16 08:22:10 UTC",
+      "lead_id": "LEAD-FB-4091",
+      "action": "LEAD_INTAKE",
+      "details": "Lead received from Facebook Ad (Form)"
+    }
+  ],
+  "stats": {
+    "total_leads_received": 1,
+    "qualified_leads": 1,
+    "offers_drafted": 1,
+    "offers_approved": 1,
+    "offers_dispatched": 1
+  }
+}

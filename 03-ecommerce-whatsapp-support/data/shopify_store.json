@@ -1,0 +1,56 @@
+{
+  "products": [
+    {
+      "id": "PROD-101",
+      "title": "UltraFit Wireless ANC Earbuds",
+      "category": "Electronics",
+      "price": 49.99,
+      "stock": 142,
+      "returnable_days": 14
+    },
+    {
+      "id": "PROD-102",
+      "title": "Ergonomic Memory Foam Lumbar Cushion",
+      "category": "Home & Office",
+      "price": 34.50,
+      "stock": 58,
+      "returnable_days": 30
+    },
+    {
+      "id": "PROD-103",
+      "title": "Smart Ceramic Coffee Mug Warmer",
+      "category": "Kitchen",
+      "price": 27.99,
+      "stock": 80,
+      "returnable_days": 14
+    }
+  ],
+  "orders": {
+    "SH-8821": {
+      "order_id": "SH-8821",
+      "customer_name": "Hamza Ali",
+      "phone": "+923001234567",
+      "items": [{"title": "UltraFit Wireless ANC Earbuds", "qty": 1, "price": 49.99}],
+      "total": 49.99,
+      "status": "In Transit",
+      "carrier": "TCS Express",
+      "tracking_number": "TCS-99482012",
+      "estimated_delivery": "Tomorrow by 5:00 PM",
+      "delivered_at": null,
+      "payment_status": "Paid (Credit Card)"
+    },
+    "SH-9042": {
+      "order_id": "SH-9042",
+      "customer_name": "Ayesha Khan",
+      "phone": "+923219876543",
+      "items": [{"title": "Ergonomic Memory Foam Lumbar Cushion", "qty": 1, "price": 34.50}],
+      "total": 34.50,
+      "status": "Delivered",
+      "carrier": "Leopards Courier",
+      "tracking_number": "LCS-7712390",
+      "estimated_delivery": "Delivered 2 days ago",
+      "delivered_at": "2026-11-14T11:30:00Z",
+      "payment_status": "Cash on Delivery (Completed)"
+    }
+  }
+}

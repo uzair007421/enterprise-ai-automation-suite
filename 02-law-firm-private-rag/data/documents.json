@@ -1,0 +1,82 @@
+[
+  {
+    "doc_id": "DOC-CASE-2023-089",
+    "filename": "Apex_vs_Meridian_Antitrust_Brief.pdf",
+    "title": "Apex Logistics vs. Meridian Rail Corp (Antitrust Settlement Brief)",
+    "practice_area": "Corporate Litigation & Antitrust",
+    "year": 2023,
+    "pages": [
+      {
+        "page_number": 1,
+        "content": "UNITED STATES DISTRICT COURT. CASE NO: 23-CV-8891. IN RE: MERIDIAN RAIL ACQUISITION LITIGATION. Preliminary Statement: Plaintiffs allege anticompetitive exclusive dealing agreements in rail freight corridors across the Midwest territory between 2019 and 2022."
+      },
+      {
+        "page_number": 4,
+        "content": "SECTION 4: MARKET DEFINITION & HHI THRESHOLDS. The relevant product market is defined strictly as heavy freight intermodal transportation. Pre-merger Herfindahl-Hirschman Index (HHI) was calculated at 2,450. Post-transaction HHI exceeds 3,100, establishing a prima facie presumption of enhanced market power under DOJ/FTC Horizontal Merger Guidelines Section 5.3."
+      },
+      {
+        "page_number": 12,
+        "content": "SECTION 9.4: MONETARY SETTLEMENT & DIVESTITURE REMEDY. Meridian Rail agreed to pay a total settlement fund of $42,500,000 into escrow within thirty (30) calendar days of preliminary court approval. Furthermore, Meridian must divest twelve (12) regional spur line rights-of-way to an independent certified rail operator approved by the Special Master."
+      },
+      {
+        "page_number": 18,
+        "content": "SECTION 14: NON-DISCLOSURE AND EXCLUSIVITY CARVEOUTS. Counsel fees shall not exceed twenty-two percent (22%) of the common benefit fund, capped at $9,350,000. All confidential commercial pricing matrices submitted under seal shall remain protected under the Protective Order for a mandatory period of ten (10) years."
+      }
+    ]
+  },
+  {
+    "doc_id": "DOC-CASE-2022-144",
+    "filename": "Vanguard_Tech_NonCompete_Enforceability.pdf",
+    "title": "Vanguard Technologies vs. Dr. Emily Thorne (Restrictive Covenant Ruling)",
+    "practice_area": "Labor & Employment",
+    "year": 2022,
+    "pages": [
+      {
+        "page_number": 2,
+        "content": "IN THE APPELLATE DIVISION. In the matter of enforceability of Section 11 Non-Competition Clause. Dr. Thorne was employed as Chief AI Architect. The agreement stipulated a worldwide 24-month restriction from working with any competitive artificial intelligence venture."
+      },
+      {
+        "page_number": 7,
+        "content": "HOLDING ON GEOGRAPHIC SCOPE: The appellate court holds that a worldwide geographic restriction without limitation to specific commercial customers or active accounts is unenforceable under state common law as an unreasonable restraint of trade. A non-compete covenant exceeding 12 months in fast-moving technology sectors is presumed unreasonable unless accompanied by garden leave compensation."
+      },
+      {
+        "page_number": 11,
+        "content": "REMEDY & BLUE-PENCILLING: The trial court's decision to blue-pencil the covenant from 24 months down to 6 months within a 50-mile radius is AFFIRMED. Vanguard Tech's petition for injunctive preliminary relief is DENIED."
+      }
+    ]
+  },
+  {
+    "doc_id": "DOC-CASE-2024-012",
+    "filename": "BioHealth_Pharma_Patent_Licensing.pdf",
+    "title": "BioHealth Inc. vs. Genovate Pharmaceuticals (Patent Royalty Dispute)",
+    "practice_area": "Intellectual Property & Life Sciences",
+    "year": 2024,
+    "pages": [
+      {
+        "page_number": 3,
+        "content": "US PATENT NO. 9,842,104: Formulation for mRNA lipid nanoparticle encapsulation. Article 3 stipulates a running royalty rate of 4.75% on Net Global Commercial Sales of therapeutic batches manufactured using the licensed protocol."
+      },
+      {
+        "page_number": 9,
+        "content": "AUDIT CLAUSE & UNDERREPORTING PENALTY: Licensor maintains the right upon thirty (30) days prior written notice to conduct an independent inspection of licensee manufacturing logs. In the event an underpayment exceeding five percent (5%) of royalties owed is detected, Genovate must pay interest accrued at prime rate + 3%, plus 100% of reasonable audit costs incurred."
+      }
+    ]
+  },
+  {
+    "doc_id": "DOC-MSA-2024",
+    "filename": "Firm_Standard_Master_Services_Agreement_v4.pdf",
+    "title": "Firm Standard Master Services Agreement (Template v4.2)",
+    "practice_area": "Corporate Contracts & Commercial Law",
+    "year": 2024,
+    "pages": [
+      {
+        "page_number": 5,
+        "content": "CLAUSE 8: LIMITATION OF LIABILITY. Neither party shall be liable for indirect, incidental, consequential, special, or punitive damages. Total aggregate liability arising under this Agreement shall not exceed the total fees paid or payable by Client to Firm in the preceding twelve (12) month period. This cap shall not apply to breaches of Section 12 (Confidentiality) or gross negligence."
+      },
+      {
+        "page_number": 8,
+        "content": "CLAUSE 15: GOVERNING LAW AND ARBITRATION. This Agreement is governed by the laws of the State of Delaware without regard to conflict of law principles. Any dispute arising under or relating to this Agreement shall be resolved through binding arbitration administered by the American Arbitration Association (AAA) in Wilmington, Delaware."
+      }
+    ]
+  }
+]

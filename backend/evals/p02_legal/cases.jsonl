@@ -1,0 +1,40 @@
+{"id": "LEG-01", "query": "What is the liability cap under the MSA agreement?", "expected_doc": "DOC-MSA-SEC8.2", "expected_status": "ANSWERED"}
+{"id": "LEG-02", "query": "Does the MSA exclude lost profits and consequential damages?", "expected_doc": "DOC-MSA-SEC8.2", "expected_status": "ANSWERED"}
+{"id": "LEG-03", "query": "How many months of fees determine the aggregate liability cap?", "expected_doc": "DOC-MSA-SEC8.2", "expected_status": "ANSWERED"}
+{"id": "LEG-04", "query": "Are indemnification obligations subject to the liability cap?", "expected_doc": "DOC-MSA-SEC8.2", "expected_status": "ANSWERED"}
+{"id": "LEG-05", "query": "Does gross negligence bypass the MSA liability limitation?", "expected_doc": "DOC-MSA-SEC8.2", "expected_status": "ANSWERED"}
+{"id": "LEG-06", "query": "What is the term of confidentiality under the NDA?", "expected_doc": "DOC-NDA-SEC3.1", "expected_status": "ANSWERED"}
+{"id": "LEG-07", "query": "How many years do confidentiality obligations survive under NDA?", "expected_doc": "DOC-NDA-SEC3.1", "expected_status": "ANSWERED"}
+{"id": "LEG-08", "query": "Are trade secrets protected in perpetuity in our NDA?", "expected_doc": "DOC-NDA-SEC3.1", "expected_status": "ANSWERED"}
+{"id": "LEG-09", "query": "What standard of care is required for safeguarding proprietary info?", "expected_doc": "DOC-NDA-SEC3.1", "expected_status": "ANSWERED"}
+{"id": "LEG-10", "query": "What are the non-compete restrictions in the employment agreement?", "expected_doc": "DOC-EMP-SEC6.2", "expected_status": "ANSWERED"}
+{"id": "LEG-11", "query": "How long is the executive non-compete duration post-termination?", "expected_doc": "DOC-EMP-SEC6.2", "expected_status": "ANSWERED"}
+{"id": "LEG-12", "query": "What is the geographical radius for the employee non-compete?", "expected_doc": "DOC-EMP-SEC6.2", "expected_status": "ANSWERED"}
+{"id": "LEG-13", "query": "How many months of severance are guaranteed upon termination without Cause?", "expected_doc": "DOC-EMP-SEC6.2", "expected_status": "ANSWERED"}
+{"id": "LEG-14", "query": "Does severance include continuation of executive health benefits?", "expected_doc": "DOC-EMP-SEC6.2", "expected_status": "ANSWERED"}
+{"id": "LEG-15", "query": "What is the tenant cure period following a lease default notice?", "expected_doc": "DOC-LEASE-SEC14", "expected_status": "ANSWERED"}
+{"id": "LEG-16", "query": "How many days does tenant have to cure monetary default in lease?", "expected_doc": "DOC-LEASE-SEC14", "expected_status": "ANSWERED"}
+{"id": "LEG-17", "query": "Can the landlord re-enter premises without 30 days written notice?", "expected_doc": "DOC-LEASE-SEC14", "expected_status": "ANSWERED"}
+{"id": "LEG-18", "query": "What constitutes an event of default under commercial lease agreement?", "expected_doc": "DOC-LEASE-SEC14", "expected_status": "ANSWERED"}
+{"id": "LEG-19", "query": "How quickly must we report a personal data breach under GDPR DPA?", "expected_doc": "DOC-DPA-SEC4.3", "expected_status": "ANSWERED"}
+{"id": "LEG-20", "query": "What is the 72-hour security incident notification requirement?", "expected_doc": "DOC-DPA-SEC4.3", "expected_status": "ANSWERED"}
+{"id": "LEG-21", "query": "What details must be included in GDPR data breach notification?", "expected_doc": "DOC-DPA-SEC4.3", "expected_status": "ANSWERED"}
+{"id": "LEG-22", "query": "Does processor have to notify controller in writing for suspected breach?", "expected_doc": "DOC-DPA-SEC4.3", "expected_status": "ANSWERED"}
+{"id": "LEG-23", "query": "Is punitive damage allowed under the SaaS MSA?", "expected_doc": "DOC-MSA-SEC8.2", "expected_status": "ANSWERED"}
+{"id": "LEG-24", "query": "What happens if tenant fails to pay base rent on time?", "expected_doc": "DOC-LEASE-SEC14", "expected_status": "ANSWERED"}
+{"id": "LEG-25", "query": "Can the executive work for a competing AI enterprise within 50 miles?", "expected_doc": "DOC-EMP-SEC6.2", "expected_status": "ANSWERED"}
+{"id": "LEG-26", "query": "What is the recipe for baking chocolate fudge cake?", "expected_doc": "NONE", "expected_status": "REFUSAL_GROUNDED"}
+{"id": "LEG-27", "query": "Who won the 2022 FIFA World Cup football championship?", "expected_doc": "NONE", "expected_status": "REFUSAL_GROUNDED"}
+{"id": "LEG-28", "query": "What is the current weather temperature in Tokyo Japan?", "expected_doc": "NONE", "expected_status": "REFUSAL_GROUNDED"}
+{"id": "LEG-29", "query": "Tell me a funny joke about software engineers", "expected_doc": "NONE", "expected_status": "REFUSAL_GROUNDED"}
+{"id": "LEG-30", "query": "What are the lyrics to Bohemian Rhapsody song?", "expected_doc": "NONE", "expected_status": "REFUSAL_GROUNDED"}
+{"id": "LEG-31", "query": "Who was the 16th president of the United States?", "expected_doc": "NONE", "expected_status": "REFUSAL_GROUNDED"}
+{"id": "LEG-32", "query": "What is the liability cap in our cloud agreement?", "expected_doc": "DOC-MSA-SEC8.2", "expected_status": "ANSWERED"}
+{"id": "LEG-33", "query": "How long do we protect confidential data after signing NDA?", "expected_doc": "DOC-NDA-SEC3.1", "expected_status": "ANSWERED"}
+{"id": "LEG-34", "query": "Explain the 5-year confidentiality period in mutual NDA", "expected_doc": "DOC-NDA-SEC3.1", "expected_status": "ANSWERED"}
+{"id": "LEG-35", "query": "How much severance does the executive receive upon termination without cause?", "expected_doc": "DOC-EMP-SEC6.2", "expected_status": "ANSWERED"}
+{"id": "LEG-36", "query": "What is the non-compete radius for executive staff?", "expected_doc": "DOC-EMP-SEC6.2", "expected_status": "ANSWERED"}
+{"id": "LEG-37", "query": "How many days to cure lease rent default?", "expected_doc": "DOC-LEASE-SEC14", "expected_status": "ANSWERED"}
+{"id": "LEG-38", "query": "What is the GDPR data breach SLA timeframe?", "expected_doc": "DOC-DPA-SEC4.3", "expected_status": "ANSWERED"}
+{"id": "LEG-39", "query": "Can you recommend a good movie to watch tonight?", "expected_doc": "NONE", "expected_status": "REFUSAL_GROUNDED"}
+{"id": "LEG-40", "query": "What ingredients do I need for pizza dough recipe?", "expected_doc": "NONE", "expected_status": "REFUSAL_GROUNDED"}

@@ -1,0 +1,65 @@
+{
+  "metrics": {
+    "annual_recurring_revenue": 3450000,
+    "monthly_recurring_revenue": 287500,
+    "cash_in_bank": 1820000,
+    "monthly_burn_rate": 115000,
+    "runway_months": 15.8,
+    "gross_margin_pct": 78.4
+  },
+  "client_accounts": [
+    {
+      "account_id": "ACC-901",
+      "company": "Apex Global Logistics",
+      "tier": "Enterprise",
+      "mrr": 18500,
+      "credit_limit": 50000,
+      "balance_due": 18500,
+      "status": "Current"
+    },
+    {
+      "account_id": "ACC-902",
+      "company": "Hyperion Media Labs",
+      "tier": "Growth",
+      "mrr": 6200,
+      "credit_limit": 15000,
+      "balance_due": 0,
+      "status": "Current"
+    },
+    {
+      "account_id": "ACC-903",
+      "company": "Vanguard Biotech Corp",
+      "tier": "Enterprise",
+      "mrr": 24000,
+      "credit_limit": 75000,
+      "balance_due": 48000,
+      "status": "Overdue (30 Days)"
+    }
+  ],
+  "users": {
+    "usr_analyst": {
+      "user_id": "usr_analyst",
+      "name": "Alex Rivera",
+      "role": "JUNIOR_ANALYST",
+      "daily_budget_limit": 5.00,
+      "cost_used_today": 0.42,
+      "permissions": ["READ_DATABASE", "GENERATE_REPORTS", "DRAFT_EMAILS"]
+    },
+    "usr_manager": {
+      "user_id": "usr_manager",
+      "name": "Samantha Reed",
+      "role": "SENIOR_FINANCE_MANAGER",
+      "daily_budget_limit": 20.00,
+      "cost_used_today": 1.85,
+      "permissions": ["READ_DATABASE", "GENERATE_REPORTS", "DRAFT_EMAILS", "REQUEST_WRITE_ACTIONS"]
+    },
+    "usr_cfo": {
+      "user_id": "usr_cfo",
+      "name": "Marcus Vance (CFO)",
+      "role": "CFO_ADMIN",
+      "daily_budget_limit": 100.00,
+      "cost_used_today": 3.20,
+      "permissions": ["READ_DATABASE", "GENERATE_REPORTS", "DRAFT_EMAILS", "REQUEST_WRITE_ACTIONS", "APPROVE_WRITES", "OVERRIDE_BUDGET"]
+    }
+  }
+}

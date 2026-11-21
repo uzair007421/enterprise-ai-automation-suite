@@ -1,0 +1,10 @@
+{"id": "CHAOS-01", "workflow_id": "wf_meta_leads_01", "service": "Meta Graph API v19.0", "fault": "HTTP_429_RATE_LIMIT", "expected_strategy": "EXPONENTIAL_BACKOFF_JITTER", "expected_status": "RECOVERED"}
+{"id": "CHAOS-02", "workflow_id": "wf_meta_leads_01", "service": "Meta Graph API v19.0", "fault": "HTTP_429_RATE_LIMIT", "expected_strategy": "EXPONENTIAL_BACKOFF_JITTER", "expected_status": "RECOVERED"}
+{"id": "CHAOS-03", "workflow_id": "wf_hubspot_enrich_02", "service": "HubSpot REST API", "fault": "HTTP_401_TOKEN_EXPIRED", "expected_strategy": "OAUTH_TOKEN_REFRESH", "expected_status": "RECOVERED"}
+{"id": "CHAOS-04", "workflow_id": "wf_hubspot_enrich_02", "service": "HubSpot REST API", "fault": "HTTP_401_TOKEN_EXPIRED", "expected_strategy": "OAUTH_TOKEN_REFRESH", "expected_status": "RECOVERED"}
+{"id": "CHAOS-05", "workflow_id": "wf_stripe_billing_03", "service": "Stripe Webhooks API", "fault": "HTTP_504_GATEWAY_TIMEOUT", "expected_strategy": "CIRCUIT_BREAKER_RESET", "expected_status": "RECOVERED"}
+{"id": "CHAOS-06", "workflow_id": "wf_stripe_billing_03", "service": "Stripe Webhooks API", "fault": "HTTP_504_GATEWAY_TIMEOUT", "expected_strategy": "CIRCUIT_BREAKER_RESET", "expected_status": "RECOVERED"}
+{"id": "CHAOS-07", "workflow_id": "wf_google_ads_04", "service": "Google Ads API v16", "fault": "HTTP_429_RATE_LIMIT", "expected_strategy": "EXPONENTIAL_BACKOFF_JITTER", "expected_status": "RECOVERED"}
+{"id": "CHAOS-08", "workflow_id": "wf_google_ads_04", "service": "Google Ads API v16", "fault": "HTTP_401_TOKEN_EXPIRED", "expected_strategy": "OAUTH_TOKEN_REFRESH", "expected_status": "RECOVERED"}
+{"id": "CHAOS-09", "workflow_id": "wf_shopify_fulfill_05", "service": "Shopify Fulfillment API", "fault": "HTTP_504_GATEWAY_TIMEOUT", "expected_strategy": "CIRCUIT_BREAKER_RESET", "expected_status": "RECOVERED"}
+{"id": "CHAOS-10", "workflow_id": "wf_shopify_fulfill_05", "service": "Shopify Fulfillment API", "fault": "HTTP_500_SERVER_ERROR", "expected_strategy": "FAILOVER_RETRY", "expected_status": "RECOVERED"}

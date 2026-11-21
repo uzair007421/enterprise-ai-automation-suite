@@ -1,0 +1,107 @@
+{
+  "portfolio_name": "Enterprise AI Engineering & Automation Portfolio",
+  "developer": "Muhammad Uzair",
+  "role": "AI Systems & Autonomous Agent Engineer",
+  "live_hub_url": "https://uzairio.web.app/ai-automations",
+  "updated_at": "2026-11-20T23:45:00Z",
+  "technical_architecture_standards": [
+    "Deterministic verification loops over unvalidated LLM output",
+    "Real in-browser Tesseract.js neural OCR engine with WebAssembly pixel processing",
+    "128-dimensional dense vector embeddings with mathematical cosine similarity search",
+    "Real Python Telegram AI support bot with Gemini 1.5 Flash integration",
+    "Production n8n workflow monitoring and automated Telegram failure alerts"
+  ],
+  "total_systems": 10,
+  "systems": [
+    {
+      "id": "01-real-estate",
+      "number": "01",
+      "title": "Multi-Agent Real Estate Sales & Ingestion Engine",
+      "vertical": "Real Estate Brokerages & Agencies",
+      "commercial_problem": "300+ monthly leads from ads and WhatsApp overwhelm brokers. Manual qualification and offer drafting cause 40% lead drop-off.",
+      "technical_implementation": "3-Agent sequential state machine: Lead Qualification (budget & timeline scoring), MLS Inventory Matcher (algorithmic fit), and Offer Drafter with Licensed Broker manual review desk.",
+      "live_url": "https://uzairio.web.app/projects-live/ai-systems/01-real-estate/index.html"
+    },
+    {
+      "id": "02-law-firm-rag",
+      "number": "02",
+      "title": "Legal Document Vector Cosine Similarity Search Engine",
+      "vertical": "Law Firms & Corporate Legal Counsel",
+      "commercial_problem": "Attorneys waste 15+ hours weekly cross-referencing deposition transcripts. Finding exact clauses requires semantic search.",
+      "technical_implementation": "128-dimensional dense vector embedding engine with mathematical dot-product Cosine Similarity. Includes a strict semantic threshold refusal gate (0.22) that blocks out-of-domain queries.",
+      "live_url": "https://uzairio.web.app/projects-live/ai-systems/02-law-firm-rag/index.html"
+    },
+    {
+      "id": "03-whatsapp-ecommerce",
+      "number": "03",
+      "title": "Bilingual AI Customer Support Engine & Telegram Bot",
+      "vertical": "Shopify & Direct-to-Consumer (D2C) Retail",
+      "commercial_problem": "High customer support load in mixed Roman Urdu and English. Customer reps make unauthorized refund commitments under pressure.",
+      "technical_implementation": "Dual-language NLP parser (English & Roman Urdu), courier status tracking, sentiment hostility escalation, and strict refund guardrails. Includes live Python Telegram Bot backend in `d:/Projects/real-ai-telegram-bot`.",
+      "live_url": "https://uzairio.web.app/projects-live/ai-systems/03-whatsapp-ecommerce/index.html"
+    },
+    {
+      "id": "04-accounting-ocr",
+      "number": "04",
+      "title": "Real AI Invoice Vision & Tesseract Neural OCR Pipeline",
+      "vertical": "Corporate Accounting, CFOs & ERP Systems",
+      "commercial_problem": "Manual processing of vendor receipts causes 4% calculation errors and expensive double billing.",
+      "technical_implementation": "Real drag-and-drop image upload running Tesseract.js neural OCR in WebAssembly, optional Gemini 1.5 Flash Multimodal Vision extraction, 4-way math reconciliation (Line Items + Tax == Total), and Google Sheets CSV sync.",
+      "live_url": "https://uzairio.web.app/projects-live/ai-systems/04-accounting-ocr/index.html"
+    },
+    {
+      "id": "05-marketing-monitor",
+      "number": "05",
+      "title": "Autonomous Telemetry Sentinel & n8n Failure Alert Engine",
+      "vertical": "Marketing Agencies, Zapier / Make / n8n Automation Fleets",
+      "commercial_problem": "Silent API failures in client automation fleets (Zapier/Make/n8n) go undetected for days, risking client retention.",
+      "technical_implementation": "Fleet observability grid with chaos fault injection (HTTP 429, 401, 504), automated exponential jitter retries, and production n8n Telegram failure alert workflow in `d:/Projects/real-n8n-failure-alert`.",
+      "live_url": "https://uzairio.web.app/projects-live/ai-systems/05-marketing-monitor/index.html"
+    },
+    {
+      "id": "06-hr-recruiter",
+      "number": "06",
+      "title": "Objective AI Recruiter Assistant & Calendar Scheduler",
+      "vertical": "Enterprise Talent Acquisition & Recruitment Agencies",
+      "commercial_problem": "Recruiter screening bias and fatigue lead to non-compliance with labor laws and missed top talent.",
+      "technical_implementation": "Pre-scoring demographic redaction gateway automatically scrubs names, pronouns, and age proxies before applying an explainable 100-point rubric and calendar interview scheduler.",
+      "live_url": "https://uzairio.web.app/projects-live/ai-systems/06-hr-recruiter/index.html"
+    },
+    {
+      "id": "07-dental-voice",
+      "number": "07",
+      "title": "Voice AI Medical & Dental Appointment Triage Agent",
+      "vertical": "Healthcare Clinics, Dental Practices & Hospitals",
+      "commercial_problem": "Overloaded receptionists miss after-hours emergency calls, costing practices $140,000+ in annual lost patient revenue.",
+      "technical_implementation": "Conversational Web Speech API audio synthesis with clinical intent parsing, acute emergency triage routing (transfers trauma cases to surgeon), and appointment confirmation dispatch.",
+      "live_url": "https://uzairio.web.app/projects-live/ai-systems/07-dental-voice/index.html"
+    },
+    {
+      "id": "08-saas-intel",
+      "number": "08",
+      "title": "SaaSRadar Competitor Market Intelligence Platform",
+      "vertical": "B2B SaaS Companies & Venture Capitalists",
+      "commercial_problem": "SaaS leadership is blind to rival pricing hikes and stealth feature launches until renewals are lost.",
+      "technical_implementation": "15-competitor DOM diffing engine (tracking Stripe, Supabase, Datadog), automated price shift percentage calculation, 1-10 strategic impact scoring, and executive digest generation.",
+      "live_url": "https://uzairio.web.app/projects-live/ai-systems/08-saas-intel/index.html"
+    },
+    {
+      "id": "09-media-engine",
+      "number": "09",
+      "title": "OmniContent Video Repurposing & Editorial Desk",
+      "vertical": "Media Companies, Creators & Executive Personal Branding",
+      "commercial_problem": "Repurposing 45-minute keynote videos into multi-platform assets requires 20+ hours of manual copywriting.",
+      "technical_implementation": "1-to-13 multi-channel repurposing (10 viral video hooks/scripts, 1 SEO blog, 1 LinkedIn post, 1 X thread) with brand voice buzzword filtering and human editorial review desk.",
+      "live_url": "https://uzairio.web.app/projects-live/ai-systems/09-media-engine/index.html"
+    },
+    {
+      "id": "10-finance-audit",
+      "number": "10",
+      "title": "FinGuard Enterprise Autonomous Finance Agent",
+      "vertical": "Corporate Treasury, Fintech & Regulated Entities",
+      "commercial_problem": "Giving autonomous AI agents unchecked write access (fund transfers, credit limits) creates catastrophic financial liability.",
+      "technical_implementation": "ReAct agent loop with safe read tools vs dangerous write tools, mandatory human confirmation gates, and 3-tier Role-Based Access Control (Analyst, Manager, CFO).",
+      "live_url": "https://uzairio.web.app/projects-live/ai-systems/10-finance-audit/index.html"
+    }
+  ]
+}

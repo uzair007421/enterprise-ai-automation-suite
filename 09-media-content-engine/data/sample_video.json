@@ -1,0 +1,12 @@
+{
+  "video_id": "VID-PODCAST-882",
+  "title": "Ep 42: How Multi-Agent AI Architecture Replaces 80% of Repetitive Agency Operations",
+  "duration_minutes": 42.5,
+  "speaker": "Alexander Hayes (Chief AI Architect)",
+  "brand_voice": {
+    "tone": "Data-driven, authoritative, direct, practical",
+    "banned_words": ["game-changer", "revolutionize", "disrupt", "magic", "miracle"],
+    "target_audience": "Founders, Agency Owners, CTOs"
+  },
+  "transcript_excerpt": "When we looked at agency client retention, the biggest failure mode was silent automation decay. A webhook breaks at 2 AM, nobody notices for five days, and the client churns. Multi-agent systems with active self-healing solve this because you have an agent that monitors the other agents. Secondly, lead response times under 90 seconds increase deal close rates by 391%. By wiring lead qualification directly into WhatsApp and CRM before human review, agency margins jump from 25% to 58%. The key is human-in-the-loop: AI proposes, humans approve."
+}

@@ -1,0 +1,79 @@
+[
+  {
+    "id": "INV-RAW-001",
+    "filename": "AWS_Cloud_Services_Oct2026.pdf",
+    "format": "PDF",
+    "source": "billing@amazon.com",
+    "vendor": "Amazon Web Services Inc.",
+    "invoice_number": "AWS-2026-9812",
+    "date": "2026-10-31",
+    "due_date": "2026-11-30",
+    "currency": "USD",
+    "line_items": [
+      {"description": "EC2 Virtual Server Instances", "qty": 4, "unit_price": 250.00, "amount": 1000.00},
+      {"description": "S3 Standard Storage (TB)", "qty": 5, "unit_price": 40.00, "amount": 200.00},
+      {"description": "CloudFront CDN Data Transfer", "qty": 1, "unit_price": 150.00, "amount": 150.00}
+    ],
+    "subtotal": 1350.00,
+    "tax": 108.00,
+    "total": 1458.00,
+    "raw_ocr_confidence": 0.98
+  },
+  {
+    "id": "INV-RAW-002",
+    "filename": "Photo_Receipt_OfficeSupplies.jpg",
+    "format": "Photo Receipt",
+    "source": "Mobile Upload / Expense App",
+    "vendor": "Staples Business Depot",
+    "invoice_number": "STP-44021",
+    "date": "2026-11-04",
+    "due_date": "2026-11-04",
+    "currency": "USD",
+    "line_items": [
+      {"description": "Ergonomic Desk Chairs", "qty": 2, "unit_price": 180.00, "amount": 360.00},
+      {"description": "Laser Printer Cartridges", "qty": 3, "unit_price": 75.00, "amount": 225.00}
+    ],
+    "subtotal": 585.00,
+    "tax": 46.80,
+    "total": 699.00,
+    "raw_ocr_confidence": 0.72
+  },
+  {
+    "id": "INV-RAW-003",
+    "filename": "AWS_Cloud_Services_Oct2026_DUPLICATE.pdf",
+    "format": "PDF",
+    "source": "accounting-resend@amazon.com",
+    "vendor": "Amazon Web Services Inc.",
+    "invoice_number": "AWS-2026-9812",
+    "date": "2026-10-31",
+    "due_date": "2026-11-30",
+    "currency": "USD",
+    "line_items": [
+      {"description": "EC2 Virtual Server Instances", "qty": 4, "unit_price": 250.00, "amount": 1000.00},
+      {"description": "S3 Standard Storage (TB)", "qty": 5, "unit_price": 40.00, "amount": 200.00},
+      {"description": "CloudFront CDN Data Transfer", "qty": 1, "unit_price": 150.00, "amount": 150.00}
+    ],
+    "subtotal": 1350.00,
+    "tax": 108.00,
+    "total": 1458.00,
+    "raw_ocr_confidence": 0.97
+  },
+  {
+    "id": "INV-RAW-004",
+    "filename": "Unverified_Consultancy_Fee.pdf",
+    "format": "Email PDF",
+    "source": "inbox@partner-strategy.io",
+    "vendor": "Apex Strategic Partners LLC",
+    "invoice_number": "STRAT-9901",
+    "date": "2026-11-10",
+    "due_date": "2026-11-15",
+    "currency": "USD",
+    "line_items": [
+      {"description": "Executive Management Advisory Retainer", "qty": 1, "unit_price": 45000.00, "amount": 45000.00}
+    ],
+    "subtotal": 45000.00,
+    "tax": 0.00,
+    "total": 45000.00,
+    "raw_ocr_confidence": 0.94
+  }
+]

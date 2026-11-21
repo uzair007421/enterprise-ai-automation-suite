@@ -1,0 +1,25 @@
+{
+  "clinic_name": "Apex Smiles Dental & Orthodontics",
+  "phone": "+1 (555) 321-7890",
+  "doctors": [
+    {"id": "DOC-01", "name": "Dr. Sarah Vance", "specialty": "Orthodontics & Cosmetic"},
+    {"id": "DOC-02", "name": "Dr. Michael Chen", "specialty": "General Dentistry & Hygiene"}
+  ],
+  "available_slots": [
+    {"slot_id": "SLOT-101", "doctor": "Dr. Sarah Vance", "date": "Tomorrow", "time": "10:30 AM", "status": "AVAILABLE"},
+    {"slot_id": "SLOT-102", "doctor": "Dr. Sarah Vance", "date": "Tomorrow", "time": "2:00 PM", "status": "AVAILABLE"},
+    {"slot_id": "SLOT-103", "doctor": "Dr. Michael Chen", "date": "Tomorrow", "time": "11:15 AM", "status": "AVAILABLE"},
+    {"slot_id": "SLOT-104", "doctor": "Dr. Michael Chen", "date": "Thursday", "time": "3:30 PM", "status": "AVAILABLE"}
+  ],
+  "existing_appointments": {
+    "APT-8801": {
+      "appointment_id": "APT-8801",
+      "patient_name": "David Miller",
+      "phone": "+1 (555) 998-1122",
+      "doctor": "Dr. Sarah Vance",
+      "date": "Tomorrow",
+      "time": "9:00 AM",
+      "treatment": "Braces Checkup"
+    }
+  }
+}

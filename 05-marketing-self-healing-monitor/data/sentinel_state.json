@@ -1,0 +1,378 @@
+{
+  "workflows": {
+    "WF-01": {
+      "id": "WF-01",
+      "name": "Apex Dental: Meta Lead Ads to HubSpot Sync",
+      "client": "Apex Dental",
+      "category": "Lead Gen",
+      "status": "SELF_HEALED",
+      "success_rate": 99.8,
+      "last_error": "The upstream platform (Meta / Google Ads) throttled requests due to sudden surge in lead volume. The API key is valid, but request quota was temporarily exhausted."
+    },
+    "WF-02": {
+      "id": "WF-02",
+      "name": "Luxe Apparel: Shopify to Klaviyo Welcome Flow",
+      "client": "Luxe Apparel",
+      "category": "E-Commerce",
+      "status": "HEALTHY",
+      "success_rate": 100.0
+    },
+    "WF-03": {
+      "id": "WF-03",
+      "name": "Venture Capital: Crunchbase Daily Funding Scraping",
+      "client": "Venture Horizons",
+      "category": "Scraping",
+      "status": "HEALTHY",
+      "success_rate": 97.4
+    },
+    "WF-04": {
+      "id": "WF-04",
+      "name": "Urban Fitness: Mindbody Class Booking Webhook",
+      "client": "Urban Fitness",
+      "category": "Bookings",
+      "status": "HEALTHY",
+      "success_rate": 99.1
+    },
+    "WF-05": {
+      "id": "WF-05",
+      "name": "TechFlow: Stripe Invoice to Xero Ledger Sync",
+      "client": "TechFlow SaaS",
+      "category": "Billing",
+      "status": "HEALTHY",
+      "success_rate": 98.9
+    },
+    "WF-06": {
+      "id": "WF-06",
+      "name": "Horizon Realty: Zillow Inquiries to Agent WhatsApp",
+      "client": "Horizon Realty",
+      "category": "Messaging",
+      "status": "HEALTHY",
+      "success_rate": 99.5
+    },
+    "WF-07": {
+      "id": "WF-07",
+      "name": "Gourmet Kitchen: UberEats Order to POS Printer",
+      "client": "Gourmet Kitchen",
+      "category": "Operations",
+      "status": "CRITICAL_ALERT",
+      "success_rate": 98.2,
+      "last_error": "Client changed their database schema without notice. A mandatory field 'postal_code' is missing from the incoming webhook."
+    },
+    "WF-08": {
+      "id": "WF-08",
+      "name": "BioHealth: HIPAA Form Ingestion to Secure Storage",
+      "client": "BioHealth Labs",
+      "category": "Compliance",
+      "status": "HEALTHY",
+      "success_rate": 100.0
+    },
+    "WF-09": {
+      "id": "WF-09",
+      "name": "Echo Agency: Google Ads Cost Aggregator to Slack",
+      "client": "Echo Media",
+      "category": "Reporting",
+      "status": "HEALTHY",
+      "success_rate": 99.0
+    },
+    "WF-10": {
+      "id": "WF-10",
+      "name": "SolarTech: Residential Utility Bill OCR Pipeline",
+      "client": "SolarTech Direct",
+      "category": "AI Pipeline",
+      "status": "HEALTHY",
+      "success_rate": 98.6
+    },
+    "WF-01-G2": {
+      "id": "WF-01-G2",
+      "name": "[2] Apex Dental: Meta Lead Ads to HubSpot Sync",
+      "client": "Apex Dental",
+      "category": "Lead Gen",
+      "status": "HEALTHY",
+      "success_rate": 99.8
+    },
+    "WF-02-G2": {
+      "id": "WF-02-G2",
+      "name": "[2] Luxe Apparel: Shopify to Klaviyo Welcome Flow",
+      "client": "Luxe Apparel",
+      "category": "E-Commerce",
+      "status": "HEALTHY",
+      "success_rate": 100.0
+    },
+    "WF-03-G2": {
+      "id": "WF-03-G2",
+      "name": "[2] Venture Capital: Crunchbase Daily Funding Scraping",
+      "client": "Venture Horizons",
+      "category": "Scraping",
+      "status": "HEALTHY",
+      "success_rate": 97.4
+    },
+    "WF-04-G2": {
+      "id": "WF-04-G2",
+      "name": "[2] Urban Fitness: Mindbody Class Booking Webhook",
+      "client": "Urban Fitness",
+      "category": "Bookings",
+      "status": "HEALTHY",
+      "success_rate": 99.1
+    },
+    "WF-05-G2": {
+      "id": "WF-05-G2",
+      "name": "[2] TechFlow: Stripe Invoice to Xero Ledger Sync",
+      "client": "TechFlow SaaS",
+      "category": "Billing",
+      "status": "HEALTHY",
+      "success_rate": 98.9
+    },
+    "WF-06-G2": {
+      "id": "WF-06-G2",
+      "name": "[2] Horizon Realty: Zillow Inquiries to Agent WhatsApp",
+      "client": "Horizon Realty",
+      "category": "Messaging",
+      "status": "HEALTHY",
+      "success_rate": 99.5
+    },
+    "WF-07-G2": {
+      "id": "WF-07-G2",
+      "name": "[2] Gourmet Kitchen: UberEats Order to POS Printer",
+      "client": "Gourmet Kitchen",
+      "category": "Operations",
+      "status": "HEALTHY",
+      "success_rate": 98.2
+    },
+    "WF-08-G2": {
+      "id": "WF-08-G2",
+      "name": "[2] BioHealth: HIPAA Form Ingestion to Secure Storage",
+      "client": "BioHealth Labs",
+      "category": "Compliance",
+      "status": "HEALTHY",
+      "success_rate": 100.0
+    },
+    "WF-09-G2": {
+      "id": "WF-09-G2",
+      "name": "[2] Echo Agency: Google Ads Cost Aggregator to Slack",
+      "client": "Echo Media",
+      "category": "Reporting",
+      "status": "HEALTHY",
+      "success_rate": 99.0
+    },
+    "WF-10-G2": {
+      "id": "WF-10-G2",
+      "name": "[2] SolarTech: Residential Utility Bill OCR Pipeline",
+      "client": "SolarTech Direct",
+      "category": "AI Pipeline",
+      "status": "HEALTHY",
+      "success_rate": 98.6
+    },
+    "WF-01-G3": {
+      "id": "WF-01-G3",
+      "name": "[3] Apex Dental: Meta Lead Ads to HubSpot Sync",
+      "client": "Apex Dental",
+      "category": "Lead Gen",
+      "status": "HEALTHY",
+      "success_rate": 99.8
+    },
+    "WF-02-G3": {
+      "id": "WF-02-G3",
+      "name": "[3] Luxe Apparel: Shopify to Klaviyo Welcome Flow",
+      "client": "Luxe Apparel",
+      "category": "E-Commerce",
+      "status": "HEALTHY",
+      "success_rate": 100.0
+    },
+    "WF-03-G3": {
+      "id": "WF-03-G3",
+      "name": "[3] Venture Capital: Crunchbase Daily Funding Scraping",
+      "client": "Venture Horizons",
+      "category": "Scraping",
+      "status": "HEALTHY",
+      "success_rate": 97.4
+    },
+    "WF-04-G3": {
+      "id": "WF-04-G3",
+      "name": "[3] Urban Fitness: Mindbody Class Booking Webhook",
+      "client": "Urban Fitness",
+      "category": "Bookings",
+      "status": "HEALTHY",
+      "success_rate": 99.1
+    },
+    "WF-05-G3": {
+      "id": "WF-05-G3",
+      "name": "[3] TechFlow: Stripe Invoice to Xero Ledger Sync",
+      "client": "TechFlow SaaS",
+      "category": "Billing",
+      "status": "HEALTHY",
+      "success_rate": 98.9
+    },
+    "WF-06-G3": {
+      "id": "WF-06-G3",
+      "name": "[3] Horizon Realty: Zillow Inquiries to Agent WhatsApp",
+      "client": "Horizon Realty",
+      "category": "Messaging",
+      "status": "HEALTHY",
+      "success_rate": 99.5
+    },
+    "WF-07-G3": {
+      "id": "WF-07-G3",
+      "name": "[3] Gourmet Kitchen: UberEats Order to POS Printer",
+      "client": "Gourmet Kitchen",
+      "category": "Operations",
+      "status": "HEALTHY",
+      "success_rate": 98.2
+    },
+    "WF-08-G3": {
+      "id": "WF-08-G3",
+      "name": "[3] BioHealth: HIPAA Form Ingestion to Secure Storage",
+      "client": "BioHealth Labs",
+      "category": "Compliance",
+      "status": "HEALTHY",
+      "success_rate": 100.0
+    },
+    "WF-09-G3": {
+      "id": "WF-09-G3",
+      "name": "[3] Echo Agency: Google Ads Cost Aggregator to Slack",
+      "client": "Echo Media",
+      "category": "Reporting",
+      "status": "HEALTHY",
+      "success_rate": 99.0
+    },
+    "WF-10-G3": {
+      "id": "WF-10-G3",
+      "name": "[3] SolarTech: Residential Utility Bill OCR Pipeline",
+      "client": "SolarTech Direct",
+      "category": "AI Pipeline",
+      "status": "HEALTHY",
+      "success_rate": 98.6
+    },
+    "WF-01-G4": {
+      "id": "WF-01-G4",
+      "name": "[4] Apex Dental: Meta Lead Ads to HubSpot Sync",
+      "client": "Apex Dental",
+      "category": "Lead Gen",
+      "status": "HEALTHY",
+      "success_rate": 99.8
+    },
+    "WF-02-G4": {
+      "id": "WF-02-G4",
+      "name": "[4] Luxe Apparel: Shopify to Klaviyo Welcome Flow",
+      "client": "Luxe Apparel",
+      "category": "E-Commerce",
+      "status": "HEALTHY",
+      "success_rate": 100.0
+    },
+    "WF-03-G4": {
+      "id": "WF-03-G4",
+      "name": "[4] Venture Capital: Crunchbase Daily Funding Scraping",
+      "client": "Venture Horizons",
+      "category": "Scraping",
+      "status": "HEALTHY",
+      "success_rate": 97.4
+    },
+    "WF-04-G4": {
+      "id": "WF-04-G4",
+      "name": "[4] Urban Fitness: Mindbody Class Booking Webhook",
+      "client": "Urban Fitness",
+      "category": "Bookings",
+      "status": "HEALTHY",
+      "success_rate": 99.1
+    },
+    "WF-05-G4": {
+      "id": "WF-05-G4",
+      "name": "[4] TechFlow: Stripe Invoice to Xero Ledger Sync",
+      "client": "TechFlow SaaS",
+      "category": "Billing",
+      "status": "HEALTHY",
+      "success_rate": 98.9
+    },
+    "WF-06-G4": {
+      "id": "WF-06-G4",
+      "name": "[4] Horizon Realty: Zillow Inquiries to Agent WhatsApp",
+      "client": "Horizon Realty",
+      "category": "Messaging",
+      "status": "HEALTHY",
+      "success_rate": 99.5
+    },
+    "WF-07-G4": {
+      "id": "WF-07-G4",
+      "name": "[4] Gourmet Kitchen: UberEats Order to POS Printer",
+      "client": "Gourmet Kitchen",
+      "category": "Operations",
+      "status": "HEALTHY",
+      "success_rate": 98.2
+    },
+    "WF-08-G4": {
+      "id": "WF-08-G4",
+      "name": "[4] BioHealth: HIPAA Form Ingestion to Secure Storage",
+      "client": "BioHealth Labs",
+      "category": "Compliance",
+      "status": "HEALTHY",
+      "success_rate": 100.0
+    },
+    "WF-09-G4": {
+      "id": "WF-09-G4",
+      "name": "[4] Echo Agency: Google Ads Cost Aggregator to Slack",
+      "client": "Echo Media",
+      "category": "Reporting",
+      "status": "HEALTHY",
+      "success_rate": 99.0
+    },
+    "WF-10-G4": {
+      "id": "WF-10-G4",
+      "name": "[4] SolarTech: Residential Utility Bill OCR Pipeline",
+      "client": "SolarTech Direct",
+      "category": "AI Pipeline",
+      "status": "HEALTHY",
+      "success_rate": 98.6
+    }
+  },
+  "incidents": [
+    {
+      "incident_id": "INC-63006",
+      "workflow_id": "WF-07",
+      "workflow_name": "Gourmet Kitchen: UberEats Order to POS Printer",
+      "client": "Gourmet Kitchen",
+      "timestamp": "2026-11-16 08:31:03 UTC",
+      "diagnosis": {
+        "category": "SCHEMA_MISMATCH",
+        "plain_english": "Client changed their database schema without notice. A mandatory field 'postal_code' is missing from the incoming webhook.",
+        "root_cause": "KeyError: 'postal_code' not found in JSON payload",
+        "recommended_action": "Human engineer must inspect payload and update mapping rule.",
+        "auto_recoverable": false
+      },
+      "attempts": 1,
+      "status": "REQUIRES_ENGINEER"
+    },
+    {
+      "incident_id": "INC-62997",
+      "workflow_id": "WF-01",
+      "workflow_name": "Apex Dental: Meta Lead Ads to HubSpot Sync",
+      "client": "Apex Dental",
+      "timestamp": "2026-11-16 08:31:02 UTC",
+      "diagnosis": {
+        "category": "API_RATE_LIMIT",
+        "plain_english": "The upstream platform (Meta / Google Ads) throttled requests due to sudden surge in lead volume. The API key is valid, but request quota was temporarily exhausted.",
+        "root_cause": "HTTP 429 Too Many Requests (Rate limit hit: 120 req/min)",
+        "recommended_action": "Pause dispatch queue for 5 seconds, reduce batch size from 50 to 15, and retry with exponential backoff.",
+        "auto_recoverable": true
+      },
+      "attempts": 1,
+      "status": "RESOLVED_BY_SENTINEL"
+    }
+  ],
+  "heal_log": [
+    {
+      "incident_id": "INC-62997",
+      "workflow_id": "WF-01",
+      "strategy": "Exponential Backoff & Jittered Batch Throttle",
+      "attempts_taken": 2,
+      "resolved_at": "2026-11-16 08:31:02 UTC",
+      "outcome": "SELF_HEALED_SUCCESSFULLY",
+      "detail": "Auto-recovery executed successfully. Pause dispatch queue for 5 seconds, reduce batch size from 50 to 15, and retry with exponential backoff."
+    }
+  ],
+  "alerts_dispatched": [
+    {
+      "channel": "Slack #agency-ops-alerts",
+      "message": "\ud83d\udea8 [CRITICAL WORKFLOW FAILURE] Client: Gourmet Kitchen | Workflow: Gourmet Kitchen: UberEats Order to POS Printer | Reason: Client changed their database schema without notice. A mandatory field 'postal_code' is missing from the incoming webhook.",
+      "timestamp": "2026-11-16 08:31:03 UTC"
+    }
+  ]
+}

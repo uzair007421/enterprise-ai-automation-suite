@@ -1,0 +1,57 @@
+[
+  {
+    "id": "PROP-101",
+    "title": "Luxury Downtown Skyline Penthouse",
+    "type": "Apartment",
+    "price": 850000,
+    "bedrooms": 3,
+    "bathrooms": 3,
+    "location": "Downtown Metro",
+    "features": ["Balcony", "Skyline View", "Smart Home", "Concierge", "Underground Parking"],
+    "status": "Available"
+  },
+  {
+    "id": "PROP-102",
+    "title": "Modern Suburban Family Villa",
+    "type": "Single Family Home",
+    "price": 550000,
+    "bedrooms": 4,
+    "bathrooms": 3.5,
+    "location": "Greenwood Suburbs",
+    "features": ["Spacious Backyard", "Double Garage", "Open Concept Kitchen", "Solar Panels", "Close to Schools"],
+    "status": "Available"
+  },
+  {
+    "id": "PROP-103",
+    "title": "Cozy Waterfront Lakeview Cottage",
+    "type": "Cottage / Vacation",
+    "price": 420000,
+    "bedrooms": 2,
+    "bathrooms": 2,
+    "location": "Lakeview Bay",
+    "features": ["Private Dock", "Fireplace", "Deck", "Nature Views", "Short-term Rental Permitted"],
+    "status": "Available"
+  },
+  {
+    "id": "PROP-104",
+    "title": "Contemporary Minimalist Townhouse",
+    "type": "Townhouse",
+    "price": 380000,
+    "bedrooms": 3,
+    "bathrooms": 2.5,
+    "location": "Oakridge District",
+    "features": ["Rooftop Patio", "EV Charger", "Low HOA", "Near Transit", "Granite Counters"],
+    "status": "Available"
+  },
+  {
+    "id": "PROP-105",
+    "title": "Executive Golf Course Estate",
+    "type": "Single Family Home",
+    "price": 1250000,
+    "bedrooms": 5,
+    "bathrooms": 5,
+    "location": "Highland Hills",
+    "features": ["Infinity Pool", "Wine Cellar", "Home Theater", "Golf Course Access", "Gated Security"],
+    "status": "Available"
+  }
+]

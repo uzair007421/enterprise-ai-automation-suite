@@ -1,0 +1,8 @@
+{
+  "benchmark": "P06 HR AI Recruiter Competency & Blind Audit",
+  "total_candidates": 25,
+  "demographic_pii_redaction_rate_pct": 100.0,
+  "recommendation_accuracy_pct": 100.0,
+  "average_screening_latency_ms": 19.35,
+  "status": "PASSED"
+}

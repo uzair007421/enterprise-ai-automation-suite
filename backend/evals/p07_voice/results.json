@@ -1,0 +1,9 @@
+{
+  "benchmark": "P07 Clinical Voice Triage Evaluation",
+  "total_cases": 30,
+  "total_critical_emergencies": 14,
+  "emergency_recall_pct": 100.0,
+  "tier_classification_accuracy_pct": 93.33,
+  "average_triage_latency_ms": 0.293,
+  "status": "PASSED"
+}

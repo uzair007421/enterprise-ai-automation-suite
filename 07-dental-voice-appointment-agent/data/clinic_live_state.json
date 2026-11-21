@@ -1,0 +1,84 @@
+{
+  "clinic_name": "Apex Smiles Dental & Orthodontics",
+  "phone": "+1 (555) 321-7890",
+  "doctors": [
+    {
+      "id": "DOC-01",
+      "name": "Dr. Sarah Vance",
+      "specialty": "Orthodontics & Cosmetic"
+    },
+    {
+      "id": "DOC-02",
+      "name": "Dr. Michael Chen",
+      "specialty": "General Dentistry & Hygiene"
+    }
+  ],
+  "available_slots": [
+    {
+      "slot_id": "SLOT-101",
+      "doctor": "Dr. Sarah Vance",
+      "date": "Tomorrow",
+      "time": "10:30 AM",
+      "status": "BOOKED"
+    },
+    {
+      "slot_id": "SLOT-102",
+      "doctor": "Dr. Sarah Vance",
+      "date": "Tomorrow",
+      "time": "2:00 PM",
+      "status": "AVAILABLE"
+    },
+    {
+      "slot_id": "SLOT-103",
+      "doctor": "Dr. Michael Chen",
+      "date": "Tomorrow",
+      "time": "11:15 AM",
+      "status": "AVAILABLE"
+    },
+    {
+      "slot_id": "SLOT-104",
+      "doctor": "Dr. Michael Chen",
+      "date": "Thursday",
+      "time": "3:30 PM",
+      "status": "AVAILABLE"
+    }
+  ],
+  "existing_appointments": {
+    "APT-8801": {
+      "appointment_id": "APT-8801",
+      "patient_name": "David Miller",
+      "phone": "+1 (555) 998-1122",
+      "doctor": "Dr. Sarah Vance",
+      "date": "Tomorrow",
+      "time": "9:00 AM",
+      "treatment": "Braces Checkup"
+    },
+    "APT-140": {
+      "appointment_id": "APT-140",
+      "patient_name": "Caller (Direct Inbound)",
+      "phone": "+15551234567",
+      "doctor": "Dr. Sarah Vance",
+      "date": "Tomorrow",
+      "time": "10:30 AM",
+      "treatment": "Routine Consultation & Cleaning"
+    }
+  },
+  "call_logs": [],
+  "sms_dispatched": [
+    {
+      "to": "+15551234567",
+      "message": "Apex Smiles: Your appointment with Dr. Sarah Vance is confirmed for Tomorrow at 10:30 AM. Address: 450 Medical Plaza Blvd. Reply RESCHEDULE if needed.",
+      "timestamp": "2026-11-16 08:35:40 UTC",
+      "status": "SENT_VIA_TWILIO"
+    }
+  ],
+  "emergency_transfers": [
+    {
+      "call_id": "CALL-2",
+      "caller_phone": "+15559998888",
+      "transcript": "Help! Severe bleeding and knocked out tooth!",
+      "transferred_to": "Clinical On-Call Emergency Desk (Line 1)",
+      "timestamp": "2026-11-16 08:35:40 UTC"
+    }
+  ]
+}

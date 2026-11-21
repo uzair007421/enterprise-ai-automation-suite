@@ -1,0 +1,176 @@
+{
+  "video": {
+    "video_id": "VID-PODCAST-882",
+    "title": "Ep 42: How Multi-Agent AI Architecture Replaces 80% of Repetitive Agency Operations",
+    "duration_minutes": 42.5,
+    "speaker": "Alexander Hayes (Chief AI Architect)",
+    "brand_voice": {
+      "tone": "Data-driven, authoritative, direct, practical",
+      "banned_words": [
+        "game-changer",
+        "revolutionize",
+        "disrupt",
+        "magic",
+        "miracle"
+      ],
+      "target_audience": "Founders, Agency Owners, CTOs"
+    },
+    "transcript_excerpt": "When we looked at agency client retention, the biggest failure mode was silent automation decay. A webhook breaks at 2 AM, nobody notices for five days, and the client churns. Multi-agent systems with active self-healing solve this because you have an agent that monitors the other agents. Secondly, lead response times under 90 seconds increase deal close rates by 391%. By wiring lead qualification directly into WhatsApp and CRM before human review, agency margins jump from 25% to 58%. The key is human-in-the-loop: AI proposes, humans approve."
+  },
+  "assets": [
+    {
+      "asset_id": "CLIP-01",
+      "type": "Short-Form Video Clip",
+      "platform": "TikTok / Reels / YouTube Shorts",
+      "title": "Why 80% of Agency Zapier Automations Silently Die",
+      "timestamps": "02:14 - 02:45",
+      "viral_score": 94,
+      "content": "\ud83c\udfac Hook: Why 80% of Agency Zapier Automations Silently Die\n\nKey Takeaway: Automated monitoring and 90-second response speeds are the difference between 25% and 58% agency net margins.\n\n#AIAutomation #BusinessOps #TechGrowth",
+      "status": "APPROVED",
+      "scheduled_date": "2026-11-17",
+      "reviewed_at": "2026-11-16 08:39:28 UTC"
+    },
+    {
+      "asset_id": "CLIP-02",
+      "type": "Short-Form Video Clip",
+      "platform": "TikTok / Reels / YouTube Shorts",
+      "title": "The 90-Second Lead Response Rule That Boosts Closes by 391%",
+      "timestamps": "05:30 - 06:12",
+      "viral_score": 98,
+      "content": "\ud83c\udfac Hook: The 90-Second Lead Response Rule That Boosts Closes by 391%\n\nKey Takeaway: Automated monitoring and 90-second response speeds are the difference between 25% and 58% agency net margins.\n\n#AIAutomation #BusinessOps #TechGrowth",
+      "status": "PENDING_EDITOR_REVIEW",
+      "scheduled_date": "2026-11-18"
+    },
+    {
+      "asset_id": "CLIP-03",
+      "type": "Short-Form Video Clip",
+      "platform": "TikTok / Reels / YouTube Shorts",
+      "title": "How Multi-Agent Systems Double Agency Profit Margins",
+      "timestamps": "09:40 - 10:25",
+      "viral_score": 91,
+      "content": "\ud83c\udfac Hook: How Multi-Agent Systems Double Agency Profit Margins\n\nKey Takeaway: Automated monitoring and 90-second response speeds are the difference between 25% and 58% agency net margins.\n\n#AIAutomation #BusinessOps #TechGrowth",
+      "status": "PENDING_EDITOR_REVIEW",
+      "scheduled_date": "2026-11-19"
+    },
+    {
+      "asset_id": "CLIP-04",
+      "type": "Short-Form Video Clip",
+      "platform": "TikTok / Reels / YouTube Shorts",
+      "title": "The Human-in-the-Loop Safeguard Every AI Bot Needs",
+      "timestamps": "14:10 - 14:50",
+      "viral_score": 95,
+      "content": "\ud83c\udfac Hook: The Human-in-the-Loop Safeguard Every AI Bot Needs\n\nKey Takeaway: Automated monitoring and 90-second response speeds are the difference between 25% and 58% agency net margins.\n\n#AIAutomation #BusinessOps #TechGrowth",
+      "status": "PENDING_EDITOR_REVIEW",
+      "scheduled_date": "2026-11-20"
+    },
+    {
+      "asset_id": "CLIP-05",
+      "type": "Short-Form Video Clip",
+      "platform": "TikTok / Reels / YouTube Shorts",
+      "title": "Why LLMs Without Guardrails Are a Lawsuit Waiting to Happen",
+      "timestamps": "18:22 - 19:05",
+      "viral_score": 89,
+      "content": "\ud83c\udfac Hook: Why LLMs Without Guardrails Are a Lawsuit Waiting to Happen\n\nKey Takeaway: Automated monitoring and 90-second response speeds are the difference between 25% and 58% agency net margins.\n\n#AIAutomation #BusinessOps #TechGrowth",
+      "status": "PENDING_EDITOR_REVIEW",
+      "scheduled_date": "2026-11-21"
+    },
+    {
+      "asset_id": "CLIP-06",
+      "type": "Short-Form Video Clip",
+      "platform": "TikTok / Reels / YouTube Shorts",
+      "title": "How to Build a Self-Healing Sentinel in Python",
+      "timestamps": "22:45 - 23:30",
+      "viral_score": 92,
+      "content": "\ud83c\udfac Hook: How to Build a Self-Healing Sentinel in Python\n\nKey Takeaway: Automated monitoring and 90-second response speeds are the difference between 25% and 58% agency net margins.\n\n#AIAutomation #BusinessOps #TechGrowth",
+      "status": "PENDING_EDITOR_REVIEW",
+      "scheduled_date": "2026-11-22"
+    },
+    {
+      "asset_id": "CLIP-07",
+      "type": "Short-Form Video Clip",
+      "platform": "TikTok / Reels / YouTube Shorts",
+      "title": "Bilingual Support: The Untapped Goldmine in E-Commerce",
+      "timestamps": "27:15 - 28:00",
+      "viral_score": 87,
+      "content": "\ud83c\udfac Hook: Bilingual Support: The Untapped Goldmine in E-Commerce\n\nKey Takeaway: Automated monitoring and 90-second response speeds are the difference between 25% and 58% agency net margins.\n\n#AIAutomation #BusinessOps #TechGrowth",
+      "status": "PENDING_EDITOR_REVIEW",
+      "scheduled_date": "2026-11-23"
+    },
+    {
+      "asset_id": "CLIP-08",
+      "type": "Short-Form Video Clip",
+      "platform": "TikTok / Reels / YouTube Shorts",
+      "title": "Why Blind Resume Screening Outperforms Traditional HR",
+      "timestamps": "31:40 - 32:20",
+      "viral_score": 90,
+      "content": "\ud83c\udfac Hook: Why Blind Resume Screening Outperforms Traditional HR\n\nKey Takeaway: Automated monitoring and 90-second response speeds are the difference between 25% and 58% agency net margins.\n\n#AIAutomation #BusinessOps #TechGrowth",
+      "status": "PENDING_EDITOR_REVIEW",
+      "scheduled_date": "2026-11-17"
+    },
+    {
+      "asset_id": "CLIP-09",
+      "type": "Short-Form Video Clip",
+      "platform": "TikTok / Reels / YouTube Shorts",
+      "title": "Voice AI Telephony vs Receptionist Overload",
+      "timestamps": "35:50 - 36:35",
+      "viral_score": 93,
+      "content": "\ud83c\udfac Hook: Voice AI Telephony vs Receptionist Overload\n\nKey Takeaway: Automated monitoring and 90-second response speeds are the difference between 25% and 58% agency net margins.\n\n#AIAutomation #BusinessOps #TechGrowth",
+      "status": "PENDING_EDITOR_REVIEW",
+      "scheduled_date": "2026-11-18"
+    },
+    {
+      "asset_id": "CLIP-10",
+      "type": "Short-Form Video Clip",
+      "platform": "TikTok / Reels / YouTube Shorts",
+      "title": "The Single Biggest Mistake Founders Make With AI Agents",
+      "timestamps": "40:10 - 41:00",
+      "viral_score": 96,
+      "content": "\ud83c\udfac Hook: The Single Biggest Mistake Founders Make With AI Agents\n\nKey Takeaway: Automated monitoring and 90-second response speeds are the difference between 25% and 58% agency net margins.\n\n#AIAutomation #BusinessOps #TechGrowth",
+      "status": "PENDING_EDITOR_REVIEW",
+      "scheduled_date": "2026-11-19"
+    },
+    {
+      "asset_id": "BLOG-01",
+      "type": "SEO Article / Blog Post",
+      "platform": "Agency Website Blog",
+      "title": "Architecting Autonomous Agency Operations: A Practical Blueprint for Multi-Agent Systems",
+      "timestamps": "Full Video (42 Mins)",
+      "viral_score": 92,
+      "content": "# Architecting Autonomous Agency Operations: A Practical Blueprint\n\n## The Silent Threat: Automation Decay\nWhen agencies scale beyond 20 clients, silent failure becomes the primary driver of customer churn. Traditional Zapier and Make integrations fail silently at 2 AM, leaving customer pipelines stalled.\n\n## The 90-Second Response Advantage\nData proves that contacting qualified inbound leads within 90 seconds delivers a 391% increase in conversion rates. By decoupling intake, qualification, and offer drafting across independent agentic microservices, response latency is reduced to sub-second intervals.\n\n## The Non-Negotiable Human Gate\nAutonomy does not mean abdication. Every high-stakes transaction must pass through an executive review gate before capital or contracts are committed.",
+      "status": "PENDING_EDITOR_REVIEW",
+      "scheduled_date": "2026-11-18"
+    },
+    {
+      "asset_id": "LINKEDIN-01",
+      "type": "Executive Authority Post",
+      "platform": "LinkedIn",
+      "title": "Agency Margins from 25% to 58%: The Multi-Agent Playbook",
+      "timestamps": "Key Highlight (05:30)",
+      "viral_score": 96,
+      "content": "A client lead that waits 2 hours for a response is a lost deal.\n\nResearch shows that responding within 90 seconds increases close rates by 391%.\n\nYet most agencies still have account managers manually checking form submissions, drafting quotes, and copy-pasting into HubSpot.\n\nHere is how multi-agent architecture changes the math:\n1. Agent 1 qualifies the lead in 3 seconds.\n2. Agent 2 checks internal inventory or service capacity.\n3. Agent 3 drafts a custom proposal.\n4. A human broker clicks 'Approve' with one tap.\n\nNet result? Agency profit margins increased from 25% to 58% while slashing manual grunt work.\n\nHow is your team handling lead intake today?",
+      "status": "PENDING_EDITOR_REVIEW",
+      "scheduled_date": "2026-11-17"
+    },
+    {
+      "asset_id": "THREAD-01",
+      "type": "Viral 5-Tweet Thread",
+      "platform": "X (Twitter)",
+      "title": "5 Lessons on Multi-Agent Automation from Ep 42",
+      "timestamps": "Full Episode Breakdown",
+      "viral_score": 95,
+      "content": "1/5 Most agency automations fail silently. If a webhook breaks at 2 AM and you find out from a furious client 5 days later, your tech stack is broken.\n\n2/5 The fix is Self-Healing Sentinels: autonomous monitors that catch HTTP 429s and expired tokens, retry safely, and alert in plain English.\n\n3/5 Lead qualification shouldn't take hours. Inbound leads contacted within 90 seconds convert 391% better.\n\n4/5 Never let an AI make unapproved write actions. The golden formula is AI-Proposes, Human-Approves.\n\n5/5 Full 42-minute architectural breakdown in the link below \ud83d\udc47",
+      "status": "PENDING_EDITOR_REVIEW",
+      "scheduled_date": "2026-11-17"
+    }
+  ],
+  "published_feed": [
+    {
+      "asset_id": "CLIP-01",
+      "title": "Why 80% of Agency Zapier Automations Silently Die",
+      "platform": "TikTok / Reels / YouTube Shorts",
+      "published_at": "2026-11-16 08:39:28 UTC",
+      "status": "PUBLISHED_SUCCESSFULLY",
+      "api_endpoint": "https://api.tiktok.com/v2/publish"
+    }
+  ]
+}

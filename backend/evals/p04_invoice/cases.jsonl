@@ -1,0 +1,30 @@
+{"id": "CASE-01", "vendor": "Apex Logistics", "inv_num": "APX-01", "subtotal": 100.0, "tax": 10.0, "total": 110.0, "expected_status": "APPROVED"}
+{"id": "CASE-02", "vendor": "Apex Logistics", "inv_num": "APX-02", "subtotal": 200.0, "tax": 20.0, "total": 220.0, "expected_status": "APPROVED"}
+{"id": "CASE-03", "vendor": "Apex Logistics", "inv_num": "APX-03", "subtotal": 500.0, "tax": 50.0, "total": 550.0, "expected_status": "APPROVED"}
+{"id": "CASE-04", "vendor": "Apex Logistics", "inv_num": "APX-04", "subtotal": 1500.0, "tax": 150.0, "total": 1650.0, "expected_status": "APPROVED"}
+{"id": "CASE-05", "vendor": "Beacon Media", "inv_num": "BM-101", "subtotal": 350.0, "tax": 0.0, "total": 350.0, "expected_status": "APPROVED"}
+{"id": "CASE-06", "vendor": "Beacon Media", "inv_num": "BM-102", "subtotal": 750.0, "tax": 75.0, "total": 825.0, "expected_status": "APPROVED"}
+{"id": "CASE-07", "vendor": "Beacon Media", "inv_num": "BM-103", "subtotal": 1200.0, "tax": 120.0, "total": 1320.0, "expected_status": "APPROVED"}
+{"id": "CASE-08", "vendor": "CloudScale Systems", "inv_num": "CS-901", "subtotal": 450.0, "tax": 45.0, "total": 495.0, "expected_status": "APPROVED"}
+{"id": "CASE-09", "vendor": "CloudScale Systems", "inv_num": "CS-902", "subtotal": 920.0, "tax": 92.0, "total": 1012.0, "expected_status": "APPROVED"}
+{"id": "CASE-10", "vendor": "CloudScale Systems", "inv_num": "CS-903", "subtotal": 2400.0, "tax": 240.0, "total": 2640.0, "expected_status": "APPROVED"}
+{"id": "CASE-11", "vendor": "Delta Freight", "inv_num": "DF-501", "subtotal": 800.0, "tax": 80.0, "total": 950.0, "expected_status": "DISCREPANCY"}
+{"id": "CASE-12", "vendor": "Delta Freight", "inv_num": "DF-502", "subtotal": 1200.0, "tax": 100.0, "total": 1400.0, "expected_status": "DISCREPANCY"}
+{"id": "CASE-13", "vendor": "Delta Freight", "inv_num": "DF-503", "subtotal": 600.0, "tax": 60.0, "total": 700.0, "expected_status": "DISCREPANCY"}
+{"id": "CASE-14", "vendor": "Eagle Parts Co", "inv_num": "EP-301", "subtotal": 400.0, "tax": 40.0, "total": 450.0, "expected_status": "DISCREPANCY"}
+{"id": "CASE-15", "vendor": "Eagle Parts Co", "inv_num": "EP-302", "subtotal": 1100.0, "tax": 110.0, "total": 1300.0, "expected_status": "DISCREPANCY"}
+{"id": "CASE-16", "vendor": "Falcon Legal", "inv_num": "FL-701", "subtotal": 2500.0, "tax": 0.0, "total": 2500.0, "expected_status": "APPROVED"}
+{"id": "CASE-17", "vendor": "Falcon Legal", "inv_num": "FL-702", "subtotal": 3100.0, "tax": 0.0, "total": 3100.0, "expected_status": "APPROVED"}
+{"id": "CASE-18", "vendor": "Global Telecom", "inv_num": "GT-401", "subtotal": 180.0, "tax": 18.0, "total": 198.0, "expected_status": "APPROVED"}
+{"id": "CASE-19", "vendor": "Global Telecom", "inv_num": "GT-402", "subtotal": 220.0, "tax": 22.0, "total": 242.0, "expected_status": "APPROVED"}
+{"id": "CASE-20", "vendor": "Horizon HVAC", "inv_num": "HH-801", "subtotal": 650.0, "tax": 65.0, "total": 715.0, "expected_status": "APPROVED"}
+{"id": "CASE-21", "vendor": "Horizon HVAC", "inv_num": "HH-802", "subtotal": 850.0, "tax": 85.0, "total": 935.0, "expected_status": "APPROVED"}
+{"id": "CASE-22", "vendor": "Horizon HVAC", "inv_num": "HH-803", "subtotal": 1100.0, "tax": 110.0, "total": 1210.0, "expected_status": "APPROVED"}
+{"id": "CASE-23", "vendor": "Ironclad Security", "inv_num": "IS-201", "subtotal": 3000.0, "tax": 300.0, "total": 3300.0, "expected_status": "APPROVED"}
+{"id": "CASE-24", "vendor": "Ironclad Security", "inv_num": "IS-202", "subtotal": 1500.0, "tax": 150.0, "total": 1650.0, "expected_status": "APPROVED"}
+{"id": "CASE-25", "vendor": "Jupiter Design", "inv_num": "JD-601", "subtotal": 900.0, "tax": 90.0, "total": 990.0, "expected_status": "APPROVED"}
+{"id": "CASE-26", "vendor": "Jupiter Design", "inv_num": "JD-602", "subtotal": 1400.0, "tax": 140.0, "total": 1600.0, "expected_status": "DISCREPANCY"}
+{"id": "CASE-27", "vendor": "Keystone Supplies", "inv_num": "KS-111", "subtotal": 250.0, "tax": 25.0, "total": 275.0, "expected_status": "APPROVED"}
+{"id": "CASE-28", "vendor": "Keystone Supplies", "inv_num": "KS-112", "subtotal": 420.0, "tax": 42.0, "total": 462.0, "expected_status": "APPROVED"}
+{"id": "CASE-29", "vendor": "Lunar Tech", "inv_num": "LT-001", "subtotal": 5000.0, "tax": 500.0, "total": 5500.0, "expected_status": "APPROVED"}
+{"id": "CASE-30", "vendor": "Lunar Tech", "inv_num": "LT-002", "subtotal": 7500.0, "tax": 750.0, "total": 8500.0, "expected_status": "DISCREPANCY"}

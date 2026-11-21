@@ -1,0 +1,345 @@
+{
+  "competitors": [
+    {
+      "id": "COMP-01",
+      "name": "FlowCraft AI",
+      "website": "https://flowcraftai.io",
+      "category": "Workflow Automation",
+      "pricing": {
+        "pro_tier": 49,
+        "enterprise_tier": 196
+      },
+      "features": [
+        "Cloud Sync",
+        "REST API",
+        "Webhook Triggers",
+        "Analytics Dashboard"
+      ],
+      "latest_blog": "Maximizing ROI with FlowCraft AI in 2026",
+      "review_rating": 4.0,
+      "last_scanned": "2026-11-16 08:37:31 UTC"
+    },
+    {
+      "id": "COMP-02",
+      "name": "OmniBotics",
+      "website": "https://omnibotics.io",
+      "category": "Conversational AI",
+      "pricing": {
+        "pro_tier": 79,
+        "enterprise_tier": 316
+      },
+      "features": [
+        "Cloud Sync",
+        "REST API",
+        "Webhook Triggers",
+        "Analytics Dashboard"
+      ],
+      "latest_blog": "Maximizing ROI with OmniBotics in 2026",
+      "review_rating": 4.1,
+      "last_scanned": "2026-11-16 08:37:31 UTC"
+    },
+    {
+      "id": "COMP-03",
+      "name": "SyncWave CRM",
+      "website": "https://syncwavecrm.io",
+      "category": "CRM & Sales AI",
+      "pricing": {
+        "pro_tier": 35,
+        "enterprise_tier": 140
+      },
+      "features": [
+        "Cloud Sync",
+        "REST API",
+        "Webhook Triggers",
+        "Analytics Dashboard"
+      ],
+      "latest_blog": "Maximizing ROI with SyncWave CRM in 2026",
+      "review_rating": 4.2,
+      "last_scanned": "2026-11-16 08:37:31 UTC"
+    },
+    {
+      "id": "COMP-04",
+      "name": "HyperAutomate",
+      "website": "https://hyperautomate.io",
+      "category": "Enterprise RPA",
+      "pricing": {
+        "pro_tier": 199,
+        "enterprise_tier": 796
+      },
+      "features": [
+        "Cloud Sync",
+        "REST API",
+        "Webhook Triggers",
+        "Analytics Dashboard"
+      ],
+      "latest_blog": "Maximizing ROI with HyperAutomate in 2026",
+      "review_rating": 4.3,
+      "last_scanned": "2026-11-16 08:37:31 UTC"
+    },
+    {
+      "id": "COMP-05",
+      "name": "AgentPulse",
+      "website": "https://agentpulse.io",
+      "category": "Agent Orchestration",
+      "pricing": {
+        "pro_tier": 89,
+        "enterprise_tier": 356
+      },
+      "features": [
+        "Cloud Sync",
+        "REST API",
+        "Webhook Triggers",
+        "Analytics Dashboard"
+      ],
+      "latest_blog": "Maximizing ROI with AgentPulse in 2026",
+      "review_rating": 4.4,
+      "last_scanned": "2026-11-16 08:37:31 UTC"
+    },
+    {
+      "id": "COMP-06",
+      "name": "TaskGenie",
+      "website": "https://taskgenie.io",
+      "category": "Task Management AI",
+      "pricing": {
+        "pro_tier": 29,
+        "enterprise_tier": 116
+      },
+      "features": [
+        "Cloud Sync",
+        "REST API",
+        "Webhook Triggers",
+        "Analytics Dashboard"
+      ],
+      "latest_blog": "Maximizing ROI with TaskGenie in 2026",
+      "review_rating": 4.5,
+      "last_scanned": "2026-11-16 08:37:31 UTC"
+    },
+    {
+      "id": "COMP-07",
+      "name": "DataNexus",
+      "website": "https://datanexus.io",
+      "category": "Data Pipeline AI",
+      "pricing": {
+        "pro_tier": 120,
+        "enterprise_tier": 480
+      },
+      "features": [
+        "Cloud Sync",
+        "REST API",
+        "Webhook Triggers",
+        "Analytics Dashboard"
+      ],
+      "latest_blog": "Maximizing ROI with DataNexus in 2026",
+      "review_rating": 4.6,
+      "last_scanned": "2026-11-16 08:37:31 UTC"
+    },
+    {
+      "id": "COMP-08",
+      "name": "LeadForge",
+      "website": "https://leadforge.io",
+      "category": "B2B Lead Enrichment",
+      "pricing": {
+        "pro_tier": 65,
+        "enterprise_tier": 260
+      },
+      "features": [
+        "Cloud Sync",
+        "REST API",
+        "Webhook Triggers",
+        "Analytics Dashboard"
+      ],
+      "latest_blog": "Maximizing ROI with LeadForge in 2026",
+      "review_rating": 4.7,
+      "last_scanned": "2026-11-16 08:37:31 UTC"
+    },
+    {
+      "id": "COMP-09",
+      "name": "QuickBot",
+      "website": "https://quickbot.io",
+      "category": "Customer Support Bot",
+      "pricing": {
+        "pro_tier": 40,
+        "enterprise_tier": 160
+      },
+      "features": [
+        "Cloud Sync",
+        "REST API",
+        "Webhook Triggers",
+        "Analytics Dashboard"
+      ],
+      "latest_blog": "Maximizing ROI with QuickBot in 2026",
+      "review_rating": 4.0,
+      "last_scanned": "2026-11-16 08:37:31 UTC"
+    },
+    {
+      "id": "COMP-10",
+      "name": "CloudSentinel",
+      "website": "https://cloudsentinel.io",
+      "category": "Cloud Cost Optimizer",
+      "pricing": {
+        "pro_tier": 150,
+        "enterprise_tier": 600
+      },
+      "features": [
+        "Cloud Sync",
+        "REST API",
+        "Webhook Triggers",
+        "Analytics Dashboard"
+      ],
+      "latest_blog": "Maximizing ROI with CloudSentinel in 2026",
+      "review_rating": 4.1,
+      "last_scanned": "2026-11-16 08:37:31 UTC"
+    },
+    {
+      "id": "COMP-11",
+      "name": "VoiceFlowHQ",
+      "website": "https://voiceflowhq.io",
+      "category": "Voice Telephony AI",
+      "pricing": {
+        "pro_tier": 95,
+        "enterprise_tier": 380
+      },
+      "features": [
+        "Cloud Sync",
+        "REST API",
+        "Webhook Triggers",
+        "Analytics Dashboard"
+      ],
+      "latest_blog": "Maximizing ROI with VoiceFlowHQ in 2026",
+      "review_rating": 4.2,
+      "last_scanned": "2026-11-16 08:37:31 UTC"
+    },
+    {
+      "id": "COMP-12",
+      "name": "DocuExtract",
+      "website": "https://docuextract.io",
+      "category": "Document OCR AI",
+      "pricing": {
+        "pro_tier": 85,
+        "enterprise_tier": 340
+      },
+      "features": [
+        "Cloud Sync",
+        "REST API",
+        "Webhook Triggers",
+        "Analytics Dashboard"
+      ],
+      "latest_blog": "Maximizing ROI with DocuExtract in 2026",
+      "review_rating": 4.3,
+      "last_scanned": "2026-11-16 08:37:31 UTC"
+    },
+    {
+      "id": "COMP-13",
+      "name": "GrowthEngine",
+      "website": "https://growthengine.io",
+      "category": "Marketing Automation",
+      "pricing": {
+        "pro_tier": 110,
+        "enterprise_tier": 440
+      },
+      "features": [
+        "Cloud Sync",
+        "REST API",
+        "Webhook Triggers",
+        "Analytics Dashboard"
+      ],
+      "latest_blog": "Maximizing ROI with GrowthEngine in 2026",
+      "review_rating": 4.4,
+      "last_scanned": "2026-11-16 08:37:31 UTC"
+    },
+    {
+      "id": "COMP-14",
+      "name": "SalesSprint",
+      "website": "https://salessprint.io",
+      "category": "Outbound Email AI",
+      "pricing": {
+        "pro_tier": 55,
+        "enterprise_tier": 220
+      },
+      "features": [
+        "Cloud Sync",
+        "REST API",
+        "Webhook Triggers",
+        "Analytics Dashboard"
+      ],
+      "latest_blog": "Maximizing ROI with SalesSprint in 2026",
+      "review_rating": 4.5,
+      "last_scanned": "2026-11-16 08:37:31 UTC"
+    },
+    {
+      "id": "COMP-15",
+      "name": "LegalScan",
+      "website": "https://legalscan.io",
+      "category": "Contract Analysis AI",
+      "pricing": {
+        "pro_tier": 250,
+        "enterprise_tier": 1000
+      },
+      "features": [
+        "Cloud Sync",
+        "REST API",
+        "Webhook Triggers",
+        "Analytics Dashboard"
+      ],
+      "latest_blog": "Maximizing ROI with LegalScan in 2026",
+      "review_rating": 4.6,
+      "last_scanned": "2026-11-16 08:37:31 UTC"
+    }
+  ],
+  "detected_changes": [
+    {
+      "id": "DIFF-01",
+      "competitor_name": "FlowCraft AI",
+      "category": "PRICING_CHANGE",
+      "impact_score": 9,
+      "importance_rating": "CRITICAL",
+      "headline": "Pro Tier Pricing Increased from $49/mo to $69/mo (+40.8%)",
+      "detail": "FlowCraft updated their pricing table today. The $49 entry tier was eliminated and grandfathered users were given 60 days notice. Free tier API rate limit was reduced by 50%.",
+      "source_url": "https://flowcraft.io/pricing#plans",
+      "strategic_takeaway": "Immediate acquisition opportunity. Run Google & LinkedIn ad campaigns targeting FlowCraft users searching for affordable alternatives.",
+      "detected_at": "2026-11-16 08:37:31 UTC"
+    },
+    {
+      "id": "DIFF-02",
+      "competitor_name": "OmniBotics",
+      "category": "NEW_FEATURE_LAUNCH",
+      "impact_score": 8,
+      "importance_rating": "HIGH",
+      "headline": "Launched Native Twilio & Vapi Voice Telephony Calling",
+      "detail": "OmniBotics added full two-way voice dialing to their customer support suite, moving directly into our voice appointment territory.",
+      "source_url": "https://omnibotics.com/changelog/2026-11-voice-telephony",
+      "strategic_takeaway": "Accelerate our Dental & Clinic Voice AI templates to maintain vertical specialization advantage.",
+      "detected_at": "2026-11-16 08:37:31 UTC"
+    },
+    {
+      "id": "DIFF-03",
+      "competitor_name": "SyncWave CRM",
+      "category": "SENTIMENT_REVIEW_DROP",
+      "impact_score": 7,
+      "importance_rating": "MEDIUM-HIGH",
+      "headline": "G2 Rating Dropped to 3.8 Stars (Spike in 1-Star Reviews)",
+      "detail": "5 recent G2 reviews complain about unexpected billing overages and severe webhook reliability issues during peak US trading hours.",
+      "source_url": "https://g2.com/products/syncwave-crm/reviews?filter=recent_critical",
+      "strategic_takeaway": "Publish comparison case study highlighting our 99.9% uptime and zero-hidden-fee pricing model.",
+      "detected_at": "2026-11-16 08:37:31 UTC"
+    },
+    {
+      "id": "DIFF-04",
+      "competitor_name": "HyperAutomate",
+      "category": "BLOG_STRATEGY",
+      "impact_score": 5,
+      "importance_rating": "MEDIUM",
+      "headline": "Published Whitepaper: 'Replacing Zapier in Enterprise Tech Stacks'",
+      "detail": "HyperAutomate is aggressively positioning against traditional iPaaS providers to capture mid-market accounts.",
+      "source_url": "https://hyperautomate.io/blog/enterprise-ipaas-migration",
+      "strategic_takeaway": "Useful sales collateral inspiration for our own enterprise agency pitches.",
+      "detected_at": "2026-11-16 08:37:31 UTC"
+    }
+  ],
+  "latest_digest": {
+    "title": "Executive Intelligence Briefing (2026-W46)",
+    "content": "WEEKLY COMPETITOR INTELLIGENCE BRIEFING \u2014 November 16, 2026\nFleet Monitored: 15 SaaS Competitors | Scan Status: 100% Complete\n\n1. [CRITICAL - 9/10] FlowCraft AI increased prices by 41% ($49 -> $69/mo). Action: Launch conquest ad campaign.\n   Source: https://flowcraft.io/pricing\n\n2. [HIGH - 8/10] OmniBotics launched two-way voice calling. Action: Double down on healthcare vertical specialization.\n   Source: https://omnibotics.com/changelog\n\n3. [MEDIUM - 7/10] SyncWave CRM experiencing customer backlash over billing bugs on G2. Action: Target dissatisfied users on social.\n   Source: https://g2.com/products/syncwave-crm/reviews\n\nOverall Market Assessment: Competitive pricing pressure is shifting upwards, creating strong tailwinds for our agency automation offers.",
+    "high_impact_count": 3,
+    "generated_at": "2026-11-16 08:37:31 UTC"
+  }
+}

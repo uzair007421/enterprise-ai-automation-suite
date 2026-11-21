@@ -1,0 +1,35 @@
+[
+  {
+    "id": "COMP-01",
+    "name": "FlowCraft AI",
+    "website": "https://flowcraft.io",
+    "category": "Workflow Automation",
+    "pricing": {"pro_tier": 49, "enterprise_tier": "Custom"},
+    "features": ["Visual Canvas", "Webhook Triggers", "Gmail Sync"],
+    "latest_blog": "Why Visual Workflows Beat Code",
+    "review_rating": 4.5,
+    "last_scanned": "2026-11-09T08:00:00Z"
+  },
+  {
+    "id": "COMP-02",
+    "name": "OmniBotics",
+    "website": "https://omnibotics.com",
+    "category": "Conversational AI",
+    "pricing": {"pro_tier": 79, "enterprise_tier": 299},
+    "features": ["WhatsApp API", "Shopify Bot", "Multi-lingual Support"],
+    "latest_blog": "Top 10 E-Commerce Bots for Black Friday",
+    "review_rating": 4.1,
+    "last_scanned": "2026-11-09T08:00:00Z"
+  },
+  {
+    "id": "COMP-03",
+    "name": "SyncWave CRM",
+    "website": "https://syncwave.app",
+    "category": "CRM & Sales AI",
+    "pricing": {"pro_tier": 35, "enterprise_tier": 120},
+    "features": ["Lead Scoring", "Email Sequencer", "Stripe Billing"],
+    "latest_blog": "Automating B2B Lead Followups",
+    "review_rating": 4.7,
+    "last_scanned": "2026-11-09T08:00:00Z"
+  }
+]

@@ -1,0 +1,12 @@
+[
+  {"id": "WF-01", "name": "Apex Dental: Meta Lead Ads to HubSpot Sync", "client": "Apex Dental", "category": "Lead Gen", "status": "HEALTHY", "success_rate": 99.8},
+  {"id": "WF-02", "name": "Luxe Apparel: Shopify to Klaviyo Welcome Flow", "client": "Luxe Apparel", "category": "E-Commerce", "status": "HEALTHY", "success_rate": 100.0},
+  {"id": "WF-03", "name": "Venture Capital: Crunchbase Daily Funding Scraping", "client": "Venture Horizons", "category": "Scraping", "status": "HEALTHY", "success_rate": 97.4},
+  {"id": "WF-04", "name": "Urban Fitness: Mindbody Class Booking Webhook", "client": "Urban Fitness", "category": "Bookings", "status": "HEALTHY", "success_rate": 99.1},
+  {"id": "WF-05", "name": "TechFlow: Stripe Invoice to Xero Ledger Sync", "client": "TechFlow SaaS", "category": "Billing", "status": "HEALTHY", "success_rate": 98.9},
+  {"id": "WF-06", "name": "Horizon Realty: Zillow Inquiries to Agent WhatsApp", "client": "Horizon Realty", "category": "Messaging", "status": "HEALTHY", "success_rate": 99.5},
+  {"id": "WF-07", "name": "Gourmet Kitchen: UberEats Order to POS Printer", "client": "Gourmet Kitchen", "category": "Operations", "status": "HEALTHY", "success_rate": 98.2},
+  {"id": "WF-08", "name": "BioHealth: HIPAA Form Ingestion to Secure Storage", "client": "BioHealth Labs", "category": "Compliance", "status": "HEALTHY", "success_rate": 100.0},
+  {"id": "WF-09", "name": "Echo Agency: Google Ads Cost Aggregator to Slack", "client": "Echo Media", "category": "Reporting", "status": "HEALTHY", "success_rate": 99.0},
+  {"id": "WF-10", "name": "SolarTech: Residential Utility Bill OCR Pipeline", "client": "SolarTech Direct", "category": "AI Pipeline", "status": "HEALTHY", "success_rate": 98.6}
+]

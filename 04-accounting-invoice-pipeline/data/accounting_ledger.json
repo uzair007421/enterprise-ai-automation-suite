@@ -1,0 +1,128 @@
+{
+  "ledger": [
+    {
+      "invoice_id": "INV-RAW-002",
+      "vendor": "Staples Business Depot",
+      "invoice_number": "STP-44021",
+      "date": "2026-11-04",
+      "due_date": "2026-11-04",
+      "currency": "USD",
+      "subtotal": 585.0,
+      "tax": 46.8,
+      "total": 631.8,
+      "line_items": [
+        {
+          "description": "Ergonomic Desk Chairs",
+          "qty": 2,
+          "unit_price": 180.0,
+          "amount": 360.0
+        },
+        {
+          "description": "Laser Printer Cartridges",
+          "qty": 3,
+          "unit_price": 75.0,
+          "amount": 225.0
+        }
+      ],
+      "ocr_confidence": 65.0,
+      "flags": [
+        {
+          "type": "MATH_TOTAL_MISMATCH",
+          "severity": "CRITICAL",
+          "detail": "Subtotal ($585.00) + Tax ($46.80) = $631.80, but invoice states $699.00"
+        }
+      ],
+      "signature_hash": "2baae6362a125963d543c21b8de0a13b",
+      "processed_at": "2026-11-16T08:28:13.564188",
+      "status": "SYNCED_TO_ACCOUNTING (MANUAL_OVERRIDE)",
+      "accounting_ref": "QB-REV-2BAAE6",
+      "accountant_note": "Corrected tax total"
+    },
+    {
+      "invoice_id": "INV-RAW-001",
+      "vendor": "Amazon Web Services Inc.",
+      "invoice_number": "AWS-2026-9812",
+      "date": "2026-10-31",
+      "due_date": "2026-11-30",
+      "currency": "USD",
+      "subtotal": 1350.0,
+      "tax": 108.0,
+      "total": 1458.0,
+      "line_items": [
+        {
+          "description": "EC2 Virtual Server Instances",
+          "qty": 4,
+          "unit_price": 250.0,
+          "amount": 1000.0
+        },
+        {
+          "description": "S3 Standard Storage (TB)",
+          "qty": 5,
+          "unit_price": 40.0,
+          "amount": 200.0
+        },
+        {
+          "description": "CloudFront CDN Data Transfer",
+          "qty": 1,
+          "unit_price": 150.0,
+          "amount": 150.0
+        }
+      ],
+      "ocr_confidence": 98.0,
+      "flags": [],
+      "signature_hash": "47fd6decaccf49c1369a0d2dcdf7e9a0",
+      "processed_at": "2026-11-16T08:28:13.563212",
+      "status": "SYNCED_TO_ACCOUNTING",
+      "accounting_ref": "QB-47FD6DEC"
+    }
+  ],
+  "review_queue": [
+    {
+      "invoice_id": "INV-RAW-003",
+      "vendor": "Amazon Web Services Inc.",
+      "invoice_number": "AWS-2026-9812",
+      "date": "2026-10-31",
+      "due_date": "2026-11-30",
+      "currency": "USD",
+      "subtotal": 1350.0,
+      "tax": 108.0,
+      "total": 1458.0,
+      "line_items": [
+        {
+          "description": "EC2 Virtual Server Instances",
+          "qty": 4,
+          "unit_price": 250.0,
+          "amount": 1000.0
+        },
+        {
+          "description": "S3 Standard Storage (TB)",
+          "qty": 5,
+          "unit_price": 40.0,
+          "amount": 200.0
+        },
+        {
+          "description": "CloudFront CDN Data Transfer",
+          "qty": 1,
+          "unit_price": 150.0,
+          "amount": 150.0
+        }
+      ],
+      "ocr_confidence": 65.0,
+      "flags": [
+        {
+          "type": "DUPLICATE_INVOICE_DETECTED",
+          "severity": "CRITICAL",
+          "detail": "Exact invoice already recorded in ledger as [INV-RAW-001] (Vendor: Amazon Web Services Inc., Inv #: AWS-2026-9812)"
+        }
+      ],
+      "signature_hash": "47fd6decaccf49c1369a0d2dcdf7e9a0",
+      "processed_at": "2026-11-16T08:28:13.565177",
+      "status": "PENDING_ACCOUNTANT_REVIEW"
+    }
+  ],
+  "rejected": [],
+  "signatures": {
+    "47fd6decaccf49c1369a0d2dcdf7e9a0": "INV-RAW-001",
+    "2baae6362a125963d543c21b8de0a13b": "INV-RAW-002"
+  }
+}

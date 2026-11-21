@@ -1,0 +1,55 @@
+{
+  "job_description": {
+    "role_id": "JOB-AI-2026",
+    "title": "Senior AI & Full-Stack Solutions Engineer",
+    "department": "Engineering & Automation",
+    "location": "Remote",
+    "required_skills": ["Python", "FastAPI", "React / Next.js", "LangChain / RAG", "SQL / Vector DBs", "Docker"],
+    "min_experience_years": 4,
+    "responsibilities": "Architect multi-agent pipelines, integrate LLM APIs, build enterprise client dashboards, and ensure 99.9% uptime."
+  },
+  "candidates": [
+    {
+      "id": "CAND-001",
+      "personal_info": {
+        "full_name": "Elena Rostova",
+        "gender": "Female",
+        "age": 28,
+        "email": "elena.rostova@techmail.io",
+        "location": "Prague, Czech Republic"
+      },
+      "cv_raw": "Elena Rostova (28, Female). 5+ years of software engineering. Proficient in Python, FastAPI, Docker, Next.js, and RAG pipelines using Qdrant and LangChain. Scaled client multi-agent customer support bot handling 50k chats/month. BS in Computer Science.",
+      "skills": ["Python", "FastAPI", "Next.js", "Docker", "LangChain", "Qdrant", "SQL"],
+      "years_experience": 5.5,
+      "key_achievement": "Architected multi-agent customer support pipeline handling 50k queries/month with 99.9% uptime."
+    },
+    {
+      "id": "CAND-002",
+      "personal_info": {
+        "full_name": "Marcus Sterling",
+        "gender": "Male",
+        "age": 52,
+        "email": "m.sterling@legacycode.net",
+        "location": "Chicago, IL, USA"
+      },
+      "cv_raw": "Marcus Sterling (52, Male). 15 years in Enterprise IT and Java/Spring. Transitioned into AI automation 2 years ago. Built Python scripts for data ingestion and basic OpenAI API calls. Highly experienced in Docker and SQL databases.",
+      "skills": ["Java", "SQL", "Docker", "Python", "OpenAI API", "Spring Boot"],
+      "years_experience": 15.0,
+      "key_achievement": "Led legacy IT migrations and developed microservices backend for financial transactions."
+    },
+    {
+      "id": "CAND-003",
+      "personal_info": {
+        "full_name": "Zainab Malik",
+        "gender": "Female",
+        "age": 24,
+        "email": "zainab.malik@devcorner.pk",
+        "location": "Lahore, Pakistan"
+      },
+      "cv_raw": "Zainab Malik (24, Female). Junior developer with 1 year experience in HTML, CSS, JavaScript and beginner Python. Looking for internship or entry-level junior role.",
+      "skills": ["HTML", "CSS", "JavaScript", "Python"],
+      "years_experience": 1.0,
+      "key_achievement": "Created university final year project for student portal."
+    }
+  ]
+}
