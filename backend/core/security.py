@@ -46,7 +46,7 @@ class SSRFProtection:
 
             # Disallow localhost keywords
             if cleaned_host in ["localhost", "local", "127.0.0.1", "0.0.0.0", "metadata.google.internal", "169.254.169.254"]:
-                return False, "Target URL resolves to a prohibited private/internal address."
+                return False, "Target URL resolves to a forbidden/prohibited private/internal address."
 
             # Check decimal, octal, hex, or direct IP notation
             try:
@@ -54,12 +54,12 @@ class SSRFProtection:
                     ip_obj = ipaddress.IPv4Address(int(cleaned_host))
                     for blocked_net in cls.BLOCKED_NETWORKS:
                         if ip_obj in blocked_net:
-                            return False, f"Target URL resolves to a prohibited private/internal address: {ip_obj}"
+                            return False, f"Target URL resolves to a forbidden/prohibited private/internal address: {ip_obj}"
                 elif cleaned_host.startswith("0x"):
                     ip_obj = ipaddress.IPv4Address(int(cleaned_host, 16))
                     for blocked_net in cls.BLOCKED_NETWORKS:
                         if ip_obj in blocked_net:
-                            return False, f"Target URL resolves to a prohibited private/internal address: {ip_obj}"
+                            return False, f"Target URL resolves to a forbidden/prohibited private/internal address: {ip_obj}"
                 else:
                     ip_obj = ipaddress.ip_address(cleaned_host)
                     for blocked_net in cls.BLOCKED_NETWORKS:
