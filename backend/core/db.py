@@ -159,6 +159,7 @@ def init_db():
         conn.execute("""
             CREATE TABLE IF NOT EXISTS p03_orders (
                 id TEXT PRIMARY KEY,
+                tenant_id TEXT DEFAULT 'tenant_default',
                 customer_name TEXT NOT NULL,
                 email TEXT,
                 phone TEXT,
@@ -173,6 +174,7 @@ def init_db():
         conn.execute("""
             CREATE TABLE IF NOT EXISTS p03_tickets (
                 id TEXT PRIMARY KEY,
+                tenant_id TEXT DEFAULT 'tenant_default',
                 order_id TEXT,
                 customer_id TEXT,
                 state TEXT NOT NULL,
@@ -182,6 +184,16 @@ def init_db():
                 created_at TEXT NOT NULL
             );
         """)
+        try:
+            conn.execute("ALTER TABLE p03_orders ADD COLUMN tenant_id TEXT DEFAULT 'tenant_default';")
+        except Exception:
+            pass
+        try:
+            conn.execute("ALTER TABLE p03_tickets ADD COLUMN tenant_id TEXT DEFAULT 'tenant_default';")
+        except Exception:
+            pass
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_p03_orders_tenant ON p03_orders(tenant_id);")
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_p03_tickets_tenant ON p03_tickets(tenant_id);")
 
         # P04 Invoices & Accounting Ledger
         conn.execute("""

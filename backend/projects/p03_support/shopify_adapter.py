@@ -52,10 +52,11 @@ class ShopifyAdapter:
     def __init__(self):
         self.access_token = settings.SHOPIFY_ADMIN_ACCESS_TOKEN
         self.store_url = settings.SHOPIFY_SHOP_URL
+        self.live_mode = getattr(settings, "SHOPIFY_LIVE_MODE", False)
         self._seed_orders_if_needed()
 
     def _seed_orders_if_needed(self):
-        """Ensures SQLite has realistic sandbox orders."""
+        """Ensures SQLite has realistic sandbox orders with tenant partitioning."""
         db = DatabaseSession()
         try:
             count = db.fetchone("SELECT COUNT(*) as cnt FROM p03_orders")
@@ -64,8 +65,8 @@ class ShopifyAdapter:
                     db.execute(
                         """
                         INSERT INTO p03_orders 
-                        (id, customer_name, email, phone, items, total_usd, status, courier, tracking_id, created_at)
-                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))
+                        (id, tenant_id, customer_name, email, phone, items, total_usd, status, courier, tracking_id, created_at)
+                        VALUES (?, 'tenant_default', ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))
                         """,
                         (
                             o["id"], o["customer_name"], o["email"], o["phone"],
@@ -73,20 +74,24 @@ class ShopifyAdapter:
                         )
                     )
                 db.commit()
+            else:
+                # Ensure existing seed orders have tenant_id set
+                db.execute("UPDATE p03_orders SET tenant_id = 'tenant_default' WHERE tenant_id IS NULL OR tenant_id = ''")
+                db.commit()
         except Exception as e:
             if "no such table" not in str(e).lower():
                 logger.warning(f"Could not seed orders: {e}")
         finally:
             db.close()
 
-    def get_order_by_id(self, order_id: str) -> Optional[Dict[str, Any]]:
-        """Finds order by ID (e.g. '1042' or '#1042')."""
+    def get_order_by_id(self, order_id: str, tenant_id: str = "tenant_default") -> Optional[Dict[str, Any]]:
+        """Finds order by ID scoped by tenant."""
         normalized = order_id.strip()
         if not normalized.startswith("#"):
             normalized = f"#{normalized}"
 
-        # If live Shopify token configured:
-        if self.access_token and self.store_url:
+        # If live Shopify token configured and live mode enabled:
+        if self.live_mode and self.access_token and self.store_url:
             try:
                 numeric_id = normalized.replace("#", "")
                 url = f"https://{self.store_url}/admin/api/2024-01/orders/{numeric_id}.json"
@@ -102,15 +107,19 @@ class ShopifyAdapter:
                             "total_usd": float(order.get("total_price", 0.0)),
                             "courier": "Shopify Fulfillment",
                             "tracking_id": order.get("fulfillments", [{}])[0].get("tracking_number", "N/A"),
-                            "source": "live_shopify"
+                            "source": "live_shopify",
+                            "tenant_id": tenant_id
                         }
             except Exception as e:
                 logger.error(f"Live Shopify query failed: {e}")
 
-        # Fallback to persistent SQLite Sandbox
+        # Persistent SQLite Multi-Tenant Sandbox
         db = DatabaseSession()
         try:
-            row = db.fetchone("SELECT * FROM p03_orders WHERE id = ?", (normalized,))
+            row = db.fetchone(
+                "SELECT * FROM p03_orders WHERE id = ? AND tenant_id = ?",
+                (normalized, tenant_id)
+            )
             if row:
                 res = dict(row)
                 res["source"] = "sqlite_sandbox"
@@ -124,11 +133,50 @@ class ShopifyAdapter:
         finally:
             db.close()
 
-    def list_recent_orders(self, limit: int = 10) -> List[Dict[str, Any]]:
+    def list_recent_orders(self, limit: int = 10, tenant_id: Optional[str] = None) -> List[Dict[str, Any]]:
         db = DatabaseSession()
         try:
-            rows = db.fetchall("SELECT * FROM p03_orders ORDER BY created_at DESC LIMIT ?", (limit,))
+            if tenant_id:
+                rows = db.fetchall(
+                    "SELECT * FROM p03_orders WHERE tenant_id = ? ORDER BY created_at DESC LIMIT ?",
+                    (tenant_id, limit)
+                )
+            else:
+                rows = db.fetchall("SELECT * FROM p03_orders ORDER BY created_at DESC LIMIT ?", (limit,))
             return [dict(r) for r in rows]
+        finally:
+            db.close()
+
+    def ingest_order(self, order_dict: Dict[str, Any], tenant_id: str = "tenant_default") -> Dict[str, Any]:
+        """Ingests a new order into the multi-tenant store ledger."""
+        oid = order_dict["id"].strip()
+        if not oid.startswith("#"):
+            oid = f"#{oid}"
+        items_str = json.dumps(order_dict.get("items", [])) if not isinstance(order_dict.get("items"), str) else order_dict["items"]
+        
+        db = DatabaseSession()
+        try:
+            db.execute(
+                """
+                INSERT OR REPLACE INTO p03_orders
+                (id, tenant_id, customer_name, email, phone, items, total_usd, status, courier, tracking_id, created_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))
+                """,
+                (
+                    oid,
+                    tenant_id,
+                    order_dict.get("customer_name", "Customer"),
+                    order_dict.get("email"),
+                    order_dict.get("phone"),
+                    items_str,
+                    float(order_dict.get("total_usd", 0.0)),
+                    order_dict.get("status", "In Transit"),
+                    order_dict.get("courier", "TCS Express"),
+                    order_dict.get("tracking_id", "TRK-000000")
+                )
+            )
+            db.commit()
+            return {"id": oid, "tenant_id": tenant_id, "status": "INGESTED"}
         finally:
             db.close()
 

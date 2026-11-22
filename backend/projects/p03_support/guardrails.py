@@ -23,7 +23,8 @@ def check_and_apply_refund_guardrail(
     text: str,
     classification: ClassificationResult,
     session_id: str,
-    order_id: Optional[str] = None
+    order_id: Optional[str] = None,
+    tenant_id: str = "tenant_default"
 ) -> Tuple[bool, Optional[str], Optional[str]]:
     """
     Verifies if a refund is requested or an adversarial jailbreak is attempted.
@@ -51,11 +52,12 @@ def check_and_apply_refund_guardrail(
         db.execute(
             """
             INSERT INTO p03_tickets 
-            (id, order_id, customer_id, state, sentiment, transcript, escalated_to_human, created_at)
-            VALUES (?, ?, ?, ?, ?, ?, 1, ?)
+            (id, tenant_id, order_id, customer_id, state, sentiment, transcript, escalated_to_human, created_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, 1, ?)
             """,
             (
                 ticket_id,
+                tenant_id,
                 order_id or classification.extracted_order_id or "UNKNOWN",
                 session_id,
                 "OPEN_ESCALATED",
@@ -64,6 +66,7 @@ def check_and_apply_refund_guardrail(
                 datetime.now(timezone.utc).isoformat()
             )
         )
+        db.commit()
     finally:
         db.close()
 

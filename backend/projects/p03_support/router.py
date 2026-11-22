@@ -9,7 +9,7 @@ from core.events import event_broker
 from core.health import record_project_activity
 from core.db import DatabaseSession
 from core.security import verify_admin_token, mask_email, mask_phone
-from .schemas import CustomerMessageRequest, BotResponse, ClassificationResult
+from .schemas import CustomerMessageRequest, BotResponse, ClassificationResult, OrderIngestRequest
 from .classifier import classify_customer_message
 from .guardrails import check_and_apply_refund_guardrail
 from .shopify_adapter import shopify_adapter
@@ -44,11 +44,13 @@ def handle_customer_message(request: CustomerMessageRequest):
     })
 
     # Step 3: Refund & Prompt Injection Guardrail
+    tenant_id = getattr(request, "tenant_id", "tenant_default") or "tenant_default"
     is_blocked, ticket_id, guardrail_reply = check_and_apply_refund_guardrail(
         text=request.text,
         classification=classification,
         session_id=session_id,
-        order_id=classification.extracted_order_id
+        order_id=classification.extracted_order_id,
+        tenant_id=tenant_id
     )
 
     order_info = None
@@ -64,7 +66,7 @@ def handle_customer_message(request: CustomerMessageRequest):
         target_order_id = classification.extracted_order_id
         is_order_verified = False
         if target_order_id:
-            order_info = shopify_adapter.get_order_by_id(target_order_id)
+            order_info = shopify_adapter.get_order_by_id(target_order_id, tenant_id=tenant_id)
             if order_info:
                 order_phone = (order_info.get("phone") or "").replace("+", "").replace("-", "").replace(" ", "")
                 order_last4 = order_phone[-4:] if len(order_phone) >= 4 else ""
@@ -176,13 +178,14 @@ def handle_customer_message(request: CustomerMessageRequest):
         refund_blocked=is_blocked and has_refund_intent,
         refund_block_reason="Automated refunds strictly prohibited by financial code gate" if (is_blocked and has_refund_intent) else None,
         execution_time_ms=elapsed,
-        engine=classification.engine
+        engine=classification.engine,
+        tenant_id=tenant_id
     )
 
 @router.get("/orders", dependencies=[Depends(verify_admin_token)])
-def get_orders_list(limit: int = 10):
+def get_orders_list(limit: int = 10, tenant_id: Optional[str] = None):
     """Lists orders from Shopify / local SQLite ledger with masked contact details."""
-    orders = shopify_adapter.list_recent_orders(limit)
+    orders = shopify_adapter.list_recent_orders(limit=limit, tenant_id=tenant_id)
     masked_orders = []
     for o in orders:
         o_copy = dict(o)
@@ -193,12 +196,22 @@ def get_orders_list(limit: int = 10):
         masked_orders.append(o_copy)
     return {"orders": masked_orders}
 
+@router.post("/orders", dependencies=[Depends(verify_admin_token)])
+def ingest_order_endpoint(request: OrderIngestRequest):
+    """Multi-tenant order ingestion endpoint for store owners."""
+    data = request.model_dump() if hasattr(request, "model_dump") else request.dict()
+    result = shopify_adapter.ingest_order(data, tenant_id=request.tenant_id)
+    return {"status": "SUCCESS", "order": result}
+
 @router.get("/tickets", dependencies=[Depends(verify_admin_token)])
-def get_escalation_tickets():
+def get_escalation_tickets(tenant_id: Optional[str] = None):
     """Lists human escalation tickets created by the sentiment/refund guardrail with masked contact info."""
     db = DatabaseSession()
     try:
-        rows = db.fetchall("SELECT * FROM p03_tickets ORDER BY created_at DESC")
+        if tenant_id:
+            rows = db.fetchall("SELECT * FROM p03_tickets WHERE tenant_id = ? ORDER BY created_at DESC", (tenant_id,))
+        else:
+            rows = db.fetchall("SELECT * FROM p03_tickets ORDER BY created_at DESC")
         tickets = []
         for r in rows:
             d = dict(r)

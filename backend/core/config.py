@@ -59,6 +59,7 @@ class Settings(BaseSettings):
     FLAG_P10_FIN_GUARD: bool = True
 
     # External Integration Flags
+    SHOPIFY_LIVE_MODE: bool = False
     SHOPIFY_SHOP_URL: Optional[str] = None
     SHOPIFY_ADMIN_ACCESS_TOKEN: Optional[str] = None
     TELEGRAM_BOT_TOKEN: Optional[str] = None

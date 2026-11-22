@@ -12,6 +12,19 @@ class CustomerMessageRequest(BaseModel):
     phone: Optional[str] = Field(default=None, description="Customer phone number")
     email: Optional[str] = Field(default=None, description="Customer email address if provided")
     customer_name: Optional[str] = Field(default="Customer", description="Customer name if known")
+    tenant_id: str = Field(default="tenant_default", description="Multi-tenant store/workspace partition")
+
+class OrderIngestRequest(BaseModel):
+    id: str = Field(description="Order ID e.g. #1045 or 1045")
+    customer_name: str
+    email: Optional[str] = None
+    phone: Optional[str] = None
+    items: List[Dict[str, Any]] = Field(default_factory=list)
+    total_usd: float
+    status: str = "In Transit"
+    courier: str = "TCS Express"
+    tracking_id: str
+    tenant_id: str = "tenant_default"
 
 class ClassificationResult(BaseModel):
     language: str = Field(description="'English', 'Urdu', or 'Roman Urdu'")
@@ -41,3 +54,4 @@ class BotResponse(BaseModel):
     refund_block_reason: Optional[str] = None
     execution_time_ms: float
     engine: str = Field(default="rules", description="'llm' or 'rules'")
+    tenant_id: str = Field(default="tenant_default", description="Partition ID")
