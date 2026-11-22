@@ -237,10 +237,11 @@ def init_db():
         except Exception:
             pass
 
-        # P07 Dental Appointments
+        # P07 Dental Appointments (Multi-Tenant SaaS Enabled)
         conn.execute("""
             CREATE TABLE IF NOT EXISTS p07_appointments (
                 id TEXT PRIMARY KEY,
+                tenant_id TEXT DEFAULT 'default_clinic',
                 patient_name TEXT NOT NULL,
                 doctor TEXT NOT NULL,
                 slot_time TEXT NOT NULL,
@@ -250,6 +251,10 @@ def init_db():
                 created_at TEXT NOT NULL
             );
         """)
+        try:
+            conn.execute("ALTER TABLE p07_appointments ADD COLUMN tenant_id TEXT DEFAULT 'default_clinic';")
+        except Exception:
+            pass
 
         # P08 Competitor Snapshots & Diffs
         conn.execute("""

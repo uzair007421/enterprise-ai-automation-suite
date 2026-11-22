@@ -1,21 +1,24 @@
 """
 Project 07: Dental Voice Appointment Agent Router
 FastAPI router for voice triage, automated booking, calendar synchronization, and Twilio SMS confirmations.
+SaaS Multi-Tenant Partitioning, Dynamic Emergency Number Dispatch, and Accurate Clinical Triage.
 """
 import uuid
 import datetime
 import re
-from fastapi import APIRouter, HTTPException, Depends
+from typing import Optional
+from fastapi import APIRouter, HTTPException, Depends, Query
 from core.db import get_db, DatabaseSession
 from core.events import event_broker
 from core.security import verify_admin_token, mask_phone, mask_email
+from core.config import settings
 from .schemas import (
     VoiceTriageRequest,
     VoiceTriageResponse,
     AppointmentBookingRequest,
     AppointmentBookingResponse
 )
-from .triage_engine import triage_dental_inquiry
+from .triage_engine import triage_dental_inquiry, get_emergency_number
 from .notification_adapter import notification_adapter
 
 router = APIRouter(prefix="/api/ai/dental-voice", tags=["P07 Dental Voice Agent"])
@@ -25,15 +28,18 @@ def transcribe_and_triage(req: VoiceTriageRequest):
     """
     Analyzes patient voice inquiry, detects emergency symptoms with >=98% recall,
     and returns clinical urgency tier with recommended doctor and slot.
+    Multi-tenant SaaS enabled: partitions by tenant_id.
     """
     session_id = req.session_id or "demo_session"
+    tenant_id = req.tenant_id or "default_clinic"
+
     event_broker.publish(session_id, {
         "project": "p07_voice",
         "stage": "VOICE_INTAKE",
-        "message": f"Processing voice transcript: '{req.transcript[:60]}...'"
+        "message": f"Processing voice transcript for clinic [{tenant_id}]: '{req.transcript[:60]}...'"
     })
 
-    triage_result = triage_dental_inquiry(req.transcript)
+    triage_result = triage_dental_inquiry(req.transcript, tenant_id=tenant_id)
 
     event_broker.publish(session_id, {
         "project": "p07_voice",
@@ -48,11 +54,14 @@ def transcribe_and_triage(req: VoiceTriageRequest):
 @router.post("/book", response_model=AppointmentBookingResponse)
 def book_appointment(req: AppointmentBookingRequest, db: DatabaseSession = Depends(get_db)):
     """
-    Schedules appointment in SQLite database, enforces doctor conflict resolution,
+    Schedules appointment in database, enforces doctor conflict resolution,
     and triggers Twilio SMS confirmation.
+    Multi-tenant SaaS enabled: isolates appointments per clinic partition.
     """
     session_id = req.session_id or "demo_session"
+    tenant_id = req.tenant_id or "default_clinic"
     now_str = datetime.datetime.now(datetime.timezone.utc).isoformat()
+    emergency_number = get_emergency_number()
 
     # Doctor Validation
     VALID_DOCTORS = ["marcus vance", "elena rostova", "sarah jenkins", "michael chen"]
@@ -78,10 +87,12 @@ def book_appointment(req: AppointmentBookingRequest, db: DatabaseSession = Depen
         event_broker.publish(session_id, {
             "project": "p07_voice",
             "stage": "EMERGENCY_BLOCKED",
-            "message": "Life-threatening medical emergency detected. Booking refused; caller instructed to call 911 / 1122."
+            "message": f"Life-threatening medical emergency detected. Booking refused; caller instructed to call {emergency_number}."
         })
         return AppointmentBookingResponse(
-            appointment_id="CALL-911",
+            appointment_id=f"CALL-{emergency_number}",
+            tenant_id=tenant_id,
+            engine="rules",
             patient_name=req.patient_name,
             doctor="None",
             slot_time="None",
@@ -89,14 +100,14 @@ def book_appointment(req: AppointmentBookingRequest, db: DatabaseSession = Depen
             is_emergency=True,
             sms_status="not_sent",
             calendar_sync_status="not_synced",
-            confirmation_message="EMERGENCY: Call 911 (or 1122 in Pakistan) immediately or visit the nearest emergency room. Online booking is prohibited for life-threatening emergencies.",
+            confirmation_message=f"EMERGENCY: Call {emergency_number} immediately or visit the nearest emergency room. Online booking is prohibited for life-threatening emergencies.",
             alternate_slots=[]
         )
 
-    # Slot Conflict Check: Doctor cannot be double-booked for the exact slot time
+    # Slot Conflict Check: Doctor cannot be double-booked for the exact slot time within clinic partition
     existing = db.fetchone(
-        "SELECT id FROM p07_appointments WHERE (doctor = ? OR doctor IS NOT NULL) AND slot_time = ?",
-        (req.doctor, req.slot_time)
+        "SELECT id FROM p07_appointments WHERE tenant_id = ? AND doctor = ? AND slot_time = ?",
+        (tenant_id, req.doctor, req.slot_time)
     )
 
     if existing:
@@ -109,11 +120,13 @@ def book_appointment(req: AppointmentBookingRequest, db: DatabaseSession = Depen
         })
         return AppointmentBookingResponse(
             appointment_id="N/A",
+            tenant_id=tenant_id,
+            engine="rules",
             patient_name=req.patient_name,
             doctor=req.doctor,
             slot_time=req.slot_time,
             status="CONFLICT_REJECTED",
-            is_emergency=req.is_emergency,
+            is_emergency=req.is_emergency or False,
             sms_status="not_sent",
             calendar_sync_status="conflict",
             confirmation_message=f"Conflict: {req.doctor} is already booked at {req.slot_time}. Please select an alternate slot.",
@@ -122,13 +135,13 @@ def book_appointment(req: AppointmentBookingRequest, db: DatabaseSession = Depen
 
     appt_id = f"APPT-{uuid.uuid4().hex[:6].upper()}"
 
-    # Insert into SQLite Database
+    # Insert into Database with tenant_id
     db.execute("""
         INSERT INTO p07_appointments (
-            id, patient_name, doctor, slot_time, reason, is_emergency, sms_sent, created_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            id, tenant_id, patient_name, doctor, slot_time, reason, is_emergency, sms_sent, created_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
     """, (
-        appt_id, req.patient_name, req.doctor, req.slot_time, req.reason,
+        appt_id, tenant_id, req.patient_name, req.doctor, req.slot_time, req.reason,
         1 if req.is_emergency else 0, 1, now_str
     ))
     db.commit()
@@ -152,20 +165,29 @@ def book_appointment(req: AppointmentBookingRequest, db: DatabaseSession = Depen
 
     return AppointmentBookingResponse(
         appointment_id=appt_id,
+        tenant_id=tenant_id,
+        engine="rules",
         patient_name=req.patient_name,
         doctor=req.doctor,
         slot_time=req.slot_time,
         status="CONFIRMED",
-        is_emergency=req.is_emergency,
+        is_emergency=req.is_emergency or False,
         sms_status=sms_status,
         calendar_sync_status="db_persisted",
         confirmation_message=f"Successfully confirmed with {req.doctor} for {req.slot_time}."
     )
 
 @router.get("/appointments", dependencies=[Depends(verify_admin_token)])
-def get_scheduled_appointments(db: DatabaseSession = Depends(get_db)):
-    """Retrieves all scheduled patient appointments with masked contact details."""
-    rows = db.fetchall("SELECT * FROM p07_appointments ORDER BY created_at DESC LIMIT 50")
+def get_scheduled_appointments(
+    tenant_id: Optional[str] = Query(default=None, description="Filter appointments by clinic tenant partition"),
+    db: DatabaseSession = Depends(get_db)
+):
+    """Retrieves all scheduled patient appointments with masked contact details and tenant filtering."""
+    if tenant_id:
+        rows = db.fetchall("SELECT * FROM p07_appointments WHERE tenant_id = ? ORDER BY created_at DESC LIMIT 50", (tenant_id,))
+    else:
+        rows = db.fetchall("SELECT * FROM p07_appointments ORDER BY created_at DESC LIMIT 50")
+
     appointments = []
     for r in rows:
         d = dict(r)
@@ -176,4 +198,4 @@ def get_scheduled_appointments(db: DatabaseSession = Depends(get_db)):
         if "patient_email" in d:
             d["patient_email"] = mask_email(d["patient_email"])
         appointments.append(d)
-    return {"appointments": appointments, "count": len(appointments)}
+    return {"appointments": appointments, "count": len(appointments), "tenant_id": tenant_id}

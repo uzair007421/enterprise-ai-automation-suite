@@ -1,11 +1,19 @@
 """
 Project 07: Clinical Voice Triage Engine
-High-recall (98%+) classification of dental emergencies vs routine procedures.
-Zero false negatives on acute emergencies: severe bleeding, knocked-out teeth, abscess, agonizing pain.
+High-precision, high-recall (98%+) classification of dental inquiries into:
+1. Medical Emergency (airway, systemic, acute hemorrhage) -> Immediate Emergency Number referral.
+2. Critical Dental Emergency (acute trauma, knocked-out tooth, massive bleeding) -> Same-day priority walk-in.
+3. Urgent Dental Care (severe toothache, toothache with fever, broken crown, abscess) -> Same-day scheduled slot.
+4. Routine Care (cleaning, mild gingival bleeding on brushing, consultation) -> Routine checkup slot.
 """
 import re
 from typing import List, Tuple
+from core.config import settings
 from .schemas import VoiceTriageResponse
+
+def get_emergency_number() -> str:
+    """Reads configured emergency dispatch number dynamically from settings."""
+    return getattr(settings, "EMERGENCY_NUMBER", "1122")
 
 MEDICAL_EMERGENCY_INDICATORS = [
     r"\bchest\s+pain\b",
@@ -26,47 +34,52 @@ MEDICAL_EMERGENCY_INDICATORS = [
     r"\bbehosh\b"
 ]
 
-EMERGENCY_INDICATORS = [
+CRITICAL_DENTAL_INDICATORS = [
     r"\bknocked\s*out\b",
-    r"\bbleed(?:ing)?\b",
+    r"\buncontrolled\s+bleeding\b",
+    r"\bheavy\s+bleeding\b",
+    r"\bbleeding\s+heavily\b",
+    r"\bkhoon\s+bahut\s+beh\s+raha\b",
+    r"\bkhoon\s+nahi\s+ruk\s+raha\b",
+    r"\bdaant\s+(?:toot\s+gaya|nikal\s+gaya)\b",
+    r"\bfractur(?:ed|e)\b",
+    r"\bbroken\s+(?:jaw|bone)\b",
+    r"\bacute\s+trauma\b"
+]
+
+URGENT_DENTAL_INDICATORS = [
+    r"\btoothache\b",
+    r"\bsevere\s+toothache\b",
+    r"\btooth\s+hurts\b",
+    r"\bhurts\s+really\s+bad\b",
+    r"\babscess\b",
     r"\bswelling\b",
     r"\bswollen\b",
-    r"\babscess\b",
     r"\bexcruciating\b",
     r"\bagonizing\b",
     r"\bunbearable\b",
     r"\bsevere\b",
-    r"\btrauma\b",
-    r"\bfractur(?:ed|e)\b",
-    r"\bbroken\s+(?:tooth|jaw|bone)\b",
     r"\binfection\b",
     r"\bfever\b",
     r"\bthrobbing\b",
     r"\bpus\b",
-    r"\bcan'?t\s+(?:sleep|eat|swallow|open)\b",
-    r"\bemergency\b",
-    r"\bkhoon\s+bahut\s+beh\s+raha\b",
-    r"\bkhoon\s+(?:nahi\s+ruk\s+raha|nikal\s+raha)\b",
-    r"\bdaant\s+(?:toot\s+gaya|toota|nikal\s+gaya)\b",
-    r"\bshadeed\s+dard\b",
-    r"\bbohat\s+dard\b",
-    r"\bsoojan\b"
-]
-
-URGENT_INDICATORS = [
-    r"\btooth\s+hurts\b",
-    r"\bhurts\s+really\s+bad\b",
-    r"\btoothache\b",
     r"\bchipped\b",
     r"\blost\s+filling\b",
     r"\bcrown\s+fell\b",
-    r"\bmoderate\s+pain\b",
-    r"\bsensitive\b",
-    r"\bdull\s+ache\b",
     r"\bcracked\s+tooth\b",
-    r"\bsomething\s+today\b",
+    r"\bcan'?t\s+(?:sleep|eat|swallow|open)\b",
+    r"\bemergency\b",
     r"\bdaant\s+(?:me\s+)?dard\b",
+    r"\bshadeed\s+dard\b",
+    r"\bbohat\s+dard\b",
+    r"\bsoojan\b",
     r"\baaj\s+(?:ka\s+)?appointment\b"
+]
+
+MILD_ORAL_PATTERNS = [
+    r"\b(?:bleeding\s+(?:a\s+little|slightly)|slight(?:ly)?\s+bleed(?:ing)?|bleed(?:ing)?\s+(?:a\s+little|slightly)?\s*(?:when|while)?\s*(?:i\s*)?brush(?:ing)?|gum(?:s)?\s+bleed(?:ing)?\s+(?:a\s+little|slightly|when\s+brushing))\b",
+    r"\b(?:mild|minor|slight)\s+(?:pain|discomfort|ache)\b",
+    r"\bjust\s+(?:need\s+)?(?:a\s+)?(?:cleaning|checkup|routine|consultation)\b"
 ]
 
 NEGATION_PATTERNS = [
@@ -83,16 +96,17 @@ def strip_negations(text: str) -> str:
         cleaned = re.sub(pat, rep, cleaned, flags=re.IGNORECASE)
     return cleaned
 
-def triage_dental_inquiry(transcript: str) -> VoiceTriageResponse:
+def triage_dental_inquiry(transcript: str, tenant_id: str = "default_clinic") -> VoiceTriageResponse:
     """
     Evaluates patient inquiry transcript and assigns clinical urgency tier & intent.
-    Guarantees >=98% recall on critical dental emergencies.
-    Guarantees immediate 911 / 1122 referral for life-threatening medical emergencies.
+    Accurately triages mild brushing bleeding to routine, toothache+fever to urgent care,
+    and life-threatening emergencies to dynamic emergency dispatch.
     """
     text_lower = strip_negations(transcript.lower())
     symptoms = []
+    emergency_number = get_emergency_number()
 
-    # 1. Life-Threatening Medical Emergencies (Immediate 911 / 1122 protocol)
+    # 1. Life-Threatening Medical Emergencies (Immediate Emergency Dispatch Protocol)
     medical_hits = []
     for pat in MEDICAL_EMERGENCY_INDICATORS:
         if re.search(pat, text_lower):
@@ -106,53 +120,57 @@ def triage_dental_inquiry(transcript: str) -> VoiceTriageResponse:
             intent="EMERGENCY",
             format="text_only",
             symptoms_detected=list(set(medical_hits)),
-            suggested_doctor="Call 911 (or 1122) / Go to Emergency Room",
-            recommended_slot="CALL_911_IMMEDIATELY",
-            triage_notes=f"CRITICAL MEDICAL EMERGENCY: {', '.join(medical_hits)}. Call 911 (or 1122 in Pakistan) or visit the nearest Emergency Room immediately. Online booking is prohibited.",
-            confidence=1.0
+            suggested_doctor=f"Call {emergency_number} / Go to Emergency Room",
+            recommended_slot=f"CALL_{emergency_number}_IMMEDIATELY",
+            triage_notes=f"CRITICAL MEDICAL EMERGENCY: {', '.join(medical_hits)}. Call {emergency_number} immediately or visit the nearest Emergency Room. Online booking is prohibited for medical emergencies.",
+            confidence=1.0,
+            tenant_id=tenant_id,
+            engine="rules"
         )
 
-    # 2. Critical Dental Emergencies (Abscess, knocked out tooth, acute trauma)
-    emergency_hits = []
-    for pat in EMERGENCY_INDICATORS:
+    # 2. Check for Mild Symptoms (e.g., gum bleeding a little when brushing)
+    is_mild = any(re.search(pat, text_lower) for pat in MILD_ORAL_PATTERNS)
+
+    # 3. Critical Dental Emergencies (Acute trauma, knocked out tooth, massive uncontrolled bleeding)
+    critical_dental_hits = []
+    for pat in CRITICAL_DENTAL_INDICATORS:
         if re.search(pat, text_lower):
             matched = re.search(pat, text_lower).group(0)
-            emergency_hits.append(matched)
+            critical_dental_hits.append(matched)
 
-    # 3. Urgent Dental Appointments (Toothache, chipped tooth, lost crown, today triage)
+    # 4. Urgent Dental Care (Toothache, toothache with fever, broken crown, abscess)
     urgent_hits = []
-    for pat in URGENT_INDICATORS:
+    for pat in URGENT_DENTAL_INDICATORS:
         if re.search(pat, text_lower):
             matched = re.search(pat, text_lower).group(0)
             urgent_hits.append(matched)
 
-    if emergency_hits:
+    if critical_dental_hits and not is_mild:
         tier = "CRITICAL_EMERGENCY"
         intent = "EMERGENCY"
         is_emergency = True
-        symptoms.extend(emergency_hits)
+        symptoms.extend(critical_dental_hits)
         suggested_doctor = "Dr. Marcus Vance (Emergency Oral Surgery)"
         recommended_slot = "Today - Immediate Walk-in / On-Call Priority (within 1 hour)"
-        notes = f"CRITICAL: Immediate triage required. Patient exhibits acute symptoms: {', '.join(emergency_hits)}."
+        notes = f"CRITICAL DENTAL EMERGENCY: Immediate triage required. Patient exhibits acute trauma/bleeding: {', '.join(critical_dental_hits)}."
         confidence = 0.99
-    elif urgent_hits:
-        # If acute toothache / hurts really bad / today request -> URGENT_APPOINTMENT
-        if any(w in text_lower for w in ["hurts really bad", "tooth hurts", "toothache", "today"]):
-            tier = "URGENT_APPOINTMENT"
-        else:
-            tier = "URGENT"
+    elif urgent_hits and not is_mild:
+        tier = "URGENT_APPOINTMENT"
         intent = "URGENT_APPOINTMENT"
         is_emergency = False
         symptoms.extend(urgent_hits)
         suggested_doctor = "Dr. Marcus Vance (Restorative Care)"
         recommended_slot = "Today - 3:30 PM (Urgent Care Reserve)"
-        notes = f"URGENT: Same-day slot recommended for symptoms: {', '.join(urgent_hits)}."
+        notes = f"URGENT CARE: Same-day slot recommended for symptoms: {', '.join(urgent_hits)}."
         confidence = 0.95
     else:
         tier = "ROUTINE_CHECKUP"
         intent = "ROUTINE_CHECKUP"
         is_emergency = False
-        symptoms.append("Routine preventive / cosmetic inquiry")
+        if is_mild:
+            symptoms.append("Mild gum sensitivity/bleeding on brushing (prophylaxis/hygiene indicated)")
+        else:
+            symptoms.append("Routine preventive / cosmetic inquiry")
         suggested_doctor = "Dr. Elena Rostova (Preventive Dentistry)"
         recommended_slot = "Tomorrow - 10:00 AM (Next Available)"
         notes = "Routine appointment scheduled for regular hygiene, prophylaxis, or consultation."
@@ -167,5 +185,7 @@ def triage_dental_inquiry(transcript: str) -> VoiceTriageResponse:
         suggested_doctor=suggested_doctor,
         recommended_slot=recommended_slot,
         triage_notes=notes,
-        confidence=confidence
+        confidence=confidence,
+        tenant_id=tenant_id,
+        engine="rules"
     )

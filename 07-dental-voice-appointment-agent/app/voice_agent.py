@@ -38,11 +38,14 @@ class DentalVoiceAgent:
             json.dump(data, f, indent=2)
 
     def check_emergency(self, utterance: str) -> bool:
-        emergency_terms = [
-            "bleeding", "severe pain", "unbearable", "knocked out", "broken jaw",
-            "swelling throat", "fever and swollen", "trauma", "emergency", "blood"
-        ]
         text_lower = utterance.lower()
+        # Mild brushing bleeding or routine exam is not an emergency
+        if any(w in text_lower for w in ["brush", "cleaning", "mild", "slight", "no bleeding", "not bleeding"]):
+            return False
+        emergency_terms = [
+            "heavy bleeding", "uncontrolled bleeding", "severe pain", "unbearable", "knocked out", "broken jaw",
+            "swelling throat", "fever and swollen", "trauma", "emergency", "khoon"
+        ]
         return any(term in text_lower for term in emergency_terms)
 
     def handle_call_turn(self, call_id: str, caller_phone: str, user_transcript: str) -> Dict[str, Any]:
