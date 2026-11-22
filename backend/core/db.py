@@ -256,10 +256,11 @@ def init_db():
         except Exception:
             pass
 
-        # P08 Competitor Snapshots & Diffs
+        # P08 Competitor Snapshots & Diffs (Multi-Tenant SaaS Enabled)
         conn.execute("""
             CREATE TABLE IF NOT EXISTS p08_competitor_diffs (
                 id TEXT PRIMARY KEY,
+                tenant_id TEXT DEFAULT 'default_org',
                 competitor_name TEXT NOT NULL,
                 change_type TEXT NOT NULL,
                 headline TEXT NOT NULL,
@@ -271,12 +272,22 @@ def init_db():
         """)
         conn.execute("""
             CREATE TABLE IF NOT EXISTS p08_snapshots (
-                url TEXT PRIMARY KEY,
+                url TEXT NOT NULL,
+                tenant_id TEXT DEFAULT 'default_org',
                 competitor_name TEXT NOT NULL,
                 html_snapshot TEXT NOT NULL,
-                updated_at TEXT NOT NULL
+                updated_at TEXT NOT NULL,
+                PRIMARY KEY (tenant_id, url)
             );
         """)
+        try:
+            conn.execute("ALTER TABLE p08_competitor_diffs ADD COLUMN tenant_id TEXT DEFAULT 'default_org';")
+        except Exception:
+            pass
+        try:
+            conn.execute("ALTER TABLE p08_snapshots ADD COLUMN tenant_id TEXT DEFAULT 'default_org';")
+        except Exception:
+            pass
 
         # P09 Media Content Repurposed Assets
         conn.execute("""

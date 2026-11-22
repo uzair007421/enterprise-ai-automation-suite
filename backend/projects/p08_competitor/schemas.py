@@ -1,5 +1,6 @@
 """
 Project 08: SaaS Competitor Intelligence Schemas
+SaaS Multi-Tenant Contracts for SSRF-Safe Crawling, DOM Diffing, and Strategic Counter-Measures.
 """
 from typing import Optional, List, Dict, Any
 from pydantic import BaseModel, Field
@@ -9,6 +10,7 @@ class CompetitorScanRequest(BaseModel):
     target_url: str = Field(description="Competitor pricing or product page URL")
     previous_html_snapshot: Optional[str] = None
     current_html_snapshot: Optional[str] = None
+    tenant_id: Optional[str] = Field(default="default_org", description="SaaS organization partition")
     session_id: Optional[str] = "demo_session"
 
 class CompetitorDiffItem(BaseModel):
@@ -24,6 +26,8 @@ class CompetitorDiffItem(BaseModel):
 class CompetitorScanResponse(BaseModel):
     competitor_name: str
     target_url: str
+    tenant_id: str = "default_org"
+    engine: str = "rules"
     ssrf_validated: bool
     changes_detected: List[CompetitorDiffItem]
     diff_count: int = 0
