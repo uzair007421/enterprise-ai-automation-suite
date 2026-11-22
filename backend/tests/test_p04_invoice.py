@@ -122,3 +122,54 @@ def test_ledger_retrieval_and_csv_export():
     assert "Vendor" in content
     assert "Invoice Number" in content
     assert "Subtotal + Tax vs Total" in content
+
+
+def test_saas_multitenant_duplicate_isolation():
+    """Verify Company A's invoice #INV-8800 does not block Company B from using invoice #INV-8800."""
+    from core.db import get_connection
+    with get_connection() as conn:
+        conn.execute("DELETE FROM p04_invoices WHERE tenant_id IN ('tenant_company_alpha', 'tenant_company_beta')")
+
+    req_alpha = InvoiceProcessRequest(
+        raw_text="Invoice #INV-8800 Vendor: TechFlow Date: 2026-11-20 Subtotal: $1000.00 Tax: $100.00 Total: $1100.00",
+        filename="alpha_inv.txt",
+        session_id="sess_alpha",
+        tenant_id="tenant_company_alpha"
+    )
+    resp_alpha = process_invoice_endpoint(req_alpha)
+    assert resp_alpha.duplicate_check.is_duplicate is False
+
+    # Second submission under same tenant is flagged as duplicate
+    resp_alpha_dup = process_invoice_endpoint(req_alpha)
+    assert resp_alpha_dup.duplicate_check.is_duplicate is True
+
+    # Same vendor and invoice number under a different tenant is NOT flagged as duplicate
+    req_beta = InvoiceProcessRequest(
+        raw_text="Invoice #INV-8800 Vendor: TechFlow Date: 2026-11-20 Subtotal: $1000.00 Tax: $100.00 Total: $1100.00",
+        filename="beta_inv.txt",
+        session_id="sess_beta",
+        tenant_id="tenant_company_beta"
+    )
+    resp_beta = process_invoice_endpoint(req_beta)
+    assert resp_beta.duplicate_check.is_duplicate is False
+    assert resp_beta.tenant_id == "tenant_company_beta"
+
+
+def test_saas_multitenant_ledger_isolation():
+    """Verify ledgers and CSV export are strictly partitioned by tenant_id."""
+    ledger_alpha = get_ledger(limit=10, tenant_id="tenant_company_alpha")
+    alpha_ids = [inv["id"] for inv in ledger_alpha["invoices"]]
+    assert len(alpha_ids) >= 1
+
+    ledger_beta = get_ledger(limit=10, tenant_id="tenant_company_beta")
+    beta_ids = [inv["id"] for inv in ledger_beta["invoices"]]
+    assert len(beta_ids) >= 1
+
+    # Invoices must not bleed across tenants
+    assert not set(alpha_ids).intersection(set(beta_ids))
+
+    # CSV export for Alpha must not contain Beta's invoice IDs
+    csv_alpha = export_csv_endpoint(tenant_id="tenant_company_alpha").body.decode("utf-8")
+    for b_id in beta_ids:
+        assert b_id not in csv_alpha
+

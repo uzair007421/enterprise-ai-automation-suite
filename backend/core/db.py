@@ -199,6 +199,7 @@ def init_db():
         conn.execute("""
             CREATE TABLE IF NOT EXISTS p04_invoices (
                 id TEXT PRIMARY KEY,
+                tenant_id TEXT DEFAULT 'tenant_default',
                 vendor TEXT NOT NULL,
                 invoice_number TEXT NOT NULL,
                 invoice_date TEXT NOT NULL,
@@ -214,6 +215,11 @@ def init_db():
                 created_at TEXT NOT NULL
             );
         """)
+        try:
+            conn.execute("ALTER TABLE p04_invoices ADD COLUMN tenant_id TEXT DEFAULT 'tenant_default';")
+        except Exception:
+            pass
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_p04_invoices_tenant ON p04_invoices(tenant_id);")
 
         # P05 Workflow Monitoring Telemetry
         conn.execute("""

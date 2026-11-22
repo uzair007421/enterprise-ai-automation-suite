@@ -48,9 +48,11 @@ class InvoiceProcessRequest(BaseModel):
     filename: Optional[str] = "invoice.pdf"
     session_id: Optional[str] = "demo_session"
     manual_data: Optional[InvoiceExtractedData] = None
+    tenant_id: str = Field(default="tenant_default", description="Multi-tenant enterprise partition")
 
 class InvoiceProcessResponse(BaseModel):
     invoice_id: str
+    tenant_id: str = "tenant_default"
     file_sha256: str
     vendor_name: Optional[str] = None
     invoice_number: Optional[str] = None

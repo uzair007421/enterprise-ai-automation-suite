@@ -39,6 +39,7 @@ def process_invoice_endpoint(request: InvoiceProcessRequest):
     start_time = time.time()
     record_project_activity("invoice-processing")
     session_id = request.session_id or "demo_session"
+    tenant_id = getattr(request, "tenant_id", "tenant_default") or "tenant_default"
 
     # Step 1: Ingest & Compute HMAC-Secured Content Hash
     event_broker.publish(session_id, {
@@ -86,7 +87,8 @@ def process_invoice_endpoint(request: InvoiceProcessRequest):
         file_sha256=file_hash,
         vendor_name=extracted.vendor_name,
         invoice_number=extracted.invoice_number,
-        amount=extracted.total_amount
+        amount=extracted.total_amount,
+        tenant_id=tenant_id
     )
 
     # Determine status & Save to SQLite
@@ -109,11 +111,12 @@ def process_invoice_endpoint(request: InvoiceProcessRequest):
         db.execute(
             """
             INSERT INTO p04_invoices 
-            (id, vendor, invoice_number, invoice_date, amount, status, math_check_1, math_check_2, file_hash, created_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            (id, tenant_id, vendor, invoice_number, invoice_date, amount, status, math_check_1, math_check_2, file_hash, created_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             (
                 invoice_id,
+                tenant_id,
                 extracted.vendor_name or "UNKNOWN",
                 extracted.invoice_number or "UNKNOWN",
                 extracted.invoice_date or datetime.now(timezone.utc).strftime("%Y-%m-%d"),
@@ -137,6 +140,7 @@ def process_invoice_endpoint(request: InvoiceProcessRequest):
 
     return InvoiceProcessResponse(
         invoice_id=invoice_id,
+        tenant_id=tenant_id,
         file_sha256=file_hash,
         vendor_name=extracted.vendor_name,
         invoice_number=extracted.invoice_number,
@@ -194,11 +198,21 @@ async def upload_file_endpoint(
     return process_invoice_endpoint(req)
 
 @router.get("/ledger")
-def get_ledger(limit: int = 50, status_filter: Optional[str] = None):
-    """Returns persistent invoices from SQLite database."""
+def get_ledger(limit: int = 50, status_filter: Optional[str] = None, tenant_id: Optional[str] = None):
+    """Returns persistent invoices from SQLite database scoped to tenant."""
     db = DatabaseSession()
     try:
-        if status_filter:
+        if tenant_id and status_filter:
+            rows = db.fetchall(
+                "SELECT * FROM p04_invoices WHERE tenant_id = ? AND status = ? ORDER BY created_at DESC LIMIT ?",
+                (tenant_id, status_filter, limit)
+            )
+        elif tenant_id:
+            rows = db.fetchall(
+                "SELECT * FROM p04_invoices WHERE tenant_id = ? ORDER BY created_at DESC LIMIT ?",
+                (tenant_id, limit)
+            )
+        elif status_filter:
             rows = db.fetchall(
                 "SELECT * FROM p04_invoices WHERE status = ? ORDER BY created_at DESC LIMIT ?",
                 (status_filter, limit)
@@ -213,9 +227,9 @@ def get_ledger(limit: int = 50, status_filter: Optional[str] = None):
         db.close()
 
 @router.get("/export/csv")
-def export_csv_endpoint():
+def export_csv_endpoint(tenant_id: Optional[str] = None):
     """Generates and downloads CSV ledger for Google Sheets integration."""
-    csv_data = accounting_adapter.export_ledger_csv()
+    csv_data = accounting_adapter.export_ledger_csv(tenant_id=tenant_id)
     return Response(
         content=csv_data,
         media_type="text/csv",

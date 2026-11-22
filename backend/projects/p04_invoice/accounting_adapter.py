@@ -51,11 +51,14 @@ class AccountingAdapter:
                 "accounting_target": "Local SQLite Ledger (Sandbox Mode)"
             }
 
-    def export_ledger_csv(self) -> str:
+    def export_ledger_csv(self, tenant_id: Optional[str] = None) -> str:
         """Exports all approved invoices to CSV formatted for Google Sheets import."""
         db = DatabaseSession()
         try:
-            rows = db.fetchall("SELECT * FROM p04_invoices ORDER BY created_at DESC")
+            if tenant_id:
+                rows = db.fetchall("SELECT * FROM p04_invoices WHERE tenant_id = ? ORDER BY created_at DESC", (tenant_id,))
+            else:
+                rows = db.fetchall("SELECT * FROM p04_invoices ORDER BY created_at DESC")
             output = io.StringIO()
             writer = csv.writer(output)
             writer.writerow([

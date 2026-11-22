@@ -16,18 +16,19 @@ def check_duplicate_invoice(
     file_sha256: str,
     vendor_name: Optional[str] = None,
     invoice_number: Optional[str] = None,
-    amount: Optional[float] = None
+    amount: Optional[float] = None,
+    tenant_id: str = "tenant_default"
 ) -> DuplicateCheckResult:
     """
     Queries database for identical SHA-256 hash or identical vendor + invoice_number (+ amount) combination,
-    including invoices waiting in the review queue.
+    scoped strictly to tenant_id.
     """
     db = DatabaseSession()
     try:
-        # Check identical content hash
+        # Check identical content hash within tenant
         hash_match = db.fetchone(
-            "SELECT id, vendor, invoice_number, status FROM p04_invoices WHERE file_hash = ?",
-            (file_sha256,)
+            "SELECT id, vendor, invoice_number, status FROM p04_invoices WHERE file_hash = ? AND tenant_id = ?",
+            (file_sha256, tenant_id)
         )
         if hash_match:
             status_desc = f" ({hash_match['status']})" if hash_match.get("status") else ""
@@ -41,16 +42,16 @@ def check_duplicate_invoice(
             normalized_vendor = vendor_name.strip().lower()
             normalized_inv_num = invoice_number.strip().lower()
 
-            # Check composite business key: vendor_name + invoice_number (+ optional amount)
+            # Check composite business key within tenant
             if amount is not None:
                 composite_match = db.fetchone(
-                    "SELECT id, vendor, invoice_number, status FROM p04_invoices WHERE LOWER(vendor) = ? AND LOWER(invoice_number) = ? AND ABS(amount - ?) < 0.02",
-                    (normalized_vendor, normalized_inv_num, amount)
+                    "SELECT id, vendor, invoice_number, status FROM p04_invoices WHERE LOWER(vendor) = ? AND LOWER(invoice_number) = ? AND ABS(amount - ?) < 0.02 AND tenant_id = ?",
+                    (normalized_vendor, normalized_inv_num, amount, tenant_id)
                 )
             else:
                 composite_match = db.fetchone(
-                    "SELECT id, vendor, invoice_number, status FROM p04_invoices WHERE LOWER(vendor) = ? AND LOWER(invoice_number) = ?",
-                    (normalized_vendor, normalized_inv_num)
+                    "SELECT id, vendor, invoice_number, status FROM p04_invoices WHERE LOWER(vendor) = ? AND LOWER(invoice_number) = ? AND tenant_id = ?",
+                    (normalized_vendor, normalized_inv_num, tenant_id)
                 )
 
             if composite_match:

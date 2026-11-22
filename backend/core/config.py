@@ -64,6 +64,7 @@ class Settings(BaseSettings):
     SHOPIFY_ADMIN_ACCESS_TOKEN: Optional[str] = None
     TELEGRAM_BOT_TOKEN: Optional[str] = None
     TELEGRAM_ALERT_CHAT_ID: Optional[str] = None
+    QBO_LIVE_MODE: bool = False
     QBO_CLIENT_ID: Optional[str] = None
     QBO_CLIENT_SECRET: Optional[str] = None
     QBO_REALM_ID: Optional[str] = None
