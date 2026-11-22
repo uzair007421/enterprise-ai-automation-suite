@@ -49,6 +49,7 @@ def draft_purchase_offer(lead: QualifiedLead, property_match: PropertyListing) -
 
     return DraftOffer(
         offer_id=offer_id,
+        tenant_id=lead.tenant_id or "default_brokerage",
         lead_id=lead.lead_id,
         mls_id=property_match.mls_id,
         property_address=f"{property_match.address}, {property_match.city}",

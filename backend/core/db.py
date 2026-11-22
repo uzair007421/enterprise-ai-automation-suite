@@ -88,10 +88,11 @@ def init_db():
     """Initializes database schema tables for all 10 automation projects."""
     conn = get_connection()
     with conn:
-        # P01 Real Estate Leads & Offers
+        # P01 Real Estate Leads & Offers (Multi-Tenant SaaS Enabled)
         conn.execute("""
             CREATE TABLE IF NOT EXISTS p01_leads (
                 id TEXT PRIMARY KEY,
+                tenant_id TEXT DEFAULT 'default_brokerage',
                 name TEXT NOT NULL,
                 email TEXT,
                 phone TEXT,
@@ -111,6 +112,7 @@ def init_db():
         conn.execute("""
             CREATE TABLE IF NOT EXISTS p01_offers (
                 id TEXT PRIMARY KEY,
+                tenant_id TEXT DEFAULT 'default_brokerage',
                 lead_id TEXT NOT NULL,
                 mls_id TEXT NOT NULL,
                 property_address TEXT NOT NULL,
@@ -125,6 +127,15 @@ def init_db():
                 updated_at TEXT NOT NULL
             );
         """)
+        # Safe migration if columns missing
+        try:
+            conn.execute("ALTER TABLE p01_leads ADD COLUMN tenant_id TEXT DEFAULT 'default_brokerage';")
+        except Exception:
+            pass
+        try:
+            conn.execute("ALTER TABLE p01_offers ADD COLUMN tenant_id TEXT DEFAULT 'default_brokerage';")
+        except Exception:
+            pass
 
         # P02 Legal Document Corpus & Chunks (Multi-Tenant SaaS Enabled)
         conn.execute("""

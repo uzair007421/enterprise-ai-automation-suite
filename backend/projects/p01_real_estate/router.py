@@ -1,11 +1,12 @@
 """
 Project 01: Multi-Agent Real Estate Sales Team Router
 Coordinates 3 specialized autonomous agents with Human-in-the-Loop Broker Approval Gate.
+SaaS Multi-Tenant Partitioning, Honest Qualification, and CRM Sync.
 """
 import time
 import datetime
 from typing import List, Dict, Any, Optional
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, Query
 from core.db import get_db, DatabaseSession
 from core.events import event_broker
 from core.security import verify_admin_token, mask_email, mask_phone
@@ -29,22 +30,24 @@ router = APIRouter(prefix="/api/ai/real-estate-sales", tags=["P01 Real Estate Sa
 def ingest_lead(inquiry: RawLeadInquiry, db: DatabaseSession = Depends(get_db)):
     """
     Executes the 3-agent autonomous real estate pipeline:
-    1. Agent 1: Lead Qualification & Scoring
+    1. Agent 1: Lead Qualification & Scoring (Honest, zero hallucinated parameters)
     2. Agent 2: MLS Property Matching
     3. Agent 3: Policy-bound Purchase Offer Drafting
     Enforces broker gate before any offer can be finalized.
+    Multi-tenant SaaS partition: isolates by tenant_id.
     """
     t_start = time.perf_counter()
     session_id = inquiry.session_id or "demo_session"
+    tenant_id = inquiry.tenant_id or "default_brokerage"
 
     event_broker.publish(session_id, {
         "project": "p01_real_estate",
         "stage": "INGESTION",
-        "message": f"Processing incoming buyer inquiry ({len(inquiry.text)} chars)..."
+        "message": f"Processing incoming buyer inquiry for brokerage [{tenant_id}] ({len(inquiry.text)} chars)..."
     })
 
     # Agent 1: Lead Qualification
-    lead: QualifiedLead = qualify_lead_from_text(inquiry.text)
+    lead: QualifiedLead = qualify_lead_from_text(inquiry.text, tenant_id=tenant_id)
     event_broker.publish(session_id, {
         "project": "p01_real_estate",
         "stage": "AGENT_1_QUALIFIED",
@@ -67,24 +70,25 @@ def ingest_lead(inquiry: RawLeadInquiry, db: DatabaseSession = Depends(get_db)):
     draft_offer: Optional[DraftOffer] = None
     if matches and lead.score_tier in ("HOT", "WARM"):
         draft_offer = draft_purchase_offer(lead, matches[0])
-        event_broker.publish(session_id, {
-            "project": "p01_real_estate",
-            "stage": "AGENT_3_DRAFTED",
-            "offer_id": draft_offer.offer_id,
-            "offered_price": draft_offer.offered_price,
-            "status": draft_offer.status,
-            "message": f"Draft offer generated: ${draft_offer.offered_price:,.0f} on {draft_offer.mls_id}. HELD for Broker Approval."
-        })
+        if draft_offer:
+            event_broker.publish(session_id, {
+                "project": "p01_real_estate",
+                "stage": "AGENT_3_DRAFTED",
+                "offer_id": draft_offer.offer_id,
+                "offered_price": draft_offer.offered_price,
+                "status": draft_offer.status,
+                "message": f"Draft offer generated: ${draft_offer.offered_price:,.0f} on {draft_offer.mls_id}. HELD for Broker Approval."
+            })
 
-    # Persist Lead to Database
+    # Persist Lead to Database with Multi-Tenant Partitioning
     now_str = datetime.datetime.now(datetime.timezone.utc).isoformat()
     db.execute("""
         INSERT INTO p01_leads (
-            id, name, email, phone, budget, location, bedrooms, timeline,
+            id, tenant_id, name, email, phone, budget, location, bedrooms, timeline,
             status, score_tier, fit_reason, raw_inquiry, broker_approved, dispatched, created_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     """, (
-        lead.lead_id, lead.name, lead.email, lead.phone, lead.budget,
+        lead.lead_id, tenant_id, lead.name, lead.email, lead.phone, lead.budget,
         lead.location, lead.bedrooms, lead.timeline, "QUALIFIED",
         lead.score_tier, lead.fit_reason, inquiry.text, 0, 0, now_str
     ))
@@ -93,12 +97,12 @@ def ingest_lead(inquiry: RawLeadInquiry, db: DatabaseSession = Depends(get_db)):
     if draft_offer:
         db.execute("""
             INSERT INTO p01_offers (
-                id, lead_id, mls_id, property_address, offered_price,
+                id, tenant_id, lead_id, mls_id, property_address, offered_price,
                 earnest_deposit, inspection_days, financing_contingency_days,
                 broker_approved, status, broker_notes, created_at, updated_at
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """, (
-            draft_offer.offer_id, draft_offer.lead_id, draft_offer.mls_id,
+            draft_offer.offer_id, tenant_id, draft_offer.lead_id, draft_offer.mls_id,
             draft_offer.property_address, draft_offer.offered_price,
             draft_offer.earnest_deposit, draft_offer.inspection_days,
             draft_offer.financing_contingency_days, 0, draft_offer.status,
@@ -124,13 +128,22 @@ def ingest_lead(inquiry: RawLeadInquiry, db: DatabaseSession = Depends(get_db)):
         draft_offer=draft_offer,
         broker_action_required=draft_offer is not None,
         hubspot_sync_status=hubspot_status,
+        tenant_id=tenant_id,
+        engine="rules",
         execution_time_ms=round(t_elapsed, 2)
     )
 
 @router.get("/leads", dependencies=[Depends(verify_admin_token)])
-def get_all_leads(db: DatabaseSession = Depends(get_db)):
-    """Fetches all qualified leads and current statuses with masked contact details."""
-    rows = db.query_all("SELECT * FROM p01_leads ORDER BY created_at DESC LIMIT 50")
+def get_all_leads(
+    tenant_id: Optional[str] = Query(default=None, description="Filter leads by brokerage tenant partition"),
+    db: DatabaseSession = Depends(get_db)
+):
+    """Fetches all qualified leads and current statuses with masked contact details and tenant filtering."""
+    if tenant_id:
+        rows = db.query_all("SELECT * FROM p01_leads WHERE tenant_id = ? ORDER BY created_at DESC LIMIT 50", (tenant_id,))
+    else:
+        rows = db.query_all("SELECT * FROM p01_leads ORDER BY created_at DESC LIMIT 50")
+
     leads = []
     for r in rows:
         d = dict(r)
@@ -139,7 +152,7 @@ def get_all_leads(db: DatabaseSession = Depends(get_db)):
         if "phone" in d:
             d["phone"] = mask_phone(d["phone"])
         leads.append(d)
-    return {"leads": leads, "count": len(leads)}
+    return {"leads": leads, "count": len(leads), "tenant_id": tenant_id}
 
 @router.get("/inventory")
 def get_mls_inventory():
@@ -150,10 +163,15 @@ def get_mls_inventory():
 def execute_broker_decision(req: BrokerDecisionRequest, db: DatabaseSession = Depends(get_db)):
     """
     Human-in-the-Loop Gate: Broker reviews, modifies, approves, or rejects drafted offer.
+    Enforces brokerage tenant verification.
     """
     row = db.query_one("SELECT * FROM p01_offers WHERE id = ?", (req.offer_id,))
     if not row:
         raise HTTPException(status_code=404, detail=f"Offer {req.offer_id} not found.")
+
+    offer_tenant = row.get("tenant_id") or "default_brokerage"
+    if req.tenant_id and req.tenant_id != "default_brokerage" and offer_tenant != req.tenant_id:
+        raise HTTPException(status_code=403, detail="Unauthorized access to offer belonging to another brokerage partition.")
 
     decision_norm = req.decision.upper().strip()
     now_str = datetime.datetime.now(datetime.timezone.utc).isoformat()
@@ -205,6 +223,7 @@ def execute_broker_decision(req: BrokerDecisionRequest, db: DatabaseSession = De
 
     return BrokerDecisionResponse(
         offer_id=req.offer_id,
+        tenant_id=offer_tenant,
         status=new_status,
         final_price=final_price,
         broker_notes=req.broker_notes or "",

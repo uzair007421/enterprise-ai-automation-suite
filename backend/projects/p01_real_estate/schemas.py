@@ -1,6 +1,7 @@
 """
 Project 01: Multi-Agent Real Estate Sales Team Schemas
-Strict contracts for 3-agent pipeline: Lead Qualifier -> Property Matcher -> Offer Drafter -> Broker Desk.
+SaaS Multi-Tenant Contracts for Lead Qualification, MLS Matching, Offer Drafting,
+and Broker Governance.
 """
 from typing import Optional, Dict, Any, List
 from pydantic import BaseModel, Field
@@ -8,19 +9,23 @@ from pydantic import BaseModel, Field
 class RawLeadInquiry(BaseModel):
     text: str = Field(description="Raw lead inquiry from email, webform, or Zillow/Realtor webhook")
     channel: Optional[str] = "Webform"
+    tenant_id: Optional[str] = Field(default="default_brokerage", description="SaaS brokerage partition")
     session_id: Optional[str] = "demo_session"
 
 class QualifiedLead(BaseModel):
     lead_id: str
+    tenant_id: str = "default_brokerage"
     name: str
     email: str
     phone: str
     budget: float
+    budget_min: Optional[float] = None
+    budget_max: Optional[float] = None
     location: str
     bedrooms: int
     timeline: str
     score: int = Field(ge=0, le=100)
-    score_tier: str  # "HOT" | "WARM" | "COLD" | "DISQUALIFIED"
+    score_tier: str  # "HOT" | "WARM" | "COLD" | "DISQUALIFIED" | "INCOMPLETE_INQUIRY"
     fit_reason: str
 
 class PropertyListing(BaseModel):
@@ -36,6 +41,7 @@ class PropertyListing(BaseModel):
 
 class DraftOffer(BaseModel):
     offer_id: str
+    tenant_id: str = "default_brokerage"
     lead_id: str
     mls_id: str
     property_address: str
@@ -52,6 +58,8 @@ class LeadPipelineResponse(BaseModel):
     draft_offer: Optional[DraftOffer] = None
     broker_action_required: bool
     hubspot_sync_status: str
+    tenant_id: str = "default_brokerage"
+    engine: str = "rules"
     execution_time_ms: float
 
 class BrokerDecisionRequest(BaseModel):
@@ -59,10 +67,12 @@ class BrokerDecisionRequest(BaseModel):
     decision: str = Field(description="'APPROVE', 'MODIFY', or 'REJECT'")
     modified_price: Optional[float] = None
     broker_notes: Optional[str] = "Approved by Managing Broker"
+    tenant_id: Optional[str] = "default_brokerage"
     session_id: Optional[str] = "demo_session"
 
 class BrokerDecisionResponse(BaseModel):
     offer_id: str
+    tenant_id: str = "default_brokerage"
     status: str
     final_price: float
     broker_notes: str

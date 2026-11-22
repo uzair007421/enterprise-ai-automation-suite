@@ -83,7 +83,11 @@ def match_properties_for_lead(lead: QualifiedLead, max_results: int = 2) -> List
     """
     Finds and ranks MLS properties aligning with lead's location, budget, and bedroom count.
     STRICT FILTER: Property price must be <= lead.budget. Budget $800k will never match $1.25M.
+    If lead has no defined budget or is incomplete/disqualified, returns empty match list.
     """
+    if lead.budget <= 0.0 or lead.score_tier in ("INCOMPLETE_INQUIRY", "DISQUALIFIED"):
+        return []
+
     matches = []
     lead_city = lead.location.split(",")[0].lower()
 
@@ -96,8 +100,8 @@ def match_properties_for_lead(lead: QualifiedLead, max_results: int = 2) -> List
         if lead_city != "unspecified location" and lead_city not in prop_city and prop_city not in lead_city:
             continue
 
-        # Bedroom check (allow within 1 bedroom)
-        if prop["bedrooms"] < (lead.bedrooms - 1):
+        # Bedroom check (only if lead specified bedrooms)
+        if lead.bedrooms > 0 and prop["bedrooms"] < (lead.bedrooms - 1):
             continue
 
         # Granular match scoring
@@ -105,7 +109,7 @@ def match_properties_for_lead(lead: QualifiedLead, max_results: int = 2) -> List
         score = 80
         if 0.85 <= price_ratio <= 1.0:
             score += 10  # within 15% of max budget
-        if prop["bedrooms"] == lead.bedrooms:
+        if lead.bedrooms > 0 and prop["bedrooms"] == lead.bedrooms:
             score += 10  # exact bedroom match
 
         score = min(98, score)

@@ -35,7 +35,7 @@ class LeadQualifierAgent:
         # 2. Financing & Pre-approval
         if lead.pre_approved:
             score += 20
-            strengths.append("Verified mortgage pre-approval / Cash buyer status")
+            strengths.append("Reported mortgage pre-approval / Cash buyer capability")
         else:
             score -= 10
             risks.append("No mortgage pre-approval documented yet")

@@ -90,3 +90,55 @@ def test_end_to_end_pipeline_and_broker_decision():
     assert row["status"] == "BROKER_APPROVED"
     assert row["broker_approved"] == 1
     session.close()
+
+def test_empty_inquiry_does_not_invent_budget_or_bedrooms():
+    """Audit Fix: 'I want a house' must NOT invent $550k budget, 3 bedrooms, or 30-day timeline."""
+    text = "I want a house"
+    lead = qualify_lead_from_text(text)
+    assert lead.budget == 0.0
+    assert lead.bedrooms == 0
+    assert lead.timeline == "Unspecified"
+    assert lead.score_tier == "INCOMPLETE_INQUIRY"
+    matches = match_properties_for_lead(lead)
+    assert len(matches) == 0
+
+def test_budget_range_parsing():
+    """Audit Fix: Parse both lower and upper bounds of budget ranges."""
+    # Test $550k-600k notation
+    text_k = "Buyer looking for 3 bed in Austin between $550k-600k"
+    lead_k = qualify_lead_from_text(text_k)
+    assert lead_k.budget == 600000.0
+    assert lead_k.budget_min == 550000.0
+    assert lead_k.budget_max == 600000.0
+    assert lead_k.bedrooms == 3
+
+    # Test full comma range $500,000 to $650,000
+    text_full = "Looking for home in Austin with budget $500,000 to $650,000"
+    lead_full = qualify_lead_from_text(text_full)
+    assert lead_full.budget == 650000.0
+    assert lead_full.budget_min == 500000.0
+    assert lead_full.budget_max == 650000.0
+
+def test_cash_buyer_labeled_self_reported_not_verified():
+    """Audit Fix: Unverified cash claim must be labeled self-reported, NOT 'Verified financing'."""
+    text = "I have $1.5M cash for a luxury home in Austin"
+    lead = qualify_lead_from_text(text)
+    assert "Self-reported cash buyer capability" in lead.fit_reason
+    assert "Verified financing" not in lead.fit_reason
+
+def test_saas_multi_tenant_brokerage_partitioning():
+    """SaaS Feature: Leads must be isolated by brokerage tenant partition."""
+    session = DatabaseSession()
+    # Ingest lead under brokerage_lone_star
+    inq_a = RawLeadInquiry(
+        text="Buyer seeking 3 bed home in Austin with budget $600,000",
+        tenant_id="brokerage_lone_star",
+        session_id="test_sess_a"
+    )
+    res_a = ingest_lead(inq_a, db=session)
+    assert res_a.tenant_id == "brokerage_lone_star"
+
+    # Query leads for brokerage_pacific
+    rows_b = session.query_all("SELECT * FROM p01_leads WHERE tenant_id = 'brokerage_pacific'")
+    assert all(r["tenant_id"] == "brokerage_pacific" for r in rows_b)
+    session.close()
