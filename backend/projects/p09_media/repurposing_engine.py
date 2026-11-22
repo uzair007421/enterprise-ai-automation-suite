@@ -5,11 +5,11 @@ Transforms long-form transcripts into 4 distinct social/technical formats:
 2. Twitter / X 5-Part Breakdown Thread
 3. Substack Technical Newsletter Edition
 4. Dev.to Technical Article Draft
-Enforces brand voice guardrails preventing hype claims, policy violations, and banned AI cliches.
+Enforces brand voice guardrails preventing hype claims, policy violations, and corporate buzzwords.
 """
 import uuid
 import re
-from typing import List, Tuple
+from typing import List, Tuple, Optional
 from .schemas import RepurposedAsset
 
 BANNED_AI_WORDS = [
@@ -18,11 +18,31 @@ BANNED_AI_WORDS = [
     r"\btapestry\b",
     r"\brevolutionize\b",
     r"\brevolutionizing\b",
+    r"\brevolutionary\b",
+    r"\bleverage\b",
+    r"\bleveraging\b",
+    r"\bsynergy\b",
+    r"\bsynergies\b",
+    r"\bdisruptive\b",
     r"\bgame-changer\b",
     r"\bgame changer\b",
+    r"\bparadigm\s+shift\b",
     r"\bin conclusion\b",
     r"\bbeacon\b",
     r"\bunleash\b"
+]
+
+BUZZWORD_PATTERNS = [
+    r"\brevolutionary\b",
+    r"\brevolutionize\b",
+    r"\bleverage\b",
+    r"\bleveraging\b",
+    r"\bsynergy\b",
+    r"\bsynergies\b",
+    r"\bdisruptive\b",
+    r"\bgame-changer\b",
+    r"\bgame changer\b",
+    r"\bparadigm\s+shift\b"
 ]
 
 HYPE_FORBIDDEN_PATTERNS = [
@@ -34,7 +54,7 @@ HYPE_FORBIDDEN_PATTERNS = [
 ]
 
 def strip_banned_words(text: str) -> str:
-    """Removes banned AI buzzwords case-insensitively from text."""
+    """Removes banned AI buzzwords and corporate cliches case-insensitively from text."""
     cleaned = text
     for pat in BANNED_AI_WORDS:
         cleaned = re.sub(pat, "", cleaned, flags=re.IGNORECASE)
@@ -42,17 +62,26 @@ def strip_banned_words(text: str) -> str:
     cleaned = re.sub(r" \n", "\n", cleaned)
     return cleaned.strip()
 
-def check_brand_voice_safety(text: str) -> Tuple[int, bool]:
+def check_brand_voice_safety(text: str, original_context: str = "") -> Tuple[int, bool]:
     """
     Evaluates content for corporate safety, compliance, and engineering rigor.
-    Computes dynamic score reflecting structural clarity and policy compliance.
+    Penalizes hype claims and buzzwords (e.g. revolutionary, leverage, synergy).
     """
-    text_lower = text.lower()
-    violations = [p for p in HYPE_FORBIDDEN_PATTERNS if re.search(p, text_lower)]
+    combined_lower = f"{text} {original_context}".lower()
+
+    # 1. Hard Forbidden Claims (Get rich, passive income, etc.)
+    violations = [p for p in HYPE_FORBIDDEN_PATTERNS if re.search(p, combined_lower)]
     if violations:
         return 45, False
 
-    # Dynamic score calculation based on readability and formatting
+    # 2. Corporate Hype / Buzzword penalty
+    buzzwords_found = [p for p in BUZZWORD_PATTERNS if re.search(p, combined_lower)]
+    if buzzwords_found:
+        penalty = 20 + len(buzzwords_found) * 5
+        score = max(50, 92 - penalty)
+        return score, False  # Fails strict safety threshold
+
+    # 3. Dynamic clean content scoring
     words = text.split()
     score = 90
     if len(words) >= 40:
@@ -60,7 +89,7 @@ def check_brand_voice_safety(text: str) -> Tuple[int, bool]:
     if any(char in text for char in [":", "-", "•", "1.", "2."]):
         score += 2
     content_mod = (len(text) % 4)
-    score = min(97, score + content_mod)
+    score = min(96, score + content_mod)
     return score, True
 
 def extract_key_points(title: str, transcript: str) -> List[str]:
@@ -125,12 +154,13 @@ def generate_repurposed_assets(title: str, transcript: str) -> List[RepurposedAs
         f"#{tag1} #{tag2}"
     )
     li_content = strip_banned_words(li_content)
-    score, cleared = check_brand_voice_safety(li_content)
+    score, cleared = check_brand_voice_safety(li_content, original_context=transcript)
     assets.append(RepurposedAsset(
         asset_id=f"ASSET-{uuid.uuid4().hex[:6].upper()}",
         platform="LINKEDIN",
         headline=f"Executive Insights: {clean_title}",
         content=li_content,
+        char_count=len(li_content),
         estimated_reading_time_sec=45,
         brand_voice_safety_score=score,
         policy_cleared=cleared
@@ -145,12 +175,13 @@ def generate_repurposed_assets(title: str, transcript: str) -> List[RepurposedAs
         f"5/5 Summary: Consistent results come from sound methodology. Save this breakdown on {clean_title.lower()} for reference."
     )
     tw_content = strip_banned_words(tw_content)
-    score, cleared = check_brand_voice_safety(tw_content)
+    score, cleared = check_brand_voice_safety(tw_content, original_context=transcript)
     assets.append(RepurposedAsset(
         asset_id=f"ASSET-{uuid.uuid4().hex[:6].upper()}",
         platform="TWITTER_THREAD",
         headline=f"5-Part Breakdown: {clean_title}",
         content=tw_content,
+        char_count=len(tw_content),
         estimated_reading_time_sec=60,
         brand_voice_safety_score=score,
         policy_cleared=cleared
@@ -169,12 +200,13 @@ def generate_repurposed_assets(title: str, transcript: str) -> List[RepurposedAs
         f"Until next week,\n*The Editorial Desk*"
     )
     nl_content = strip_banned_words(nl_content)
-    score, cleared = check_brand_voice_safety(nl_content)
+    score, cleared = check_brand_voice_safety(nl_content, original_context=transcript)
     assets.append(RepurposedAsset(
         asset_id=f"ASSET-{uuid.uuid4().hex[:6].upper()}",
         platform="NEWSLETTER",
         headline=f"Newsletter Edition: {clean_title}",
         content=nl_content,
+        char_count=len(nl_content),
         estimated_reading_time_sec=120,
         brand_voice_safety_score=score,
         policy_cleared=cleared
@@ -197,16 +229,16 @@ def generate_repurposed_assets(title: str, transcript: str) -> List[RepurposedAs
         f"{snippet}\n"
     )
     dev_content = strip_banned_words(dev_content)
-    score, cleared = check_brand_voice_safety(dev_content)
+    score, cleared = check_brand_voice_safety(dev_content, original_context=transcript)
     assets.append(RepurposedAsset(
         asset_id=f"ASSET-{uuid.uuid4().hex[:6].upper()}",
         platform="DEV_TO",
         headline=f"Guide: {clean_title}",
         content=dev_content,
+        char_count=len(dev_content),
         estimated_reading_time_sec=90,
         brand_voice_safety_score=score,
         policy_cleared=cleared
     ))
 
     return assets
-

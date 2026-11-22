@@ -2,9 +2,9 @@
 Unit & Integration Tests for Project 09: Media Content Repurposing Engine
 Verifies:
 1. Multi-platform generation across 4 channels (LinkedIn, Twitter, Newsletter, Dev.to).
-2. Brand safety policy guardrail on compliant vs forbidden hype content.
-3. Database persistence of all generated social assets.
-4. Social publishing action updating SQLite records.
+2. Brand safety policy guardrail filtering corporate buzzwords (revolutionary, leverage, synergy).
+3. Honest publishing messaging when platform API keys are unconfigured.
+4. Database persistence and SaaS multi-tenant asset isolation.
 """
 import pytest
 from core.db import init_db, DatabaseSession
@@ -37,6 +37,21 @@ def test_brand_voice_safety_guardrail():
     assert score_bad < 50
     assert cleared_bad is False
 
+def test_corporate_buzzwords_filtered_and_penalized():
+    """Audit Fix: Corporate buzzwords ('revolutionary', 'leverage', 'synergy') must be penalized and stripped."""
+    buzz_text = "Our revolutionary synergy will leverage disruptive technology."
+    score, cleared = check_brand_voice_safety("Some summary text", original_context=buzz_text)
+    assert score <= 75
+    assert cleared is False
+
+    assets = generate_repurposed_assets("NextGen AI", buzz_text)
+    for a in assets:
+        c_low = a.content.lower()
+        assert "revolutionary" not in c_low
+        assert "leverage" not in c_low
+        assert "synergy" not in c_low
+        assert a.brand_voice_safety_score <= 75
+
 def test_end_to_end_repurpose_and_publish():
     session = DatabaseSession()
     req = ContentRepurposeRequest(
@@ -61,9 +76,32 @@ def test_end_to_end_repurpose_and_publish():
     pub_res = publish_social_asset(pub_req, db=session)
     assert pub_res.status in ("LIVE_PUBLISHED", "SANDBOX_PERSISTED", "not_configured")
 
-    # Verify SQLite row
+    # Audit Fix: If unconfigured, message must honestly reflect not configured draft status
+    if not pub_res.live:
+        assert "not configured" in pub_res.message
+        assert "Successfully processed publishing" not in pub_res.message
+
+    # Verify Database row
     row = session.query_one("SELECT * FROM p09_assets WHERE id = ?", (first_asset.asset_id,))
     assert row is not None
     assert row["published"] == (1 if pub_res.live else 0)
+
+    session.close()
+
+def test_saas_multi_tenant_media_isolation():
+    """SaaS Feature: Social assets are isolated by brand tenant partition."""
+    session = DatabaseSession()
+    req_alpha = ContentRepurposeRequest(
+        source_title="Brand Alpha Cloud Strategy",
+        source_transcript="A technical whitepaper explaining Brand Alpha multi-region cloud deployment.",
+        tenant_id="brand_alpha",
+        session_id="test_alpha_sess"
+    )
+    res_alpha = repurpose_content(req_alpha, db=session)
+    assert res_alpha.tenant_id == "brand_alpha"
+
+    # Query for brand_beta -> must not return brand_alpha assets
+    rows_beta = session.query_all("SELECT * FROM p09_assets WHERE tenant_id = 'brand_beta'")
+    assert all(r["tenant_id"] == "brand_beta" for r in rows_beta)
 
     session.close()

@@ -289,10 +289,11 @@ def init_db():
         except Exception:
             pass
 
-        # P09 Media Content Repurposed Assets
+        # P09 Media Content Repurposed Assets (Multi-Tenant SaaS Enabled)
         conn.execute("""
             CREATE TABLE IF NOT EXISTS p09_assets (
                 id TEXT PRIMARY KEY,
+                tenant_id TEXT DEFAULT 'default_brand',
                 video_title TEXT NOT NULL,
                 asset_type TEXT NOT NULL,
                 platform TEXT NOT NULL,
@@ -302,6 +303,10 @@ def init_db():
                 created_at TEXT NOT NULL
             );
         """)
+        try:
+            conn.execute("ALTER TABLE p09_assets ADD COLUMN tenant_id TEXT DEFAULT 'default_brand';")
+        except Exception:
+            pass
 
         # P10 FinGuard Financial Audit Chain & Proposals
         conn.execute("""
