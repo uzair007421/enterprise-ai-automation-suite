@@ -35,6 +35,7 @@ class PublishAssetRequest(BaseModel):
 class PublishAssetResponse(BaseModel):
     asset_id: str
     platform: str
-    status: str  # "LIVE_PUBLISHED" | "SANDBOX_PERSISTED"
+    status: str  # "LIVE_PUBLISHED" | "SANDBOX_PERSISTED" | "not_configured"
     destination_url: Optional[str] = None
     message: str
+    live: bool = False

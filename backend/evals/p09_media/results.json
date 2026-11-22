@@ -3,6 +3,8 @@
   "total_cases": 20,
   "multi_channel_coverage_pct": 100.0,
   "brand_voice_safety_accuracy_pct": 100.0,
-  "average_repurposing_latency_ms": 17.71,
+  "banned_ai_words_detected": 0,
+  "honest_publishing_verified": true,
+  "average_repurposing_latency_ms": 21.35,
   "status": "PASSED"
 }

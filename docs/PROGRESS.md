@@ -27,6 +27,7 @@
 - Phase 2 Tier B: P01 Real Estate fixed (granular lead scoring differentiating students <40 from $1.5M pre-approved buyers >80, strict budget filtering price <= max_price excluding $1.25M on $800k search, UI G3 compliance, 30 evals).
 - Phase 2 Tier B: P02 Legal fixed (grounded retrieval citing 14-day refund policy, NOT_FOUND_IN_CORPUS on out-of-corpus queries, strict hallucination checker, UI G3 compliance, 40 evals at 100% precision).
 - Phase 2 Tier B: P08 Competitor fixed (SSRF guard blocking decimal/octal/metadata IPs, real HTML fetch with SCRAPE_FAILED on error, diff engine returning empty on identical snapshots, UI G3 compliance, 20 evals).
+- Phase 2 Tier B: P09 Media fixed (case-insensitive banned AI buzzwords stripped/rejected, real input topics extracted for non-tech subjects like sourdough, publishing reports live=False and status='not_configured' without credentials, UI G3 compliance, 20 evals at 100%).
 
 ---
 

@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>OmniContent AI | Video Repurposing & Editorial Approval Engine</title>
+  <script src="config.js"></script>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
@@ -37,6 +38,9 @@
       </div>
     </div>
   </header>
+  <div id="backend-error-banner" class="hidden bg-rose-600 text-white text-xs py-2 px-4 text-center font-bold tracking-wide">
+    Backend unavailable — Showing cached local view. Please ensure the backend server is running.
+  </div>
 
   <!-- Ingested Source Video Banner -->
   <div class="bg-slate-900/60 border-b border-slate-800 px-4 py-3">
@@ -455,9 +459,7 @@
       }
     }
 
-    const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-      ? 'http://localhost:8000/api/ai/media-engine'
-      : '/api/ai/media-engine';
+    const API_BASE = (window.AI_API_BASE || '') + '/api/ai/media-engine';
 
     async function approveAsset(assetId) {
       const target = state.assets.find(a => a.asset_id === assetId);
@@ -485,15 +487,15 @@
             api_endpoint: `${pubData.status}: ${pubData.destination_url || 'https://api.socialflow.io/v1/publish'}`,
             published_at: new Date().toISOString().replace('T', ' ').substring(0, 19) + ' UTC'
           });
+        } else {
+          throw new Error(`HTTP ${res.status}`);
         }
       } catch (err) {
-        console.warn("Publishing API offline, fallback to sandbox view:", err);
-        state.published_feed.unshift({
-          platform: target.platform,
-          title: target.title,
-          api_endpoint: 'SANDBOX_PERSISTED: https://api.socialflow.io/v1/sandbox_record',
-          published_at: new Date().toISOString().replace('T', ' ').substring(0, 19) + ' UTC'
-        });
+        console.warn("Publishing API offline:", err);
+        const banner = document.getElementById('backend-error-banner');
+        if (banner) banner.classList.remove('hidden');
+        alert("Backend unavailable: Could not reach publishing endpoint.");
+        return;
       }
 
       saveState();
@@ -568,40 +570,12 @@
         }));
 
       } catch (err) {
-        console.warn("Backend API unavailable, executing client-side content repurposing:", err);
-        const excerpt = (transcript || "Enterprise AI Engineering & Deterministic Execution").substring(0, 300);
-        state.assets = [
-          {
-            asset_id: "tw_" + Date.now(),
-            type: "X / Twitter Thread",
-            platform: "X (Twitter)",
-            title: `Key Takeaways: ${title}`,
-            timestamps: "Thread (4 tweets)",
-            viral_score: 93,
-            content: `1/4 🧵 Executive Brief: ${title}\n\nKey Insights from ${speaker}:\n\n2/4 ${excerpt.substring(0, 180)}...\n\n3/4 Core Takeaway: Deterministic guardrails and automated workflows accelerate time-to-market while eliminating errors.\n\n4/4 Read the full breakdown on our technical engineering hub. 🚀`,
-            status: "PENDING_EDITOR_REVIEW"
-          },
-          {
-            asset_id: "li_" + Date.now(),
-            type: "LinkedIn Thought Leadership",
-            platform: "LinkedIn",
-            title: `Strategic Architecture: ${title}`,
-            timestamps: "45s Read Time",
-            viral_score: 95,
-            content: `Key findings on ${title} by ${speaker}:\n\n"${excerpt}"\n\nWhen scaling modern automated systems, moving from fragile single prompts to verified multi-stage pipelines is the key differentiator for high-growth teams.\n\nWhat are your thoughts on this approach?`,
-            status: "PENDING_EDITOR_REVIEW"
-          },
-          {
-            asset_id: "blog_" + Date.now(),
-            type: "Technical Dev.to Article",
-            platform: "Medium / Dev.to",
-            title: `Technical Deep-Dive: ${title}`,
-            timestamps: "3 min Read Time",
-            viral_score: 89,
-            content: `# ${title}\n*Keynote delivered by ${speaker} (${duration})*\n\n## Overview\n${excerpt}\n\n## Core System Design\n- Schema-validated output formats\n- High-throughput asynchronous queuing\n- Cryptographic verification gates\n\n## Implementation Summary\nProduction systems demand audit trails and deterministic evaluation benchmarks.`,
-            status: "PENDING_EDITOR_REVIEW"
-          }
-        ];
+        console.warn("Backend API unavailable:", err);
+        const banner = document.getElementById('backend-error-banner');
+        if (banner) banner.classList.remove('hidden');
+        alert("Backend unavailable — Please ensure the backend server is running.");
+        closeIngestModal();
+        return;
       }
 
       state.published_feed = [];

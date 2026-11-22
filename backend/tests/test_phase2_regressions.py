@@ -712,6 +712,58 @@ def test_p08_identical_snapshots_produce_empty_diff():
     assert len(data["changes_detected"]) == 0
 
 
+# ==============================================================================
+# P09: Media Content Engine Regressions
+# ==============================================================================
+
+def test_p09_sourdough_input_produces_sourdough_content():
+    """Verify non-tech input (sourdough baking) reflects real input, not canned agentic workflows."""
+    resp = client.post("/api/ai/media-engine/repurpose", json={
+        "source_title": "Artisan Sourdough Bread Baking",
+        "source_transcript": "Mastering sourdough bread baking requires active starter fermentation, hydration balance, and gentle stretch-and-fold techniques in a Dutch oven.",
+        "session_id": "test_sourdough_session"
+    })
+    assert resp.status_code == 200
+    data = resp.json()
+    assert len(data["assets"]) == 4
+    all_content = " ".join(a["content"] for a in data["assets"]).lower()
+    # Must contain relevant sourdough terms
+    assert "sourdough" in all_content or "bread" in all_content or "fermentation" in all_content
+    # Must not contain canned software architecture templates
+    assert "agentic workflows" not in all_content
+    assert "merkle" not in all_content
+
+
+def test_p09_banned_words_stripped_or_rejected():
+    """Verify banned AI words ('DELVE', 'game-changer', 'revolutionize') are cleanly stripped case-insensitively."""
+    resp = client.post("/api/ai/media-engine/repurpose", json={
+        "source_title": "DELVE into this game-changer baking method",
+        "source_transcript": "We must revolutionize how we bake baguettes. DELVE into the tapestry of crust formation and unleash the beacon of steam injection. In conclusion, bake at 450F.",
+        "session_id": "test_banned_words_session"
+    })
+    assert resp.status_code == 200
+    data = resp.json()
+    all_content = " ".join(a["content"] for a in data["assets"]).lower()
+    banned = ["delve", "game-changer", "game changer", "revolutionize", "tapestry", "unleash", "beacon", "in conclusion"]
+    for b in banned:
+        assert b not in all_content, f"Banned word '{b}' found in output!"
+
+
+def test_p09_publishing_empty_env_returns_live_false():
+    """Verify publishing with unconfigured social tokens returns live=False and status='not_configured'."""
+    resp = client.post("/api/ai/media-engine/publish", json={
+        "asset_id": "ASSET-TEST-001",
+        "platform": "TWITTER",
+        "content": "A thoughtful breakdown on artisan sourdough baking.",
+        "session_id": "test_pub_session"
+    })
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["live"] is False
+    assert data["status"] == "not_configured"
+
+
+
 
 
 

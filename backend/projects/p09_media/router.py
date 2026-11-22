@@ -70,10 +70,10 @@ def repurpose_content(req: ContentRepurposeRequest, db: DatabaseSession = Depend
 @router.post("/publish", response_model=PublishAssetResponse)
 def publish_social_asset(req: PublishAssetRequest, db: DatabaseSession = Depends(get_db)):
     """
-    Publishes an approved asset to target platform via API adapter or sandbox.
+    Publishes an approved asset to target platform via API adapter or returns not_configured.
     """
     session_id = req.session_id or "demo_session"
-    success, status_tag, url = social_adapter.publish_asset(req.platform, req.content)
+    success, status_tag, url, live = social_adapter.publish_asset(req.platform, req.content)
 
     if not success:
         raise HTTPException(status_code=502, detail=f"Publishing failed: {status_tag}")
@@ -81,9 +81,9 @@ def publish_social_asset(req: PublishAssetRequest, db: DatabaseSession = Depends
     # Update asset in database
     db.execute("""
         UPDATE p09_assets
-        SET approved = 1, published = 1
+        SET approved = 1, published = ?
         WHERE id = ?
-    """, (req.asset_id,))
+    """, (1 if live else 0, req.asset_id))
     db.commit()
 
     event_broker.publish(session_id, {
@@ -93,6 +93,7 @@ def publish_social_asset(req: PublishAssetRequest, db: DatabaseSession = Depends
         "platform": req.platform,
         "status": status_tag,
         "url": url,
+        "live": live,
         "message": f"Asset {req.asset_id} published to {req.platform} ({status_tag})."
     })
 
@@ -101,7 +102,8 @@ def publish_social_asset(req: PublishAssetRequest, db: DatabaseSession = Depends
         platform=req.platform,
         status=status_tag,
         destination_url=url,
-        message=f"Successfully processed publishing to {req.platform}."
+        live=live,
+        message=f"Successfully processed publishing to {req.platform} (live={live})."
     )
 
 @router.get("/assets")
