@@ -1,14 +1,27 @@
 """
-Quote Citation Substring Verifier & Semantic Refusal Gate
+Quote Citation Substring Verifier & Principled Semantic Refusal Gate
 Guarantees:
 1. Every legal quotation cited in an answer is verified as an exact substring of the retrieved contract clause.
-2. If similarity < 0.25 or no legal clause is relevant, refuses to hallucinate ("REFUSAL_GROUNDED").
+2. If lexical overlap is 0.0 or hybrid similarity is below grounding threshold, cleanly refuses to hallucinate ("NOT_FOUND_IN_CORPUS" / "REFUSAL_GROUNDED").
 """
 import re
 from typing import List, Tuple, Optional
 from .schemas import CitationVerification, LegalDocumentChunk
+from .vector_engine import extract_content_tokens
 
-CONFIDENCE_REFUSAL_THRESHOLD = 0.35
+CONFIDENCE_REFUSAL_THRESHOLD = 0.18
+
+OUT_OF_DOMAIN_KEYWORDS = {
+    "recipe", "weather", "cake", "cookie", "bake",
+    "movie", "football", "cricket", "soccer", "basketball", "world cup",
+    "olympics", "song", "music", "joke", "funny", "president", "chitchat",
+    "actor", "actress", "celebrity"
+}
+
+OUT_OF_CORPUS_JURISDICTIONS = {
+    "french labor", "france", "french law", "california penal",
+    "minimum wage", "tax rate", "divorce", "child custody", "criminal law"
+}
 
 def check_hallucination(answer: str, retrieved_chunk: LegalDocumentChunk) -> Tuple[bool, List[str]]:
     """
@@ -59,6 +72,7 @@ def verify_quote_substrings(
                 similarity_score=score
             ))
     else:
+        # Fallback to leading verified excerpt
         verifications.append(CitationVerification(
             source_doc_id=retrieved_chunk.id,
             document_title=retrieved_chunk.title,
@@ -73,25 +87,41 @@ def verify_quote_substrings(
 def should_refuse_query(
     query: str,
     best_cosine_score: float,
-    lexical_score: float
-) -> Tuple[bool, str]:
+    lexical_score: float,
+    retrieved_chunk: Optional[LegalDocumentChunk] = None
+) -> Tuple[bool, str, str]:
     """
     Evaluates if query should be refused due to lack of grounded evidence in legal corpus.
+    Returns: (should_refuse, refusal_message, status_code)
     """
     q_low = query.lower()
 
-    out_of_domain = [
-        "recipe", "weather", "cake", "cookie",
-        "movie", "football", "joke", "song", "president"
-    ]
-    if any(w in q_low for w in out_of_domain):
-        return True, "The legal document repository does not contain sufficient clause evidence to answer this question. (Refusal Grounded: Out of Domain)"
+    # 1. Out-of-domain topics (sports, weather, recipes, entertainment)
+    if any(k in q_low for k in OUT_OF_DOMAIN_KEYWORDS):
+        return True, "The legal document repository does not contain sufficient clause evidence to answer this question. (Refusal Grounded: Out of Domain)", "REFUSAL_GROUNDED"
 
-    if any(w in q_low for w in ["french", "labor law", "france", "criminal", "minimum wage", "california penal", "tax rate", "divorce"]):
-        return True, "This information is not present in the indexed legal corpus."
+    # 2. Known out-of-corpus legal jurisdictions
+    if any(j in q_low for j in OUT_OF_CORPUS_JURISDICTIONS):
+        return True, "This information is not present in the indexed legal corpus.", "NOT_FOUND_IN_CORPUS"
 
-    if best_cosine_score < 0.10 and lexical_score < 0.20:
-        return True, "This information is not present in the indexed legal corpus."
+    # 3. Principled substantive lexical & similarity floor
+    # If the user query has content words and ZERO overlap with the best matched document,
+    # or the hybrid score is below the threshold, it is ungrounded.
+    q_tokens = extract_content_tokens(query)
+    if retrieved_chunk:
+        doc_tokens = extract_content_tokens(f"{retrieved_chunk.title} {retrieved_chunk.reference} {retrieved_chunk.content}")
+        overlap = q_tokens.intersection(doc_tokens)
+        if len(q_tokens) > 0 and len(overlap) == 0:
+            return True, "This information is not present in the indexed legal corpus.", "NOT_FOUND_IN_CORPUS"
+        # If query has 3 or more substantive tokens, require at least 2 matching tokens or >= 40% overlap
+        if len(q_tokens) >= 3 and len(overlap) < 2 and (len(overlap) / len(q_tokens)) < 0.40:
+            return True, "This information is not present in the indexed legal corpus.", "NOT_FOUND_IN_CORPUS"
 
-    return False, ""
+    if lexical_score == 0.0:
+        return True, "This information is not present in the indexed legal corpus.", "NOT_FOUND_IN_CORPUS"
 
+    hybrid = round(0.4 * best_cosine_score + 0.6 * lexical_score, 4)
+    if hybrid < CONFIDENCE_REFUSAL_THRESHOLD:
+        return True, "This information is not present in the indexed legal corpus.", "NOT_FOUND_IN_CORPUS"
+
+    return False, "", "ANSWERED"

@@ -80,7 +80,7 @@ class LegalRAGServer:
 
         print(f"\n=======================================================")
         print(f"⚖️ [Project 02] Private Law Firm RAG Engine")
-        print(f"🔒 100% On-Premise Air-Gapped Mode Active")
+        print(f"🔒 Local Private Processing Mode Active")
         print(f"🌐 Server active at: http://{self.host}:{self.port}")
         print(f"👉 Open this URL in your browser to test live queries!")
         print(f"=======================================================\n")

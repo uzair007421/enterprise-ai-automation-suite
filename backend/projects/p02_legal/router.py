@@ -1,13 +1,21 @@
 """
-Legal Document Vector Search & Cosine RAG Router
+Legal Document Vector Search & Grounded RAG Router
 Mounted under /api/ai/law-firm-private-rag
+SaaS Multi-Tenant Partitioning, Exact Substring Verification, and Principled Refusal Gate.
 """
 import time
 from typing import Dict, Any, List, Optional
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Query
 from core.events import event_broker
 from core.health import record_project_activity
-from .schemas import LegalQueryRequest, LegalRAGResponse, CitationVerification
+from core.config import settings
+from .schemas import (
+    LegalQueryRequest,
+    LegalRAGResponse,
+    CitationVerification,
+    LegalDocumentIngestRequest,
+    LegalDocumentIngestResponse
+)
 from .vector_engine import (
     generate_dense_embedding,
     compute_cosine_similarity,
@@ -21,23 +29,43 @@ router = APIRouter(prefix="/api/ai/law-firm-private-rag", tags=["Legal Document 
 @router.post("/query", response_model=LegalRAGResponse)
 def execute_legal_query(request: LegalQueryRequest):
     """
-    Executes grounded legal retrieval using 128-D dense embeddings and cosine similarity.
-    Enforces substring quote verification and refusal on ungrounded queries.
+    Executes grounded legal retrieval using 128-D feature vector embeddings and cosine similarity.
+    Enforces substring quote verification and principled refusal on ungrounded/out-of-corpus queries.
+    Multi-tenant SaaS enabled: filters by request.tenant_id.
     """
     start_time = time.time()
     record_project_activity("law-firm-private-rag")
     session_id = request.session_id or "demo_session"
+    tenant_id = request.tenant_id or "default_firm"
 
     # Step 1: Embed Query into 128-D Vector Space
     event_broker.publish(session_id, {
         "step": "DENSE_VECTOR_EMBEDDING",
-        "detail": f"Projecting query '{request.query[:40]}...' into 128-D Euclidean vector space",
+        "detail": f"Projecting query '{request.query[:40]}...' into 128-D normalized vector space (Tenant: {tenant_id})",
         "timestamp": time.time()
     })
     query_vec = generate_dense_embedding(request.query)
 
-    # Step 2: Retrieve and Compute Mathematical Cosine Similarity
-    chunks = legal_corpus.get_all_chunks()
+    # Step 2: Retrieve and Compute Cosine Similarity + Substantive Lexical Overlap
+    chunks = legal_corpus.get_all_chunks(tenant_id=tenant_id)
+    if not chunks:
+        chunks = legal_corpus.get_all_chunks(tenant_id="default_firm")
+
+    if not chunks:
+        return LegalRAGResponse(
+            query=request.query,
+            answer="This information is not present in the indexed legal corpus.",
+            status="NOT_FOUND_IN_CORPUS",
+            confidence_score=0.0,
+            similarity_score=0.0,
+            lexical_overlap_score=0.0,
+            dense_cosine_score=0.0,
+            lexical_bm25_score=0.0,
+            tenant_id=tenant_id,
+            citations=[],
+            execution_time_ms=round((time.time() - start_time) * 1000, 2)
+        )
+
     scored_chunks = []
     for c in chunks:
         cos_sim = compute_cosine_similarity(query_vec, c.embedding)
@@ -49,11 +77,15 @@ def execute_legal_query(request: LegalQueryRequest):
     scored_chunks.sort(key=lambda x: x[3], reverse=True)
     best_chunk, best_cos, best_lex, best_hybrid = scored_chunks[0]
 
-    # Step 3: Check Semantic Refusal Gate
-    refuse, refusal_msg = should_refuse_query(request.query, best_cos, best_lex)
+    # Step 3: Check Principled Semantic Refusal Gate
+    refuse, refusal_msg, refusal_status = should_refuse_query(
+        request.query,
+        best_cosine_score=best_cos,
+        lexical_score=best_lex,
+        retrieved_chunk=best_chunk
+    )
     if refuse:
-        status_code = "REFUSAL_GROUNDED" if any(w in request.query.lower() for w in ["recipe", "cookie", "cake", "weather", "movie", "football", "joke", "song", "president"]) else "NOT_FOUND_IN_CORPUS"
-        ans_text = "This information is not present in the indexed legal corpus." if status_code == "NOT_FOUND_IN_CORPUS" else refusal_msg
+        ans_text = refusal_msg
         event_broker.publish(session_id, {
             "step": "HALLUCINATION_GATE_REFUSAL",
             "detail": f"Query ungrounded in corpus. Triggered refusal: {refusal_msg}",
@@ -62,10 +94,13 @@ def execute_legal_query(request: LegalQueryRequest):
         return LegalRAGResponse(
             query=request.query,
             answer=ans_text,
-            status=status_code,
+            status=refusal_status,
             confidence_score=0.0,
+            similarity_score=best_cos,
+            lexical_overlap_score=best_lex,
             dense_cosine_score=best_cos,
             lexical_bm25_score=best_lex,
+            tenant_id=tenant_id,
             citations=[],
             execution_time_ms=round((time.time() - start_time) * 1000, 2)
         )
@@ -73,15 +108,18 @@ def execute_legal_query(request: LegalQueryRequest):
     # Step 4: Synthesize Grounded Legal Answer with Exact Clause Substrings
     event_broker.publish(session_id, {
         "step": "GROUNDED_SYNTHESIS",
-        "detail": f"Formulating verified legal counsel referencing {best_chunk.reference} (Cosine: {best_cos})",
+        "detail": f"Formulating verified legal counsel referencing {best_chunk.reference} (Similarity: {best_cos})",
         "timestamp": time.time()
     })
 
+    engine_mode = "rules"
+
+    # Clause-specific verified synthesis
     if best_chunk.id == "DOC-REFUND-SEC2.1":
         answer = (
             f"Under {best_chunk.title}, {best_chunk.reference}, customers may request a full refund "
             f"\"within fourteen (14) calendar days of initial purchase date\", provided that no more than "
-            f"ten percent (10%) of the allocated monthly API usage quotas have been consumed. "
+            f"\"ten percent (10%)\" of the allocated monthly API usage quotas have been consumed. "
             f"Refund requests submitted after fourteen (14) calendar days are strictly non-refundable."
         )
     elif best_chunk.id == "DOC-MSA-SEC8.2":
@@ -114,8 +152,49 @@ def execute_legal_query(request: LegalQueryRequest):
             f"According to {best_chunk.title}, {best_chunk.reference}, mandatory data breach notification must occur "
             f"\"within seventy-two (72) hours of becoming aware of any confirmed or reasonably suspected Personal Data Breach affecting Controller's customer data.\""
         )
+    elif best_chunk.id == "DOC-IP-SEC5.1":
+        answer = (
+            f"Under {best_chunk.title}, {best_chunk.reference}, Licensee is required to pay a "
+            f"\"royalty rate of four percent (4.0%) on net sales\". Licensor holds the right to an "
+            f"\"annual audit of licensee books and accounting records upon thirty (30) days notice\". "
+            f"If an underpayment exceeding 5% is identified, Licensee must pay an "
+            f"\"audit penalty of fifteen percent (15%)\" plus all reasonable audit and legal expenses."
+        )
+    elif best_chunk.id == "DOC-TERM-SEC11.2":
+        answer = (
+            f"Under {best_chunk.title}, {best_chunk.reference}, either party may terminate for convenience "
+            f"\"upon sixty (60) days prior written notice to the other party\". Immediate termination for cause is permitted if a material breach is not cured "
+            f"\"within thirty (30) days of receiving formal written notification.\""
+        )
+    elif best_chunk.id == "DOC-SLA-SEC3.2":
+        answer = (
+            f"Under {best_chunk.title}, {best_chunk.reference}, Provider guarantees service availability "
+            f"\"of at least ninety-nine and nine-tenths percent (99.9%)\". If availability drops below 99.9%, Customer receives a "
+            f"\"ten percent (10%) service credit applied against future subscription invoices.\""
+        )
+    elif best_chunk.id == "DOC-DISPUTE-SEC15.1":
+        answer = (
+            f"Pursuant to {best_chunk.title}, {best_chunk.reference}, all contractual disputes shall be resolved by "
+            f"\"binding arbitration administered by the American Arbitration Association (AAA) under its Commercial Arbitration Rules\". "
+            f"The designated seat is \"Wilmington, Delaware\"."
+        )
+    elif best_chunk.id == "DOC-FORCE-SEC16.4":
+        answer = (
+            f"Under {best_chunk.title}, {best_chunk.reference}, contractual delay is excused for acts beyond reasonable control, "
+            f"provided \"prompt written notice is delivered within five (5) business days of the triggering event.\""
+        )
+    elif best_chunk.id == "DOC-NONSOLICIT-SEC7.3":
+        answer = (
+            f"Under {best_chunk.title}, {best_chunk.reference}, neither party may solicit or recruit personnel or key customers "
+            f"\"for a period of twelve (12) months following contract termination\"."
+        )
     else:
-        answer = f"Based on {best_chunk.title} ({best_chunk.reference}): \"{best_chunk.content[:100]}\""
+        # Custom uploaded document chunks
+        content_preview = best_chunk.content.split(".")[0].strip()
+        answer = (
+            f"Under {best_chunk.title}, {best_chunk.reference}: "
+            f"\"{content_preview}.\""
+        )
 
     # Step 5: Strict Hallucination Checker & Substring Verifier
     is_hallucinated, unverified_claims = check_hallucination(answer, best_chunk)
@@ -135,26 +214,57 @@ def execute_legal_query(request: LegalQueryRequest):
         answer=answer,
         status=status,
         confidence_score=confidence,
+        similarity_score=best_cos,
+        lexical_overlap_score=best_lex,
         dense_cosine_score=best_cos,
         lexical_bm25_score=best_lex,
+        retrieval_method="hybrid_feature_matching",
+        engine=engine_mode,
+        tenant_id=tenant_id,
         citations=verifications,
         execution_time_ms=elapsed
     )
 
+@router.post("/documents", response_model=LegalDocumentIngestResponse)
+def ingest_legal_document(request: LegalDocumentIngestRequest):
+    """
+    SaaS Multi-Tenant Ingestion: Uploads and indexes a new contract clause under a tenant partition.
+    """
+    tenant_id = request.tenant_id or "default_firm"
+    chunk = legal_corpus.add_chunk(
+        tenant_id=tenant_id,
+        title=request.title,
+        reference=request.reference,
+        content=request.content,
+        clause_type=request.clause_type
+    )
+    tokens = len(request.content.split())
+    return LegalDocumentIngestResponse(
+        id=chunk.id,
+        tenant_id=tenant_id,
+        title=chunk.title,
+        reference=chunk.reference,
+        status="INDEXED_AND_READY",
+        indexed_tokens=tokens
+    )
+
 @router.get("/documents")
-def list_corpus_documents():
-    """Returns all ingested legal contracts and their indexed vector clauses."""
-    chunks = legal_corpus.get_all_chunks()
+def list_corpus_documents(tenant_id: Optional[str] = Query(default="default_firm")):
+    """Returns all ingested legal contracts and their indexed vector clauses for the tenant."""
+    chunks = legal_corpus.get_all_chunks(tenant_id=tenant_id)
     return {
+        "tenant_id": tenant_id,
         "total_clauses": len(chunks),
         "embedding_dimensions": 128,
-        "clauses": [
+        "embedding_algorithm": "feature_vector_128d",
+        "documents": [
             {
                 "id": c.id,
+                "tenant_id": c.tenant_id,
                 "title": c.title,
                 "reference": c.reference,
                 "clause_type": c.clause_type,
-                "content_preview": c.content[:120] + "..."
+                "preview": c.content[:80] + "..."
             }
             for c in chunks
         ]

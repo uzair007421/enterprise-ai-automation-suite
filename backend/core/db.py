@@ -126,10 +126,11 @@ def init_db():
             );
         """)
 
-        # P02 Legal Document Corpus & Chunks
+        # P02 Legal Document Corpus & Chunks (Multi-Tenant SaaS Enabled)
         conn.execute("""
             CREATE TABLE IF NOT EXISTS p02_documents (
                 id TEXT PRIMARY KEY,
+                tenant_id TEXT DEFAULT 'default_firm',
                 title TEXT NOT NULL,
                 reference TEXT NOT NULL,
                 content TEXT NOT NULL,
@@ -137,6 +138,11 @@ def init_db():
                 created_at TEXT NOT NULL
             );
         """)
+        # Safe migration if table already exists without tenant_id
+        try:
+            conn.execute("ALTER TABLE p02_documents ADD COLUMN tenant_id TEXT DEFAULT 'default_firm';")
+        except Exception:
+            pass
 
         # P03 E-Commerce Orders & Support Tickets
         conn.execute("""

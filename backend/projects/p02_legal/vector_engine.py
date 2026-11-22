@@ -1,21 +1,27 @@
 """
 Vector Embeddings & Mathematical Cosine Similarity Engine
-Generates 128-dimensional vector embeddings.
+Generates 128-dimensional normalized feature vector embeddings.
 Computes true vector dot product and norm-based cosine similarity:
 cosine_similarity(u, v) = (u . v) / (||u|| * ||v||)
 """
 import math
 import hashlib
 import re
-from typing import List, Tuple, Dict, Any
+from typing import List, Tuple, Dict, Any, Set
 
 EMBEDDING_DIM = 128
 
 STOP_WORDS = {
     "what", "is", "the", "for", "in", "to", "of", "and", "under",
     "how", "does", "are", "do", "we", "a", "an", "be", "this", "that", "can", "our",
-    "more", "than", "or", "as", "by", "from", "at", "it", "with", "on", "any", "if", "all", "its"
+    "more", "than", "or", "as", "by", "from", "at", "it", "with", "on", "any", "if", "all", "its",
+    "who", "whom", "when", "where", "why", "which", "was", "were", "been", "being", "have", "has", "had",
+    "i", "you", "he", "she", "they", "them", "my", "your", "his", "her", "their"
 }
+
+def extract_content_tokens(text: str) -> Set[str]:
+    """Extracts non-stop lowercase semantic tokens of length > 1."""
+    return set(w for w in re.findall(r"\b[a-zA-Z0-9_\-]{2,}\b", text.lower()) if w not in STOP_WORDS)
 
 def generate_dense_embedding(text: str, dim: int = EMBEDDING_DIM) -> List[float]:
     """
@@ -23,7 +29,7 @@ def generate_dense_embedding(text: str, dim: int = EMBEDDING_DIM) -> List[float]
     Extracts semantic tokens, removes stop words, computes character n-gram projections, and normalizes L2 norm to 1.0.
     """
     clean_text = text.lower().strip()
-    words = [w for w in re.findall(r"\w+", clean_text) if w not in STOP_WORDS and len(w) > 1]
+    words = [w for w in re.findall(r"\b[a-zA-Z0-9_\-]{2,}\b", clean_text) if w not in STOP_WORDS]
     if not words:
         words = ["empty"]
 
@@ -66,8 +72,8 @@ def compute_cosine_similarity(vec_a: List[float], vec_b: List[float]) -> float:
 
 def compute_lexical_overlap(query: str, doc_text: str) -> float:
     """Computes Jaccard / lexical token overlap score with stop word filtering."""
-    q_words = set(w for w in re.findall(r"\w+", query.lower()) if w not in STOP_WORDS)
-    d_words = set(w for w in re.findall(r"\w+", doc_text.lower()) if w not in STOP_WORDS)
+    q_words = extract_content_tokens(query)
+    d_words = extract_content_tokens(doc_text)
     if not q_words or not d_words:
         return 0.0
     intersection = q_words.intersection(d_words)

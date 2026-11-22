@@ -141,7 +141,7 @@ class PrivateLegalRAGEngine:
                 "confidence": 0.0,
                 "hallucination_flag": "REFUSAL_GROUNDED",
                 "citations": [],
-                "privacy_guarantee": "100% On-Premise Air-Gapped (Zero bytes sent to external cloud/APIs)"
+                "privacy_guarantee": "Local Private Processing (Zero bytes sent to external cloud/APIs)"
             }
 
         top_chunk, best_score = retrieved[0]
@@ -169,7 +169,7 @@ class PrivateLegalRAGEngine:
             "confidence": round(best_score * 100, 1),
             "hallucination_flag": "PASSED_VERIFIED",
             "citations": citations,
-            "privacy_guarantee": "100% On-Premise Air-Gapped (Zero bytes sent to external cloud/APIs)"
+            "privacy_guarantee": "Local Private Processing (Zero bytes sent to external cloud/APIs)"
         }
 
     def _synthesize_grounded_answer(self, question: str, citations: List[Dict[str, Any]]) -> str:
