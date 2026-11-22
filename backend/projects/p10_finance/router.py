@@ -107,10 +107,12 @@ def execute_agent_query(
         "timestamp": time.time()
     })
 
+    tenant_id = getattr(request, "tenant_id", "tenant_default") or "tenant_default"
     reasoning, proposal, answer = finguard_agent.process_query(
         query=request.query,
         user_id=user_id,
-        role=role
+        role=role,
+        tenant_id=tenant_id
     )
 
     if proposal:
@@ -135,7 +137,8 @@ def execute_agent_query(
         agent_reasoning=reasoning,
         tool_proposal=proposal,
         direct_answer=answer,
-        execution_time_ms=elapsed
+        execution_time_ms=elapsed,
+        tenant_id=tenant_id
     )
 
 @router.post("/approve", response_model=ApprovalExecutionResponse)
@@ -152,6 +155,7 @@ def approve_write_action(
     start_time = time.time()
     record_project_activity("finance-agent-gate")
     session_id = request.session_id or "demo_session"
+    tenant_id = getattr(request, "tenant_id", "tenant_default") or "tenant_default"
 
     from fastapi.params import Depends as DependsType
     if isinstance(current_user, DependsType):
@@ -174,12 +178,12 @@ def approve_write_action(
         approver_id = current_user["user_id"]
         approver_role = current_user["role"]
 
-    # Step 1: Lookup Pending Proposal
+    # Step 1: Lookup Pending Proposal scoped by tenant
     db = DatabaseSession()
     try:
         row = db.fetchone(
-            "SELECT * FROM p10_proposals WHERE proposal_id = ?",
-            (request.proposal_id,)
+            "SELECT * FROM p10_proposals WHERE proposal_id = ? AND tenant_id = ?",
+            (request.proposal_id, tenant_id)
         )
         if not row:
             raise HTTPException(status_code=404, detail=f"Proposal '{request.proposal_id}' not found.")
@@ -274,14 +278,16 @@ def approve_write_action(
                 "signed_at": timestamp
             },
             actor_role=approver_role,
-            hmac_signature=server_sig
+            hmac_signature=server_sig,
+            tenant_id=tenant_id
         )
 
         # Update proposal state
         db.execute(
-            "UPDATE p10_proposals SET status = 'APPROVED_EXECUTED' WHERE proposal_id = ?",
-            (request.proposal_id,)
+            "UPDATE p10_proposals SET status = 'APPROVED_EXECUTED' WHERE proposal_id = ? AND tenant_id = ?",
+            (request.proposal_id, tenant_id)
         )
+        db.commit()
 
         event_broker.publish(session_id, {
             "step": "WRITE_APPROVED_EXECUTED",
@@ -297,35 +303,44 @@ def approve_write_action(
             block_hash=audit_entry["block_hash"],
             hmac_signature=server_sig,
             message=f"Write action approved by {approver_role} ({approver_id}) and executed. Recorded in audit chain block #{audit_entry['block_index']}.",
-            execution_time_ms=elapsed
+            execution_time_ms=elapsed,
+            tenant_id=tenant_id
         )
     finally:
         db.close()
 
 @router.get("/proposals", dependencies=[Depends(verify_admin_token)])
-def list_proposals(limit: int = 20):
-    """Lists proposals from SQLite database (admin access only)."""
+def list_proposals(limit: int = 20, tenant_id: Optional[str] = None):
+    """Lists proposals from SQLite database scoped to tenant."""
     db = DatabaseSession()
     try:
-        rows = db.fetchall("SELECT * FROM p10_proposals ORDER BY created_at DESC LIMIT ?", (limit,))
+        if tenant_id:
+            rows = db.fetchall("SELECT * FROM p10_proposals WHERE tenant_id = ? ORDER BY created_at DESC LIMIT ?", (tenant_id, limit))
+        else:
+            rows = db.fetchall("SELECT * FROM p10_proposals ORDER BY created_at DESC LIMIT ?", (limit,))
         return {"proposals": [dict(r) for r in rows]}
     finally:
         db.close()
 
 @router.get("/audit-chain", response_model=List[AuditBlock])
-def get_audit_chain_blocks(limit: int = 50):
+def get_audit_chain_blocks(limit: int = 50, tenant_id: Optional[str] = None):
     """Returns chronological blocks in the tamper-evident audit chain."""
     db = DatabaseSession()
     try:
-        rows = db.fetchall("SELECT * FROM p10_audit_chain ORDER BY block_index ASC LIMIT ?", (limit,))
+        tid = tenant_id or "tenant_default"
+        audit_chain_manager._ensure_genesis_block(tenant_id=tid)
+        if tenant_id:
+            rows = db.fetchall("SELECT * FROM p10_audit_chain WHERE tenant_id = ? ORDER BY block_index ASC LIMIT ?", (tenant_id, limit))
+        else:
+            rows = db.fetchall("SELECT * FROM p10_audit_chain ORDER BY block_index ASC LIMIT ?", (limit,))
         return [AuditBlock(**dict(r)) for r in rows]
     finally:
         db.close()
 
 @router.get("/audit-chain/verify", response_model=AuditChainVerificationResponse)
-def verify_audit_chain():
+def verify_audit_chain(tenant_id: str = "tenant_default"):
     """
     Executes full hash-chain verification of the SHA-256 audit chain.
     Confirms zero tampering, broken links, or altered signatures.
     """
-    return audit_chain_manager.verify_chain_integrity()
+    return audit_chain_manager.verify_chain_integrity(tenant_id=tenant_id)

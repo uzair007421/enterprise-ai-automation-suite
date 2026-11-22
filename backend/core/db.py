@@ -336,6 +336,7 @@ def init_db():
         conn.execute("""
             CREATE TABLE IF NOT EXISTS p10_audit_chain (
                 id TEXT PRIMARY KEY,
+                tenant_id TEXT DEFAULT 'tenant_default',
                 block_index INTEGER NOT NULL,
                 previous_hash TEXT NOT NULL,
                 action_type TEXT NOT NULL,
@@ -349,6 +350,7 @@ def init_db():
         conn.execute("""
             CREATE TABLE IF NOT EXISTS p10_proposals (
                 proposal_id TEXT PRIMARY KEY,
+                tenant_id TEXT DEFAULT 'tenant_default',
                 tool_name TEXT NOT NULL,
                 tool_type TEXT NOT NULL,
                 parameters_json TEXT NOT NULL,
@@ -359,6 +361,16 @@ def init_db():
                 created_at TEXT NOT NULL
             );
         """)
+        try:
+            conn.execute("ALTER TABLE p10_audit_chain ADD COLUMN tenant_id TEXT DEFAULT 'tenant_default';")
+        except Exception:
+            pass
+        try:
+            conn.execute("ALTER TABLE p10_proposals ADD COLUMN tenant_id TEXT DEFAULT 'tenant_default';")
+        except Exception:
+            pass
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_p10_audit_tenant ON p10_audit_chain(tenant_id);")
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_p10_proposals_tenant ON p10_proposals(tenant_id);")
         conn.commit()
 
     # Seed baseline records if needed

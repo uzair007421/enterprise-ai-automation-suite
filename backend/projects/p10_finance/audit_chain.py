@@ -32,43 +32,44 @@ class AuditChainManager:
         # Lazy initialization: do not query DB at module import time
         pass
 
-    def _ensure_genesis_block(self):
-        """Initializes Block 0 (Genesis) if audit chain is empty."""
+    def _ensure_genesis_block(self, tenant_id: str = "tenant_default"):
+        """Initializes Block 0 (Genesis) for a tenant if its audit chain is empty."""
         try:
             db = DatabaseSession()
             try:
-                row = db.fetchone("SELECT COUNT(*) as cnt FROM p10_audit_chain")
+                row = db.fetchone("SELECT COUNT(*) as cnt FROM p10_audit_chain WHERE tenant_id = ?", (tenant_id,))
                 if row and row["cnt"] == 0:
                     ts = "2026-11-20T00:00:00Z"
-                    genesis_payload = json.dumps({"service": "FinGuard Autonomous Enterprise Core"}, sort_keys=True)
+                    genesis_payload = json.dumps({"service": "FinGuard Autonomous Enterprise Core", "tenant_id": tenant_id}, sort_keys=True)
                     gen_hash = compute_block_hash(
                         previous_hash=GENESIS_PREV_HASH,
                         action_type="GENESIS_INITIALIZATION",
                         payload_json=genesis_payload,
                         actor_role="SYSTEM_SECURITY_ROOT",
-                        hmac_signature="GENESIS_ROOT_SIGNATURE_2026",
+                        hmac_signature=f"GENESIS_ROOT_{tenant_id.upper()}",
                         timestamp=ts
                     )
                     db.execute(
                         """
                         INSERT INTO p10_audit_chain 
-                        (id, block_index, previous_hash, action_type, payload_json, actor_role, hmac_signature, block_hash, created_at)
-                        VALUES (?, 0, ?, 'GENESIS_INITIALIZATION', ?, 'SYSTEM_SECURITY_ROOT', 'GENESIS_ROOT_SIGNATURE_2026', ?, ?)
+                        (id, tenant_id, block_index, previous_hash, action_type, payload_json, actor_role, hmac_signature, block_hash, created_at)
+                        VALUES (?, ?, 0, ?, 'GENESIS_INITIALIZATION', ?, 'SYSTEM_SECURITY_ROOT', ?, ?, ?)
                         """,
-                        ("BLK-GENESIS-0", GENESIS_PREV_HASH, genesis_payload, gen_hash, ts)
+                        (f"BLK-GENESIS-{tenant_id[:8]}", tenant_id, GENESIS_PREV_HASH, genesis_payload, f"GENESIS_ROOT_{tenant_id.upper()}", gen_hash, ts)
                     )
+                    db.commit()
             finally:
                 db.close()
         except Exception:
             # Table not yet created (e.g. before init_db() runs in lifespan)
             pass
 
-    def get_latest_block(self) -> Dict[str, Any]:
-        """Returns the current tip block of the audit chain."""
-        self._ensure_genesis_block()
+    def get_latest_block(self, tenant_id: str = "tenant_default") -> Dict[str, Any]:
+        """Returns the current tip block of the audit chain for a tenant."""
+        self._ensure_genesis_block(tenant_id=tenant_id)
         db = DatabaseSession()
         try:
-            row = db.fetchone("SELECT * FROM p10_audit_chain ORDER BY block_index DESC LIMIT 1")
+            row = db.fetchone("SELECT * FROM p10_audit_chain WHERE tenant_id = ? ORDER BY block_index DESC LIMIT 1", (tenant_id,))
             return dict(row) if row else {}
         finally:
             db.close()
@@ -78,15 +79,18 @@ class AuditChainManager:
         action_type: str,
         payload: Dict[str, Any],
         actor_role: str,
-        hmac_signature: str
+        hmac_signature: str,
+        tenant_id: str = "tenant_default"
     ) -> Dict[str, Any]:
-        """Appends a new HMAC-verified block to the chain."""
-        self._ensure_genesis_block()
-        latest = self.get_latest_block()
+        """Appends a new HMAC-verified block to the tenant's chain."""
+        self._ensure_genesis_block(tenant_id=tenant_id)
+        latest = self.get_latest_block(tenant_id=tenant_id)
         prev_hash = latest.get("block_hash", GENESIS_PREV_HASH)
         next_index = latest.get("block_index", 0) + 1
 
-        payload_json = json.dumps(payload, sort_keys=True, separators=(',', ':'))
+        payload_copy = dict(payload)
+        payload_copy["tenant_id"] = tenant_id
+        payload_json = json.dumps(payload_copy, sort_keys=True, separators=(',', ':'))
         timestamp = datetime.now(timezone.utc).isoformat()
         block_hash = compute_block_hash(
             previous_hash=prev_hash,
@@ -103,13 +107,15 @@ class AuditChainManager:
             db.execute(
                 """
                 INSERT INTO p10_audit_chain 
-                (id, block_index, previous_hash, action_type, payload_json, actor_role, hmac_signature, block_hash, created_at)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                (id, tenant_id, block_index, previous_hash, action_type, payload_json, actor_role, hmac_signature, block_hash, created_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
-                (block_id, next_index, prev_hash, action_type, payload_json, actor_role, hmac_signature, block_hash, timestamp)
+                (block_id, tenant_id, next_index, prev_hash, action_type, payload_json, actor_role, hmac_signature, block_hash, timestamp)
             )
+            db.commit()
             return {
                 "block_id": block_id,
+                "tenant_id": tenant_id,
                 "block_index": next_index,
                 "previous_hash": prev_hash,
                 "block_hash": block_hash,
@@ -119,22 +125,23 @@ class AuditChainManager:
         finally:
             db.close()
 
-    def verify_chain_integrity(self) -> AuditChainVerificationResponse:
+    def verify_chain_integrity(self, tenant_id: str = "tenant_default") -> AuditChainVerificationResponse:
         """
-        Verification: walks from Genesis to Tip, re-calculating hashes
+        Verification: walks from Genesis to Tip for a tenant, re-calculating hashes
         and confirming zero tampering has occurred.
         """
-        self._ensure_genesis_block()
+        self._ensure_genesis_block(tenant_id=tenant_id)
         db = DatabaseSession()
         try:
-            blocks = db.fetchall("SELECT * FROM p10_audit_chain ORDER BY block_index ASC")
+            blocks = db.fetchall("SELECT * FROM p10_audit_chain WHERE tenant_id = ? ORDER BY block_index ASC", (tenant_id,))
             if not blocks:
                 return AuditChainVerificationResponse(
                     is_valid=False,
                     total_blocks=0,
                     genesis_hash="NONE",
                     tip_hash="NONE",
-                    audit_verdict="Audit chain is empty."
+                    audit_verdict="Audit chain is empty.",
+                    tenant_id=tenant_id
                 )
 
             for i, blk in enumerate(blocks):
@@ -151,7 +158,8 @@ class AuditChainManager:
                         genesis_hash=blocks[0]["block_hash"],
                         tip_hash=blocks[-1]["block_hash"],
                         tampered_block_index=blk["block_index"],
-                        audit_verdict=f"Link broken at block {blk['block_index']}: previous_hash does not match parent block_hash."
+                        audit_verdict=f"Link broken at block {blk['block_index']}: previous_hash does not match parent block_hash.",
+                        tenant_id=tenant_id
                     )
 
                 # Recompute and verify current block's hash
@@ -171,7 +179,8 @@ class AuditChainManager:
                         genesis_hash=blocks[0]["block_hash"],
                         tip_hash=blocks[-1]["block_hash"],
                         tampered_block_index=blk["block_index"],
-                        audit_verdict=f"Hash mismatch at block {blk['block_index']}: content tampered or signature invalid."
+                        audit_verdict=f"Hash mismatch at block {blk['block_index']}: content tampered or signature invalid.",
+                        tenant_id=tenant_id
                     )
 
                 # Verify HMAC approval signature if it's an approved execution
@@ -197,7 +206,8 @@ class AuditChainManager:
                                     genesis_hash=blocks[0]["block_hash"],
                                     tip_hash=blocks[-1]["block_hash"],
                                     tampered_block_index=blk["block_index"],
-                                    audit_verdict=f"HMAC signature tampering detected at block {blk['block_index']}."
+                                    audit_verdict=f"HMAC signature tampering detected at block {blk['block_index']}.",
+                                    tenant_id=tenant_id
                                 )
                     except Exception as e:
                         return AuditChainVerificationResponse(
@@ -206,7 +216,8 @@ class AuditChainManager:
                             genesis_hash=blocks[0]["block_hash"],
                             tip_hash=blocks[-1]["block_hash"],
                             tampered_block_index=blk["block_index"],
-                            audit_verdict=f"Signature verification error at block {blk['block_index']}: {str(e)}"
+                            audit_verdict=f"Signature verification error at block {blk['block_index']}: {str(e)}",
+                            tenant_id=tenant_id
                         )
 
             return AuditChainVerificationResponse(
@@ -215,7 +226,8 @@ class AuditChainManager:
                 genesis_hash=blocks[0]["block_hash"],
                 tip_hash=blocks[-1]["block_hash"],
                 tampered_block_index=None,
-                audit_verdict="HASH_CHAIN_VERIFIED: All block digests and sequential hash links match."
+                audit_verdict="HASH_CHAIN_VERIFIED: All block digests and sequential hash links match.",
+                tenant_id=tenant_id
             )
         finally:
             db.close()

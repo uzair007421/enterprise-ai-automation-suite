@@ -36,7 +36,7 @@ def parse_financial_amount(text: str) -> float:
 
 class FinGuardAgent:
 
-    def process_query(self, query: str, user_id: str, role: str) -> Tuple[str, Optional[ToolCallProposal], Optional[str]]:
+    def process_query(self, query: str, user_id: str, role: str, tenant_id: str = "tenant_default") -> Tuple[str, Optional[ToolCallProposal], Optional[str]]:
         """
         Returns: (reasoning, tool_proposal, direct_answer)
         """
@@ -89,11 +89,12 @@ class FinGuardAgent:
                 db.execute(
                     """
                     INSERT INTO p10_proposals 
-                    (proposal_id, tool_name, tool_type, parameters_json, payload_sha256, reasoning, status, created_by, created_at)
-                    VALUES (?, 'update_credit_limit', 'WRITE', ?, ?, ?, 'PENDING_HUMAN_APPROVAL', ?, datetime('now'))
+                    (proposal_id, tenant_id, tool_name, tool_type, parameters_json, payload_sha256, reasoning, status, created_by, created_at)
+                    VALUES (?, ?, 'update_credit_limit', 'WRITE', ?, ?, ?, 'PENDING_HUMAN_APPROVAL', ?, datetime('now'))
                     """,
-                    (proposal_id, json.dumps(params), digest, reasoning, user_id)
+                    (proposal_id, tenant_id, json.dumps(params), digest, reasoning, user_id)
                 )
+                db.commit()
             finally:
                 db.close()
 
@@ -106,7 +107,8 @@ class FinGuardAgent:
                 requires_human_approval=True,
                 payload_sha256=digest,
                 status="PENDING_HUMAN_APPROVAL",
-                result=None
+                result=None,
+                tenant_id=tenant_id
             )
 
             answer = (
@@ -154,11 +156,12 @@ class FinGuardAgent:
                 db.execute(
                     """
                     INSERT INTO p10_proposals 
-                    (proposal_id, tool_name, tool_type, parameters_json, payload_sha256, reasoning, status, created_by, created_at)
-                    VALUES (?, 'transfer_funds', 'WRITE', ?, ?, ?, 'PENDING_HUMAN_APPROVAL', ?, datetime('now'))
+                    (proposal_id, tenant_id, tool_name, tool_type, parameters_json, payload_sha256, reasoning, status, created_by, created_at)
+                    VALUES (?, ?, 'transfer_funds', 'WRITE', ?, ?, ?, 'PENDING_HUMAN_APPROVAL', ?, datetime('now'))
                     """,
-                    (proposal_id, json.dumps(params), digest, reasoning, user_id)
+                    (proposal_id, tenant_id, json.dumps(params), digest, reasoning, user_id)
                 )
+                db.commit()
             finally:
                 db.close()
 
@@ -171,7 +174,8 @@ class FinGuardAgent:
                 requires_human_approval=True,
                 payload_sha256=digest,
                 status="PENDING_HUMAN_APPROVAL",
-                result=None
+                result=None,
+                tenant_id=tenant_id
             )
 
             answer = (
@@ -209,11 +213,12 @@ class FinGuardAgent:
                 db.execute(
                     """
                     INSERT INTO p10_proposals 
-                    (proposal_id, tool_name, tool_type, parameters_json, payload_sha256, reasoning, status, created_by, created_at)
-                    VALUES (?, 'update_ledger', 'WRITE', ?, ?, ?, 'PENDING_HUMAN_APPROVAL', ?, datetime('now'))
+                    (proposal_id, tenant_id, tool_name, tool_type, parameters_json, payload_sha256, reasoning, status, created_by, created_at)
+                    VALUES (?, ?, 'update_ledger', 'WRITE', ?, ?, ?, 'PENDING_HUMAN_APPROVAL', ?, datetime('now'))
                     """,
-                    (proposal_id, json.dumps(params), digest, reasoning, user_id)
+                    (proposal_id, tenant_id, json.dumps(params), digest, reasoning, user_id)
                 )
+                db.commit()
             finally:
                 db.close()
 
@@ -226,7 +231,8 @@ class FinGuardAgent:
                 requires_human_approval=True,
                 payload_sha256=digest,
                 status="PENDING_HUMAN_APPROVAL",
-                result=None
+                result=None,
+                tenant_id=tenant_id
             )
             answer = f"Formulated ledger update proposal {proposal_id} for ${amount:,.2f}. Pending human authorization."
             return reasoning, proposal, answer

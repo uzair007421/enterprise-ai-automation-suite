@@ -140,3 +140,54 @@ def test_audit_chain_tamper_detection():
         assert restored_verify.is_valid is True
     finally:
         db.close()
+
+
+def test_saas_multitenant_proposal_and_audit_isolation():
+    """Verify proposals and cryptographic audit blocks are partitioned by tenant_id."""
+    req_alpha = AgentQueryRequest(
+        query="Transfer $3,500 to vendor AlphaTech",
+        user_id="trader_alpha",
+        role="TRADER",
+        tenant_id="tenant_alpha_fund"
+    )
+    res_alpha = execute_agent_query(req_alpha)
+    assert res_alpha.tool_proposal is not None
+    prop_id = res_alpha.tool_proposal.proposal_id
+    assert res_alpha.tenant_id == "tenant_alpha_fund"
+
+    # Beta attempts to approve Alpha's proposal -> Must fail (404 not found in Beta tenant)
+    with pytest.raises(Exception) as excinfo:
+        approve_req_beta = ApprovalExecutionRequest(
+            proposal_id=prop_id,
+            approver_id="cfo_beta",
+            approver_role="CFO",
+            tenant_id="tenant_beta_fund"
+        )
+        approve_write_action(approve_req_beta)
+    assert "404" in str(excinfo.value) or "not found" in str(excinfo.value)
+
+    # Legitimate Alpha approver approves Alpha's proposal
+    approve_req_alpha = ApprovalExecutionRequest(
+        proposal_id=prop_id,
+        approver_id="cfo_alpha",
+        approver_role="CFO",
+        tenant_id="tenant_alpha_fund"
+    )
+    app_res_alpha = approve_write_action(approve_req_alpha)
+    assert app_res_alpha.status == "APPROVED_EXECUTED"
+    assert app_res_alpha.tenant_id == "tenant_alpha_fund"
+
+    # Verify chain integrity for Alpha
+    alpha_verify = verify_audit_chain(tenant_id="tenant_alpha_fund")
+    assert alpha_verify.is_valid is True
+
+    # Verify chain integrity for Beta is independent
+    beta_verify = verify_audit_chain(tenant_id="tenant_beta_fund")
+    assert beta_verify.is_valid is True
+
+
+def test_fin_environment_toggle_configuration():
+    """Verify banking wire live mode environment toggle is configured safely."""
+    from core.config import settings
+    assert hasattr(settings, "FIN_BANK_LIVE_MODE")
+    assert settings.FIN_BANK_LIVE_MODE is False

@@ -21,6 +21,7 @@ class AgentQueryRequest(BaseModel):
     user_id: Optional[str] = Field(default="analyst", description="Identifier of the querying user (overridden by JWT)")
     role: Optional[str] = Field(default="ANALYST", description="'ANALYST', 'MANAGER', or 'CFO' (overridden by JWT)")
     session_id: Optional[str] = "demo_session"
+    tenant_id: str = Field(default="tenant_default", description="Multi-tenant enterprise ledger partition")
 
 class ToolCallProposal(BaseModel):
     proposal_id: str
@@ -32,6 +33,7 @@ class ToolCallProposal(BaseModel):
     payload_sha256: str
     status: str  # "EXECUTED_AUTONOMOUSLY" | "PENDING_HUMAN_APPROVAL" | "APPROVED_EXECUTED" | "REJECTED"
     result: Optional[Dict[str, Any]] = None
+    tenant_id: str = "tenant_default"
 
 class AgentQueryResponse(BaseModel):
     session_id: str
@@ -41,6 +43,7 @@ class AgentQueryResponse(BaseModel):
     tool_proposal: Optional[ToolCallProposal] = None
     direct_answer: Optional[str] = None
     execution_time_ms: float
+    tenant_id: str = "tenant_default"
 
 class ApprovalExecutionRequest(BaseModel):
     proposal_id: str
@@ -49,6 +52,7 @@ class ApprovalExecutionRequest(BaseModel):
     secret_key: Optional[str] = Field(default=None, description="Deprecated client key; server-held key is used")
     decision: str = Field(default="APPROVE", description="'APPROVE' or 'REJECT'")
     session_id: Optional[str] = "demo_session"
+    tenant_id: str = Field(default="tenant_default", description="Multi-tenant partition")
 
 class ApprovalExecutionResponse(BaseModel):
     proposal_id: str
@@ -58,6 +62,7 @@ class ApprovalExecutionResponse(BaseModel):
     hmac_signature: Optional[str] = None
     message: str
     execution_time_ms: float
+    tenant_id: str = "tenant_default"
 
 class AuditBlock(BaseModel):
     id: str
@@ -69,6 +74,7 @@ class AuditBlock(BaseModel):
     hmac_signature: str
     block_hash: str
     created_at: str
+    tenant_id: str = "tenant_default"
 
 class AuditChainVerificationResponse(BaseModel):
     is_valid: bool
@@ -77,3 +83,4 @@ class AuditChainVerificationResponse(BaseModel):
     tip_hash: str
     tampered_block_index: Optional[int] = None
     audit_verdict: str
+    tenant_id: str = "tenant_default"
