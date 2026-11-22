@@ -218,10 +218,11 @@ def init_db():
             );
         """)
 
-        # P06 HR Candidate Rubrics
+        # P06 HR Candidate Rubrics (Multi-Tenant SaaS Enabled)
         conn.execute("""
             CREATE TABLE IF NOT EXISTS p06_candidates (
                 id TEXT PRIMARY KEY,
+                tenant_id TEXT DEFAULT 'default_company',
                 redacted_cv_text TEXT NOT NULL,
                 pii_audit_json TEXT NOT NULL,
                 rubric_score INTEGER NOT NULL,
@@ -231,6 +232,10 @@ def init_db():
                 created_at TEXT NOT NULL
             );
         """)
+        try:
+            conn.execute("ALTER TABLE p06_candidates ADD COLUMN tenant_id TEXT DEFAULT 'default_company';")
+        except Exception:
+            pass
 
         # P07 Dental Appointments
         conn.execute("""

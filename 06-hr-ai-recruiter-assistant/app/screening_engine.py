@@ -8,7 +8,7 @@ Bias-Free AI Recruiter Assistant
 import json
 import os
 import re
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Dict, Any, List, Optional
 
 class BiasFreeRecruiter:
@@ -104,12 +104,17 @@ class BiasFreeRecruiter:
         total_score = tech_score + exp_score + impact_score + foundation_score
         is_shortlisted = total_score >= 80
 
-        # Interview Auto-Scheduling
+        # Interview Auto-Scheduling (Dynamic Calendar Slot Generation)
         interview_details = None
         if is_shortlisted:
+            now = datetime.utcnow()
+            slot_day = now + timedelta(days=3)
+            while slot_day.weekday() >= 5:
+                slot_day += timedelta(days=1)
+            slot_str = f"{slot_day.strftime('%A, %b %d')} at 2:00 PM EST"
             interview_details = {
-                "scheduled_slot": "Thursday, Nov 19 at 2:00 PM EST",
-                "calendar_link": "https://calendar.google.com/event?id=meet-ai-recruiter-789",
+                "scheduled_slot": slot_str,
+                "calendar_link": f"https://calendar.google.com/event?id=meet-ai-recruiter-{anon_candidate['anon_id']}",
                 "round": "Technical Architecture Screen (45 Mins)",
                 "status": "CALENDAR_INVITATION_DISPATCHED"
             }

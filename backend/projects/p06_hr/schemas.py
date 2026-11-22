@@ -1,5 +1,6 @@
 """
 Project 06: HR AI Recruiter Assistant Schemas
+SaaS Multi-Tenant Contracts for Blind Demographic Screening, Rubric Evaluation, and Interview Scheduling.
 """
 from typing import Optional, List, Dict, Any
 from pydantic import BaseModel, Field
@@ -7,6 +8,7 @@ from pydantic import BaseModel, Field
 class CandidateScreenRequest(BaseModel):
     raw_cv_text: str = Field(description="Raw unstructured resume or CV text")
     job_role: Optional[str] = "Senior Full-Stack / AI Engineer"
+    tenant_id: Optional[str] = Field(default="default_company", description="SaaS organization / company partition")
     session_id: Optional[str] = "demo_session"
 
 class PIIAuditReport(BaseModel):
@@ -22,6 +24,8 @@ class RubricBreakdown(BaseModel):
 
 class CandidateScreenResponse(BaseModel):
     candidate_id: str
+    tenant_id: str = "default_company"
+    engine: str = "rules"
     anonymized_cv: str
     pii_audit: PIIAuditReport
     rubric: RubricBreakdown

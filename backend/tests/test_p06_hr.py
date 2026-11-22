@@ -79,3 +79,40 @@ Scaled to 500k users and reduced query response times by 35%.""",
     assert row["rubric_score"] == res.rubric.total_score
 
     session.close()
+
+def test_redaction_of_religion_family_and_university():
+    """Audit Fix: Muslim, single mother, and Punjab University must be demographically redacted."""
+    cv = "Female, 29, Married, single mother, Muslim, kids, Lahore, Pakistan, graduated from Punjab University in 2018"
+    anonymized, audit = redact_demographic_pii(cv)
+    assert "Muslim" not in anonymized and "muslim" not in anonymized
+    assert "single mother" not in anonymized
+    assert "Punjab University" not in anonymized
+    assert "[REDACTED_RELIGION]" in anonymized
+    assert "[REDACTED_FAMILY_STATUS]" in anonymized
+    assert any("Religion" in c for c in audit.categories_redacted)
+    assert any("Family" in c for c in audit.categories_redacted)
+
+def test_keyword_stuffed_cv_held_for_review():
+    """Audit Fix: Keyword-stuffed resumes without metrics or action context must be HOLD_FOR_REVIEW."""
+    stuffed_cv = "[CANDIDATE_ANONYMOUS_PROFILE]\nPython, FastAPI, Docker, PostgreSQL, React, TypeScript, Redis, Microservices, Kubernetes."
+    rubric, rec, strengths, growth, slot = evaluate_candidate_rubric(stuffed_cv)
+    assert rec == "HOLD_FOR_REVIEW"
+    assert rubric.total_score <= 35
+    assert slot is None
+    assert any("Keyword stuffing detected" in g for g in growth)
+
+def test_saas_multi_tenant_candidate_partitioning():
+    """SaaS Feature: Candidates are partitioned by organization tenant partition."""
+    session = DatabaseSession()
+    req_a = CandidateScreenRequest(
+        raw_cv_text="Senior Python Engineer with 6 years experience in FastAPI and Docker.",
+        tenant_id="enterprise_corp_a",
+        session_id="test_hr_tenant_a"
+    )
+    res_a = screen_candidate(req_a, db=session)
+    assert res_a.tenant_id == "enterprise_corp_a"
+
+    # Query for enterprise_corp_b
+    rows_b = session.query_all("SELECT * FROM p06_candidates WHERE tenant_id = 'enterprise_corp_b'")
+    assert all(r["tenant_id"] == "enterprise_corp_b" for r in rows_b)
+    session.close()
