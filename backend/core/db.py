@@ -225,6 +225,7 @@ def init_db():
         conn.execute("""
             CREATE TABLE IF NOT EXISTS p05_workflow_telemetry (
                 id TEXT PRIMARY KEY,
+                tenant_id TEXT DEFAULT 'tenant_default',
                 workflow_name TEXT NOT NULL,
                 status TEXT NOT NULL,
                 http_status INTEGER NOT NULL,
@@ -235,6 +236,11 @@ def init_db():
                 created_at TEXT NOT NULL
             );
         """)
+        try:
+            conn.execute("ALTER TABLE p05_workflow_telemetry ADD COLUMN tenant_id TEXT DEFAULT 'tenant_default';")
+        except Exception:
+            pass
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_p05_telemetry_tenant ON p05_workflow_telemetry(tenant_id);")
 
         # P06 HR Candidate Rubrics (Multi-Tenant SaaS Enabled)
         conn.execute("""

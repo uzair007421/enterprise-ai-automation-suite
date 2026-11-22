@@ -84,3 +84,33 @@ def test_truthful_measured_telemetry_metrics():
     assert metrics.measured_uptime_percent > 0.0
     assert metrics.avg_recovery_time_ms >= 0.0
     assert len(metrics.recent_incidents) > 0
+
+
+def test_saas_multitenant_telemetry_isolation():
+    """Verify workflow telemetry is partitioned by tenant_id."""
+    req_alpha = ChaosInjectionRequest(
+        workflow_id="wf_meta_leads_01",
+        fault_type="HTTP_429_RATE_LIMIT",
+        simulated_service="Meta Leads API",
+        tenant_id="tenant_org_alpha"
+    )
+    res_alpha = inject_chaos_endpoint(req_alpha)
+    assert res_alpha.tenant_id == "tenant_org_alpha"
+
+    # Query telemetry for Alpha
+    alpha_telemetry = get_telemetry_metrics(tenant_id="tenant_org_alpha")
+    alpha_incidents = [inc["id"] for inc in alpha_telemetry.recent_incidents]
+    assert res_alpha.persisted_telemetry_id in alpha_incidents
+
+    # Query telemetry for Beta: must NOT contain Alpha's incident
+    beta_telemetry = get_telemetry_metrics(tenant_id="tenant_org_beta")
+    beta_incidents = [inc["id"] for inc in beta_telemetry.recent_incidents]
+    assert res_alpha.persisted_telemetry_id not in beta_incidents
+
+
+def test_n8n_environment_toggle_configuration():
+    """Verify n8n environment toggles exist and default safely."""
+    from core.config import settings
+    assert hasattr(settings, "N8N_LIVE_MODE")
+    assert settings.N8N_LIVE_MODE is False
+

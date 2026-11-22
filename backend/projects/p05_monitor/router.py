@@ -132,10 +132,12 @@ def inject_chaos_endpoint(request: ChaosInjectionRequest):
     })
 
     # Step 2: Execute Self-Healing Engine
+    tenant_id = getattr(request, "tenant_id", "tenant_default") or "tenant_default"
     result = self_healing_engine.execute_self_healing(
         workflow_id=request.workflow_id,
         fault_type=request.fault_type,
-        simulated_service=request.simulated_service
+        simulated_service=request.simulated_service,
+        tenant_id=tenant_id
     )
 
     event_broker.publish(session_id, {
@@ -170,22 +172,35 @@ def list_workflows():
     return out
 
 @router.get("/telemetry", response_model=TelemetrySummary)
-def get_telemetry_metrics():
+def get_telemetry_metrics(tenant_id: Optional[str] = None):
     """
-    Computes truthful, dynamic uptime and recovery metrics from SQLite telemetry rows.
+    Computes truthful, dynamic uptime and recovery metrics from SQLite telemetry rows scoped by tenant.
     Configurable strings or static percentages.
     """
     db = DatabaseSession()
     try:
-        row = db.fetchone(
-            """
-            SELECT 
-                COUNT(*) as total_probes,
-                SUM(CASE WHEN status IN ('HEALTHY', 'RECOVERED') THEN 1 ELSE 0 END) as successful,
-                AVG(latency_ms) as avg_latency
-            FROM p05_workflow_telemetry
-            """
-        )
+        if tenant_id:
+            row = db.fetchone(
+                """
+                SELECT 
+                    COUNT(*) as total_probes,
+                    SUM(CASE WHEN status IN ('HEALTHY', 'RECOVERED') THEN 1 ELSE 0 END) as successful,
+                    AVG(latency_ms) as avg_latency
+                FROM p05_workflow_telemetry
+                WHERE tenant_id = ?
+                """,
+                (tenant_id,)
+            )
+        else:
+            row = db.fetchone(
+                """
+                SELECT 
+                    COUNT(*) as total_probes,
+                    SUM(CASE WHEN status IN ('HEALTHY', 'RECOVERED') THEN 1 ELSE 0 END) as successful,
+                    AVG(latency_ms) as avg_latency
+                FROM p05_workflow_telemetry
+                """
+            )
         total_probes = row["total_probes"] if row and row["total_probes"] else 0
         successful = row["successful"] if row and row["successful"] else 0
         avg_latency = round(float(row["avg_latency"]), 2) if row and row["avg_latency"] else 0.0
@@ -195,9 +210,15 @@ def get_telemetry_metrics():
         else:
             uptime_pct = 100.0
 
-        recent_rows = db.fetchall(
-            "SELECT id, workflow_name, status, http_status, latency_ms, created_at FROM p05_workflow_telemetry ORDER BY created_at DESC LIMIT 10"
-        )
+        if tenant_id:
+            recent_rows = db.fetchall(
+                "SELECT id, workflow_name, status, http_status, latency_ms, created_at FROM p05_workflow_telemetry WHERE tenant_id = ? ORDER BY created_at DESC LIMIT 10",
+                (tenant_id,)
+            )
+        else:
+            recent_rows = db.fetchall(
+                "SELECT id, workflow_name, status, http_status, latency_ms, created_at FROM p05_workflow_telemetry ORDER BY created_at DESC LIMIT 10"
+            )
 
         active_breakers = sum(1 for w in REGISTERED_WORKFLOWS.values() if w["circuit_state"] == "OPEN")
 
@@ -208,13 +229,14 @@ def get_telemetry_metrics():
             measured_uptime_percent=uptime_pct,
             avg_recovery_time_ms=avg_latency,
             active_circuit_breakers=active_breakers,
-            recent_incidents=[dict(r) for r in recent_rows]
+            recent_incidents=[dict(r) for r in recent_rows],
+            tenant_id=tenant_id or "tenant_default"
         )
     finally:
         db.close()
 
 @router.post("/probe-all")
-def probe_all_workflows():
+def probe_all_workflows(tenant_id: str = "tenant_default"):
     """Runs health probes against all registered workflows and records telemetry."""
     db = DatabaseSession()
     try:
@@ -222,11 +244,12 @@ def probe_all_workflows():
             db.execute(
                 """
                 INSERT INTO p05_workflow_telemetry 
-                (id, workflow_name, status, http_status, latency_ms, healed, error_detail, created_at)
-                VALUES (?, ?, ?, ?, ?, 0, 'Routine Health Probe PASS', datetime('now'))
+                (id, tenant_id, workflow_name, status, http_status, latency_ms, healed, error_detail, created_at)
+                VALUES (?, ?, ?, ?, ?, ?, 0, 'Routine Health Probe PASS', datetime('now'))
                 """,
-                (f"PRB-{time.time_ns()}", wf["name"], "HEALTHY", 200, 18.5)
+                (f"PRB-{time.time_ns()}", tenant_id, wf["name"], "HEALTHY", 200, 18.5)
             )
-        return {"probed": len(REGISTERED_WORKFLOWS), "status": "ALL_HEALTHY"}
+        db.commit()
+        return {"probed": len(REGISTERED_WORKFLOWS), "status": "ALL_HEALTHY", "tenant_id": tenant_id}
     finally:
         db.close()

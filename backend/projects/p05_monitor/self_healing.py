@@ -113,7 +113,8 @@ class SelfHealingEngine:
         self,
         workflow_id: str,
         fault_type: str,
-        simulated_service: str
+        simulated_service: str,
+        tenant_id: str = "tenant_default"
     ) -> HealingExecutionResult:
         """
         Executes real self-healing procedure against injected fault mode.
@@ -264,11 +265,12 @@ class SelfHealingEngine:
             db.execute(
                 """
                 INSERT INTO p05_workflow_telemetry 
-                (id, workflow_name, status, http_status, latency_ms, healed, error_detail, created_at)
-                VALUES (?, ?, ?, ?, ?, ?, ?, datetime('now'))
+                (id, tenant_id, workflow_name, status, http_status, latency_ms, healed, error_detail, created_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))
                 """,
                 (
                     telemetry_id,
+                    tenant_id,
                     wf.get("name", workflow_id),
                     final_status,
                     200 if final_status == "RECOVERED" else initial_status,
@@ -277,6 +279,7 @@ class SelfHealingEngine:
                     diagnosis.plain_english_summary
                 )
             )
+            db.commit()
         finally:
             db.close()
 
@@ -295,7 +298,8 @@ class SelfHealingEngine:
             telegram_dispatched=False,
             alert_status="not_configured",
             persisted_telemetry_id=telemetry_id,
-            engine=engine
+            engine=engine,
+            tenant_id=tenant_id
         )
         if final_status == "FAILED":
             alert_dispatched, alert_status = telegram_alerter.dispatch_incident_report(temp_res)

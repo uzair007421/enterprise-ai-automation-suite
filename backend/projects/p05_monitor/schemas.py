@@ -14,6 +14,7 @@ class ChaosInjectionRequest(BaseModel):
     )
     simulated_service: str = Field(default="Meta Lead Ads Sync", description="Downstream service name")
     session_id: Optional[str] = "demo_session"
+    tenant_id: str = Field(default="tenant_default", description="Multi-tenant organization partition")
 
 class DiagnosisReport(BaseModel):
     category: str = Field(description="Error category (e.g., API_THROTTLING, AUTH_EXPIRATION, UPSTREAM_OUTAGE)")
@@ -35,6 +36,7 @@ class HealingExecutionResult(BaseModel):
     alert_status: str = Field(default="not_configured", description="'dispatched' | 'not_configured' | 'failed'")
     persisted_telemetry_id: str
     engine: str = Field(default="rules", description="'llm' or 'rules'")
+    tenant_id: str = Field(default="tenant_default", description="Partition ID")
 
 class WorkflowStatus(BaseModel):
     id: str
@@ -55,3 +57,4 @@ class TelemetrySummary(BaseModel):
     avg_recovery_time_ms: float
     active_circuit_breakers: int
     recent_incidents: List[Dict[str, Any]]
+    tenant_id: str = "tenant_default"

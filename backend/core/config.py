@@ -68,6 +68,8 @@ class Settings(BaseSettings):
     QBO_CLIENT_ID: Optional[str] = None
     QBO_CLIENT_SECRET: Optional[str] = None
     QBO_REALM_ID: Optional[str] = None
+    N8N_LIVE_MODE: bool = False
+    N8N_WEBHOOK_URL: Optional[str] = None
     HUBSPOT_ACCESS_TOKEN: Optional[str] = None
     TWILIO_ACCOUNT_SID: Optional[str] = None
     TWILIO_AUTH_TOKEN: Optional[str] = None
