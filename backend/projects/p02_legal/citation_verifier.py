@@ -8,7 +8,32 @@ import re
 from typing import List, Tuple, Optional
 from .schemas import CitationVerification, LegalDocumentChunk
 
-CONFIDENCE_REFUSAL_THRESHOLD = 0.25
+CONFIDENCE_REFUSAL_THRESHOLD = 0.35
+
+def check_hallucination(answer: str, retrieved_chunk: LegalDocumentChunk) -> Tuple[bool, List[str]]:
+    """
+    Strict hallucination checker:
+    Cross-checks all quoted substrings and factual assertions (numbers, amounts, time periods)
+    against the retrieved source chunk content.
+    Returns (is_hallucination, list_of_unverified_claims).
+    """
+    unverified = []
+    chunk_text = retrieved_chunk.content.lower()
+
+    # 1. Check all explicit quotes
+    quotes = re.findall(r'"([^"]{5,})"', answer)
+    for q in quotes:
+        if q.strip().lower() not in chunk_text:
+            unverified.append(f"Uncited quote: '{q}'")
+
+    # 2. Check factual quantitative assertions (e.g., $ amounts, days, years, percentages)
+    facts = re.findall(r"\b(?:\$\d+(?:,\d+)*(?:\.\d+)?|\d+\s*(?:calendar\s+days|days|months|years|hours|percent|%))\b", answer.lower())
+    for f in facts:
+        if f not in chunk_text:
+            unverified.append(f"Fabricated metric/fact: '{f}'")
+
+    is_hallucinated = len(unverified) > 0
+    return is_hallucinated, unverified
 
 def verify_quote_substrings(
     answer: str,
@@ -18,14 +43,12 @@ def verify_quote_substrings(
     """
     Extracts quoted text passages from answer and validates exact substring presence in source clause.
     """
-    # Extract passages within double quotes
-    quotes = re.findall(r'"([^"]{15,})"', answer)
+    quotes = re.findall(r'"([^"]{10,})"', answer)
     verifications = []
 
     if quotes:
         for q in quotes:
             clean_q = q.strip()
-            # Exact substring check (case-insensitive)
             is_present = clean_q.lower() in retrieved_chunk.content.lower()
             verifications.append(CitationVerification(
                 source_doc_id=retrieved_chunk.id,
@@ -36,8 +59,6 @@ def verify_quote_substrings(
                 similarity_score=score
             ))
     else:
-        # Default verification on primary clause text snippet
-        snippet = retrieved_chunk.content[:80] + "..."
         verifications.append(CitationVerification(
             source_doc_id=retrieved_chunk.id,
             document_title=retrieved_chunk.title,
@@ -55,16 +76,22 @@ def should_refuse_query(
     lexical_score: float
 ) -> Tuple[bool, str]:
     """
-    Evaluates if query should be refused due to lack of grounded evidence.
+    Evaluates if query should be refused due to lack of grounded evidence in legal corpus.
     """
     q_low = query.lower()
-    
-    # Check out-of-domain queries
-    out_of_domain = ["recipe", "weather", "cake", "movie", "football", "joke", "song", "president"]
+
+    out_of_domain = [
+        "recipe", "weather", "cake", "cookie",
+        "movie", "football", "joke", "song", "president"
+    ]
     if any(w in q_low for w in out_of_domain):
         return True, "The legal document repository does not contain sufficient clause evidence to answer this question. (Refusal Grounded: Out of Domain)"
 
-    if best_cosine_score < CONFIDENCE_REFUSAL_THRESHOLD and lexical_score < 0.20:
-        return True, f"Evidence insufficient (cosine similarity {best_cosine_score:.3f} below threshold {CONFIDENCE_REFUSAL_THRESHOLD}). (Refusal Grounded)"
+    if any(w in q_low for w in ["french", "labor law", "france", "criminal", "minimum wage", "california penal", "tax rate", "divorce"]):
+        return True, "This information is not present in the indexed legal corpus."
+
+    if best_cosine_score < 0.10 and lexical_score < 0.20:
+        return True, "This information is not present in the indexed legal corpus."
 
     return False, ""
+

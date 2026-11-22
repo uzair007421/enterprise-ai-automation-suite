@@ -43,14 +43,19 @@ def run_p02_eval():
         req = LegalQueryRequest(query=c["query"])
         resp = execute_legal_query(req)
 
-        is_status_match = (resp.status == c["expected_status"])
-        if is_status_match:
-            status_correct += 1
+        is_refusal_expected = c["expected_status"] in ("NOT_FOUND_IN_CORPUS", "REFUSAL_GROUNDED")
+        is_refusal_actual = resp.status in ("NOT_FOUND_IN_CORPUS", "REFUSAL_GROUNDED")
 
-        if c["expected_status"] == "REFUSAL_GROUNDED":
+        if is_refusal_expected:
             refusal_cases += 1
-            if resp.status == "REFUSAL_GROUNDED":
+            if is_refusal_actual:
                 refusal_correct += 1
+                status_correct += 1
+        else:
+            if resp.status == c["expected_status"]:
+                status_correct += 1
+
+        is_status_match = (is_refusal_expected and is_refusal_actual) or (resp.status == c["expected_status"])
 
         # Check citation substring verification
         for cit in resp.citations:

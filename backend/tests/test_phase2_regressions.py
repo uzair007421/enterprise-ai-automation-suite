@@ -616,6 +616,50 @@ def test_p01_1_5m_preapproved_buyer_scores_over_80():
     assert lead["score_tier"] == "HOT"
 
 
+# ---------------------------------------------------------
+# P02 Legal Document RAG Regressions
+# ---------------------------------------------------------
+
+def test_p02_refund_window_returns_14_days_and_cites_policy():
+    """Verify 'What is our refund window?' returns 14 days and cites Commercial Terms / Refund Policy."""
+    resp = client.post("/api/ai/law-firm-private-rag/query", json={
+        "query": "What is our refund window?"
+    })
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["status"] == "ANSWERED"
+    assert "14" in data["answer"] or "fourteen" in data["answer"].lower()
+    assert len(data["citations"]) > 0
+    cit = data["citations"][0]
+    assert "Refund Policy" in cit["document_title"] or "Commercial Terms" in cit["document_title"] or "2.1" in cit["clause_reference"]
+    assert cit["is_verified_substring"] is True
+
+
+def test_p02_french_labor_law_returns_not_found_in_corpus():
+    """Verify French labor law inquiry returns NOT_FOUND_IN_CORPUS."""
+    resp = client.post("/api/ai/law-firm-private-rag/query", json={
+        "query": "What is the penalty for early termination under French labor law?"
+    })
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["status"] == "NOT_FOUND_IN_CORPUS"
+    assert "not present in the indexed legal corpus" in data["answer"]
+
+
+def test_p02_fabricated_fact_rejected_by_hallucination_checker():
+    """Verify an answer containing an uncited fabricated fact is rejected by the hallucination checker."""
+    from projects.p02_legal.citation_verifier import check_hallucination
+    from projects.p02_legal.corpus import legal_corpus
+
+    chunk = next(c for c in legal_corpus.get_all_chunks() if c.id == "DOC-MSA-SEC8.2")
+    # Fabricated answer asserting $1,000,000 cap and 90 days filing limit not in chunk
+    fabricated_answer = 'Under Section 8.2, liability is strictly capped at "$1,000,000" and claims must be filed within 90 days.'
+    is_hallucinated, unverified = check_hallucination(fabricated_answer, chunk)
+    assert is_hallucinated is True
+    assert len(unverified) > 0
+
+
+
 
 
 

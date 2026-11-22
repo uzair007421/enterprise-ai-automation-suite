@@ -69,6 +69,17 @@ DEFAULT_LEGAL_CLAUSES = [
             "of becoming aware of any confirmed or reasonably suspected Personal Data Breach affecting Controller's customer data. "
             "Such notification shall describe the nature of the security incident, categories of data subjects impacted, and proposed mitigation measures."
         )
+    },
+    {
+        "id": "DOC-REFUND-SEC2.1",
+        "title": "Commercial Terms of Sale & Refund Policy",
+        "reference": "Section 2.1 (Refund Eligibility & Return Window)",
+        "clause_type": "REFUND_WINDOW",
+        "content": (
+            "Customer may request a full refund within fourteen (14) calendar days of initial purchase date, "
+            "provided that no more than ten percent (10%) of the allocated monthly API usage quotas have been consumed. "
+            "Refund requests submitted after fourteen (14) calendar days are strictly non-refundable."
+        )
     }
 ]
 
@@ -81,9 +92,9 @@ class LegalCorpusManager:
         """Seeds SQLite table `p02_documents` with 128-D embedded legal chunks."""
         db = DatabaseSession()
         try:
-            count = db.fetchone("SELECT COUNT(*) as cnt FROM p02_documents")
-            if count and count["cnt"] == 0:
-                for doc in DEFAULT_LEGAL_CLAUSES:
+            for doc in DEFAULT_LEGAL_CLAUSES:
+                existing = db.fetchone("SELECT id FROM p02_documents WHERE id = ?", (doc["id"],))
+                if not existing:
                     full_text = f"{doc['title']} {doc['reference']}: {doc['content']}"
                     vec = generate_dense_embedding(full_text)
                     db.execute(
@@ -94,7 +105,7 @@ class LegalCorpusManager:
                         """,
                         (doc["id"], doc["title"], doc["reference"], doc["content"], json.dumps(vec))
                     )
-                db.commit()
+            db.commit()
         except Exception as e:
             logger.warning(f"Failed to seed legal corpus: {e}")
         finally:

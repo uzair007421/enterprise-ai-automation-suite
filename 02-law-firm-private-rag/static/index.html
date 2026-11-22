@@ -6,8 +6,13 @@
   <title>LexiRAG | Legal Document Discovery & Vector Cosine Similarity Engine</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="config.js"></script>
 </head>
 <body class="bg-slate-950 text-slate-100 min-h-screen font-sans flex flex-col">
+  <!-- Backend Error Banner -->
+  <div id="backend-error-banner" class="hidden bg-rose-950 border-b border-rose-500 text-rose-200 text-xs px-4 py-2 text-center font-mono font-bold flex items-center justify-center gap-2">
+    <i class="fa-solid fa-triangle-exclamation text-rose-400"></i> <span id="backend-error-text">Backend unavailable</span>
+  </div>
 
   <!-- Production Header -->
   <header class="border-b border-slate-800 bg-slate-900/90 backdrop-blur sticky top-0 z-40">
@@ -27,6 +32,7 @@
         <button onclick="openIngestModal()" class="px-3.5 py-1.5 bg-gradient-to-r from-amber-500 to-indigo-600 hover:from-amber-400 hover:to-indigo-500 text-slate-950 rounded-lg text-xs font-black transition shadow-md flex items-center gap-1.5">
           <i class="fa-solid fa-file-circle-plus"></i> Ingest Legal Document
         </button>
+        <a href="https://github.com/uzair007421/enterprise-ai-automation-suite/tree/main/backend/projects/p02_legal" target="_blank" rel="noopener noreferrer" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-cyan-400 hover:text-white rounded-lg text-xs font-semibold border border-slate-700 transition flex items-center gap-1.5"><i class="fa-brands fa-github text-xs"></i> GitHub Source</a>
         <button onclick="downloadLegalMemo()" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-xs font-semibold border border-slate-700 transition flex items-center gap-1.5">
           <i class="fa-solid fa-download text-amber-400"></i> Export Research Memo
         </button>
@@ -312,70 +318,78 @@
       `).join('');
     }
 
+    function showBackendError(msg) {
+      const banner = document.getElementById('backend-error-banner');
+      const text = document.getElementById('backend-error-text');
+      if (text) text.textContent = msg || 'Backend unavailable';
+      if (banner) banner.classList.remove('hidden');
+    }
+
+    function hideBackendError() {
+      const banner = document.getElementById('backend-error-banner');
+      if (banner) banner.classList.add('hidden');
+    }
+
+    const API_BASE = (window.AI_API_BASE || '') + '/api/ai/law-firm-private-rag';
+
     function setQuery(q) {
       document.getElementById('query-input').value = q;
       executeVectorSearch();
     }
 
-    function executeVectorSearch() {
+    async function executeVectorSearch() {
       const input = document.getElementById('query-input');
       const query = input.value.trim();
       if (!query) return;
 
-      const API_BASE = window.location.origin.includes('8000') ? '' : 'http://localhost:8000';
-      try {
-        fetch(`${API_BASE}/api/ai/law-firm-private-rag/query`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ query: query })
-        }).then(res => res.json()).then(data => {
-          console.log('Real Law Firm RAG API Synced:', data);
-        }).catch(err => console.warn('Backend sync:', err));
-      } catch (e) {
-        console.warn(e);
-      }
-
-      const queryVector = generateDenseVector(query);
       const resBox = document.getElementById('result-box');
       resBox.classList.remove('hidden');
 
-      // Score all corpus documents using mathematical cosine similarity
-      const scored = corpus.map(doc => {
-        const sim = calculateCosineSimilarity(queryVector, doc.vector);
-        return { doc, sim };
-      });
+      try {
+        const res = await fetch(`${API_BASE}/query`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ query: query })
+        });
 
-      scored.sort((a, b) => b.sim - a.sim);
+        if (!res.ok) {
+          showBackendError('Backend unavailable');
+          return;
+        }
+        hideBackendError();
+        const data = await res.json();
 
-      const top = scored[0];
-      const simScore = top ? top.sim : 0.0;
+        document.getElementById('res-sim-score').textContent = `Cosine Similarity: ${(data.dense_cosine_score || 0).toFixed(3)}`;
+        document.getElementById('vector-math-debug').textContent = `Status: ${data.status} | Confidence: ${data.confidence_score}% | Latency: ${data.execution_time_ms}ms`;
 
-      // SEMANTIC THRESHOLD GATE:
-      // If cosine similarity < 0.22, it triggers out-of-domain refusal
-      const SEMANTIC_THRESHOLD = 0.22;
+        const badge = document.getElementById('res-badge');
+        const ansEl = document.getElementById('res-answer');
+        const citBox = document.getElementById('res-citation-box');
 
-      document.getElementById('res-sim-score').textContent = `Cosine Similarity: ${simScore.toFixed(3)}`;
-      document.getElementById('vector-math-debug').textContent = `QueryVector[128] · DocVector[128] = ${simScore.toFixed(4)} | Threshold = ${SEMANTIC_THRESHOLD}`;
+        if (data.status === 'ANSWERED') {
+          badge.textContent = 'SEMANTIC MATCH VERIFIED';
+          badge.className = 'text-[10px] px-2.5 py-1 rounded-full font-mono uppercase font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30';
 
-      const badge = document.getElementById('res-badge');
-      const ansEl = document.getElementById('res-answer');
-      const citBox = document.getElementById('res-citation-box');
+          ansEl.textContent = data.answer;
+          if (data.citations && data.citations.length > 0) {
+            citBox.classList.remove('hidden');
+            document.getElementById('res-doc-title').textContent = data.citations[0].document_title;
+            document.getElementById('res-doc-page').textContent = data.citations[0].clause_reference;
+            document.getElementById('res-excerpt').textContent = `"${data.citations[0].quoted_substring}"`;
+          } else {
+            citBox.classList.add('hidden');
+          }
+        } else {
+          badge.textContent = 'HALLUCINATION REFUSAL TRIGGERED';
+          badge.className = 'text-[10px] px-2.5 py-1 rounded-full font-mono uppercase font-bold bg-rose-500/20 text-rose-300 border border-rose-500/30';
 
-      if (simScore >= SEMANTIC_THRESHOLD) {
-        badge.textContent = 'SEMANTIC MATCH VERIFIED';
-        badge.className = 'text-[10px] px-2.5 py-1 rounded-full font-mono uppercase font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30';
-
-        ansEl.textContent = top.doc.summary_answer;
-        citBox.classList.remove('hidden');
-        document.getElementById('res-doc-title').textContent = top.doc.title;
-        document.getElementById('res-doc-page').textContent = top.doc.reference;
-        document.getElementById('res-excerpt').textContent = top.doc.content;
-      } else {
-        badge.textContent = 'HALLUCINATION REFUSAL TRIGGERED';
-        badge.className = 'text-[10px] px-2.5 py-1 rounded-full font-mono uppercase font-bold bg-rose-500/20 text-rose-300 border border-rose-500/30';
-
-        ansEl.innerHTML = `<span class="text-rose-400 font-semibold">Out-of-Domain Query Refused:</span> The query does not meet the minimum semantic cosine similarity threshold (${SEMANTIC_THRESHOLD}) against the active legal document corpus. To safeguard attorney-client privilege, the engine strictly refuses to generate speculative or ungrounded answers.`;
-        citBox.classList.add('hidden');
+          ansEl.innerHTML = `<span class="text-rose-400 font-semibold">${data.status}:</span> ${data.answer}`;
+          citBox.classList.add('hidden');
+        }
+      } catch (err) {
+        console.error("Backend RAG query failed:", err);
+        showBackendError('Backend unavailable');
+        return;
       }
     }
 

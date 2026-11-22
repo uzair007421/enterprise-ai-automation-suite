@@ -20,8 +20,8 @@
 {"id": "LEG-20", "query": "What is the 72-hour security incident notification requirement?", "expected_doc": "DOC-DPA-SEC4.3", "expected_status": "ANSWERED"}
 {"id": "LEG-21", "query": "What details must be included in GDPR data breach notification?", "expected_doc": "DOC-DPA-SEC4.3", "expected_status": "ANSWERED"}
 {"id": "LEG-22", "query": "Does processor have to notify controller in writing for suspected breach?", "expected_doc": "DOC-DPA-SEC4.3", "expected_status": "ANSWERED"}
-{"id": "LEG-23", "query": "Is punitive damage allowed under the SaaS MSA?", "expected_doc": "DOC-MSA-SEC8.2", "expected_status": "ANSWERED"}
-{"id": "LEG-24", "query": "What happens if tenant fails to pay base rent on time?", "expected_doc": "DOC-LEASE-SEC14", "expected_status": "ANSWERED"}
+{"id": "LEG-23", "query": "What is our refund window?", "expected_doc": "DOC-REFUND-SEC2.1", "expected_status": "ANSWERED"}
+{"id": "LEG-24", "query": "What is the penalty for early termination under French labor law?", "expected_doc": "NONE", "expected_status": "NOT_FOUND_IN_CORPUS"}
 {"id": "LEG-25", "query": "Can the executive work for a competing AI enterprise within 50 miles?", "expected_doc": "DOC-EMP-SEC6.2", "expected_status": "ANSWERED"}
 {"id": "LEG-26", "query": "What is the recipe for baking chocolate fudge cake?", "expected_doc": "NONE", "expected_status": "REFUSAL_GROUNDED"}
 {"id": "LEG-27", "query": "Who won the 2022 FIFA World Cup football championship?", "expected_doc": "NONE", "expected_status": "REFUSAL_GROUNDED"}

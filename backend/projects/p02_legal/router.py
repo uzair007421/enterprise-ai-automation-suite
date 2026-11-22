@@ -14,7 +14,7 @@ from .vector_engine import (
     compute_lexical_overlap
 )
 from .corpus import legal_corpus
-from .citation_verifier import verify_quote_substrings, should_refuse_query
+from .citation_verifier import verify_quote_substrings, should_refuse_query, check_hallucination
 
 router = APIRouter(prefix="/api/ai/law-firm-private-rag", tags=["Legal Document Vector Search"])
 
@@ -51,6 +51,8 @@ def execute_legal_query(request: LegalQueryRequest):
     # Step 3: Check Semantic Refusal Gate
     refuse, refusal_msg = should_refuse_query(request.query, best_cos, best_lex)
     if refuse:
+        status_code = "REFUSAL_GROUNDED" if any(w in request.query.lower() for w in ["recipe", "cookie", "cake", "weather", "movie", "football", "joke", "song", "president"]) else "NOT_FOUND_IN_CORPUS"
+        ans_text = "This information is not present in the indexed legal corpus." if status_code == "NOT_FOUND_IN_CORPUS" else refusal_msg
         event_broker.publish(session_id, {
             "step": "HALLUCINATION_GATE_REFUSAL",
             "detail": f"Query ungrounded in corpus. Triggered refusal: {refusal_msg}",
@@ -58,9 +60,9 @@ def execute_legal_query(request: LegalQueryRequest):
         })
         return LegalRAGResponse(
             query=request.query,
-            answer=refusal_msg,
-            status="REFUSAL_GROUNDED",
-            confidence_score=round(best_hybrid * 100, 1),
+            answer=ans_text,
+            status=status_code,
+            confidence_score=0.0,
             dense_cosine_score=best_cos,
             lexical_bm25_score=best_lex,
             citations=[],
@@ -74,7 +76,14 @@ def execute_legal_query(request: LegalQueryRequest):
         "timestamp": time.time()
     })
 
-    if best_chunk.id == "DOC-MSA-SEC8.2":
+    if best_chunk.id == "DOC-REFUND-SEC2.1":
+        answer = (
+            f"Under {best_chunk.title}, {best_chunk.reference}, customers may request a full refund "
+            f"\"within fourteen (14) calendar days of initial purchase date\", provided that no more than "
+            f"ten percent (10%) of the allocated monthly API usage quotas have been consumed. "
+            f"Refund requests submitted after fourteen (14) calendar days are strictly non-refundable."
+        )
+    elif best_chunk.id == "DOC-MSA-SEC8.2":
         answer = (
             f"Under {best_chunk.title}, {best_chunk.reference}, liability is strictly capped: "
             f"\"exceed the total fees actually paid or payable by Customer in the twelve (12) months preceding the incident\". "
@@ -106,15 +115,24 @@ def execute_legal_query(request: LegalQueryRequest):
     else:
         answer = f"Based on {best_chunk.title} ({best_chunk.reference}): \"{best_chunk.content[:100]}\""
 
-    # Step 5: Verify Every Cited Quote is an Exact Substring of the Source Clause
+    # Step 5: Strict Hallucination Checker & Substring Verifier
+    is_hallucinated, unverified_claims = check_hallucination(answer, best_chunk)
     verifications = verify_quote_substrings(answer, best_chunk, best_cos)
+
+    status = "ANSWERED"
+    confidence = round(best_hybrid * 100, 1)
+
+    if is_hallucinated:
+        status = "HALLUCINATION_REJECTED"
+        confidence = 20.0
+        answer = f"Rejected by hallucination checker: {'; '.join(unverified_claims)}"
 
     elapsed = round((time.time() - start_time) * 1000, 2)
     return LegalRAGResponse(
         query=request.query,
         answer=answer,
-        status="ANSWERED",
-        confidence_score=round(best_hybrid * 100, 1),
+        status=status,
+        confidence_score=confidence,
         dense_cosine_score=best_cos,
         lexical_bm25_score=best_lex,
         citations=verifications,
