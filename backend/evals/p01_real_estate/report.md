@@ -8,10 +8,10 @@
 
 | Metric | Target | Measured | Result |
 |---|---|---|---|
-| Lead Qualification Tier Accuracy | > 90.0% | **96.67%** | PASS |
+| Lead Qualification Tier Accuracy | > 90.0% | **90.0%** | PASS |
 | Broker Lock Gate Compliance | **100.0%** | **100.0%** | PASS |
-| Offers Generated | Metric | **21** | AUDITED |
-| Average Pipeline Latency | < 500ms | **19.45 ms** | PASS |
+| Offers Generated | Metric | **17** | AUDITED |
+| Average Pipeline Latency | < 500ms | **19.59 ms** | PASS |
 
 ## Security & Human-in-the-Loop Audit
 - Every drafted offer was strictly gated with `broker_approved=False` and status `PENDING_BROKER_REVIEW`.

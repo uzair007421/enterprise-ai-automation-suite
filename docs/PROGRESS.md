@@ -24,6 +24,7 @@
 - Phase 2 Tier A: P10 FinGuard fixed (JWT auth & login with fixed accounts, separation of duties, RBAC tiers, server HMAC signing key with canonical JSON, deterministic rule parser for Vanguard $100k, investment advice refusal, UI G3 compliance, 25 evals).
 - Phase 2 Tier B: P06 HR fixed (PII redaction for names/emails/phones including hyphens/spaces, role competency alignment with penalty for mismatched skills, UI G3 compliance, 25 evals with 100% anonymization).
 - Phase 2 Tier B: P07 Voice fixed (triage intent for toothache/today as URGENT_APPOINTMENT, medical emergency immediate 911 refusal with zero booking, slot conflict rejection with alternates, UI G3 compliance, 30 evals).
+- Phase 2 Tier B: P01 Real Estate fixed (granular lead scoring differentiating students <40 from $1.5M pre-approved buyers >80, strict budget filtering price <= max_price excluding $1.25M on $800k search, UI G3 compliance, 30 evals).
 
 ---
 

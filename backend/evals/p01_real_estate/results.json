@@ -1,9 +1,14 @@
 {
   "benchmark": "P01 Multi-Agent Real Estate Sales Suite",
   "total_cases": 30,
-  "qualification_tier_accuracy_pct": 96.67,
-  "offers_generated": 21,
+  "qualification_tier_accuracy_pct": 90.0,
+  "price_filter_compliance_pct": 100.0,
+  "score_spread": {
+    "min": 10,
+    "max": 98
+  },
+  "offers_generated": 17,
   "broker_gate_compliance_pct": 100.0,
-  "average_pipeline_latency_ms": 19.45,
+  "average_pipeline_latency_ms": 19.59,
   "status": "PASSED"
 }

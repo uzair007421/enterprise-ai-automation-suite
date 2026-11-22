@@ -56,34 +56,55 @@ MLS_DATABASE = [
         "bathrooms": 1.5,
         "sqft": 1420,
         "features": "Rooftop deck, walkable neighborhood"
+    },
+    {
+        "mls_id": "MLS-ATX-9988",
+        "address": "1404 Scenic Loop",
+        "city": "Austin, TX",
+        "price": 1250000.00,
+        "bedrooms": 5,
+        "bathrooms": 4.5,
+        "sqft": 4500,
+        "features": "Gated luxury estate, pool, private hill country vista"
+    },
+    {
+        "mls_id": "MLS-SEA-9910",
+        "address": "902 Magnolia Bluff Way",
+        "city": "Seattle, WA",
+        "price": 1450000.00,
+        "bedrooms": 4,
+        "bathrooms": 3.5,
+        "sqft": 3800,
+        "features": "Waterfront views, executive chef kitchen"
     }
 ]
 
 def match_properties_for_lead(lead: QualifiedLead, max_results: int = 2) -> List[PropertyListing]:
     """
     Finds and ranks MLS properties aligning with lead's location, budget, and bedroom count.
+    STRICT FILTER: Property price must be <= lead.budget. Budget $800k will never match $1.25M.
     """
     matches = []
     lead_city = lead.location.split(",")[0].lower()
 
     for prop in MLS_DATABASE:
+        # STRICT Price Filter: Listing price must never exceed buyer budget
+        if prop["price"] > lead.budget:
+            continue
+
         prop_city = prop["city"].split(",")[0].lower()
         if lead_city not in prop_city and prop_city not in lead_city:
             continue
 
-        # Budget variance (+/- 25%)
-        price_ratio = prop["price"] / lead.budget if lead.budget > 0 else 1.0
-        if price_ratio < 0.70 or price_ratio > 1.30:
-            continue
-
-        # Bedroom check
+        # Bedroom check (allow within 1 bedroom)
         if prop["bedrooms"] < (lead.bedrooms - 1):
             continue
 
-        # Calculate granular match score
+        # Granular match scoring
+        price_ratio = prop["price"] / lead.budget if lead.budget > 0 else 1.0
         score = 80
-        if abs(1.0 - price_ratio) <= 0.10:
-            score += 10  # within 10% of target budget
+        if 0.85 <= price_ratio <= 1.0:
+            score += 10  # within 15% of max budget
         if prop["bedrooms"] == lead.bedrooms:
             score += 10  # exact bedroom match
 
@@ -103,19 +124,4 @@ def match_properties_for_lead(lead: QualifiedLead, max_results: int = 2) -> List
         ))
 
     matches.sort(key=lambda x: x.match_score, reverse=True)
-    if not matches and MLS_DATABASE:
-        # Fallback to closest city property
-        fallback = MLS_DATABASE[0]
-        matches.append(PropertyListing(
-            mls_id=fallback["mls_id"],
-            address=fallback["address"],
-            city=fallback["city"],
-            price=fallback["price"],
-            bedrooms=fallback["bedrooms"],
-            bathrooms=fallback["bathrooms"],
-            sqft=fallback["sqft"],
-            match_score=75,
-            match_notes="Alternate inventory matching closest metro area"
-        ))
-
     return matches[:max_results]

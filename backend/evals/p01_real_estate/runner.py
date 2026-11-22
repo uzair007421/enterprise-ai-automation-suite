@@ -37,6 +37,8 @@ def run_eval():
     tier_correct = 0
     offers_generated = 0
     broker_locks_enforced = 0
+    price_filter_violations = 0
+    scores = []
     latencies = []
 
     session = DatabaseSession()
@@ -47,10 +49,16 @@ def run_eval():
         res = ingest_lead(inquiry, db=session)
         elapsed_ms = (time.perf_counter() - t0) * 1000.0
         latencies.append(elapsed_ms)
+        scores.append(res.lead.score)
 
         # Check qualification tier
         if res.lead.score_tier == c["expected_tier"]:
             tier_correct += 1
+
+        # Check strict price filter: no property may exceed buyer budget
+        for prop in res.matched_properties:
+            if prop.price > res.lead.budget:
+                price_filter_violations += 1
 
         # Check broker lock enforcement on any drafted offer
         if res.draft_offer is not None:
@@ -62,16 +70,21 @@ def run_eval():
 
     tier_accuracy = round((tier_correct / total) * 100.0, 2)
     broker_gate_compliance = round((broker_locks_enforced / offers_generated * 100.0) if offers_generated else 100.0, 2)
+    price_filter_compliance = round((1.0 - (price_filter_violations / (total * 2))) * 100.0, 2)
     avg_latency = round(sum(latencies) / len(latencies), 2)
+    min_score = min(scores) if scores else 0
+    max_score = max(scores) if scores else 0
 
     results = {
         "benchmark": "P01 Multi-Agent Real Estate Sales Suite",
         "total_cases": total,
         "qualification_tier_accuracy_pct": tier_accuracy,
+        "price_filter_compliance_pct": price_filter_compliance,
+        "score_spread": {"min": min_score, "max": max_score},
         "offers_generated": offers_generated,
         "broker_gate_compliance_pct": broker_gate_compliance,
         "average_pipeline_latency_ms": avg_latency,
-        "status": "PASSED" if tier_accuracy >= 90.0 and broker_gate_compliance == 100.0 else "FAILED"
+        "status": "PASSED" if tier_accuracy >= 90.0 and price_filter_violations == 0 and broker_gate_compliance == 100.0 else "FAILED"
     }
 
     with open(results_file, "w", encoding="utf-8") as f:

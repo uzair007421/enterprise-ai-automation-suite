@@ -569,5 +569,53 @@ def test_p07_second_booking_of_same_slot_rejected_with_alternates():
     assert len(data2["alternate_slots"]) > 0
 
 
+# ---------------------------------------------------------
+# P01 Real Estate Regressions
+# ---------------------------------------------------------
+
+def test_p01_800k_search_strictly_excludes_1_25m():
+    """Verify $800k budget strictly excludes $1.25M luxury listing and never returns properties above budget."""
+    resp = client.post("/api/ai/real-estate-sales/ingest", json={
+        "text": "Hi, I am looking for a 4 bedroom home in Austin, TX with a strict max budget of $800k. Ready within 30 days.",
+        "session_id": "test_p01_price_filter"
+    })
+    assert resp.status_code == 200
+    data = resp.json()
+    matched = data["matched_properties"]
+    assert len(matched) > 0
+    for prop in matched:
+        assert prop["price"] <= 800000.0
+        assert prop["price"] != 1250000.0
+        assert "1404 Scenic" not in prop["address"]
+
+
+def test_p01_student_lead_scores_under_40():
+    """Verify college student looking to rent for $800/mo scores < 40 and is disqualified/cold."""
+    resp = client.post("/api/ai/real-estate-sales/ingest", json={
+        "text": "I am a college student looking to rent a 1 bedroom apartment near campus for $800/mo.",
+        "session_id": "test_p01_student"
+    })
+    assert resp.status_code == 200
+    data = resp.json()
+    lead = data["lead"]
+    assert lead["score"] < 40
+    assert lead["score_tier"] in ["DISQUALIFIED", "COLD"]
+    assert data["draft_offer"] is None
+
+
+def test_p01_1_5m_preapproved_buyer_scores_over_80():
+    """Verify $1.5M pre-approved buyer looking this month scores > 80 and is marked HOT."""
+    resp = client.post("/api/ai/real-estate-sales/ingest", json={
+        "text": "Dr. Jonathan Davis. Pre-approved buyer with $1.5M budget seeking 4 bedrooms in Austin. Looking to close this month.",
+        "session_id": "test_p01_luxury_buyer"
+    })
+    assert resp.status_code == 200
+    data = resp.json()
+    lead = data["lead"]
+    assert lead["score"] > 80
+    assert lead["score_tier"] == "HOT"
+
+
+
 
 
