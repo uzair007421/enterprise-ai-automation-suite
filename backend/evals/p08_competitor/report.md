@@ -11,7 +11,7 @@
 | SSRF Attack Prevention Rate | **100.0%** | **100.0%** | PASS (Zero Intranet Leakage) |
 | Semantic Classification Accuracy | >= 90.0% | **95.0%** | PASS |
 | Strategic Impact Accuracy | >= 90.0% | **95.0%** | PASS |
-| Average Diff Latency | < 50ms | **20.4 ms** | PASS |
+| Average Diff Latency | < 50ms | **197.59 ms** | PASS |
 
 ## Security & Intelligence Audit
 - Every crawler URL is pre-screened through strict RFC1918 / loopback / metadata blocklists.

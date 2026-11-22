@@ -38,13 +38,18 @@ def run_eval():
     impact_matches = 0
     latencies = []
 
-    # 1. Verify SSRF Immunity
+    # 1. Verify SSRF Immunity across 10 Attack Vectors
     malicious_hosts = [
         "http://127.0.0.1:8080/keys",
         "http://localhost:3000/",
         "http://169.254.169.254/latest/meta-data/",
         "http://10.240.0.1/internal",
-        "http://192.168.0.1/admin"
+        "http://192.168.0.1/admin",
+        "http://2130706433/",
+        "http://0x7f000001/status",
+        "http://169.254.169.254/computeMetadata/v1/",
+        "http://172.16.0.5/api",
+        "http://metadata.google.internal/computeMetadata/v1/"
     ]
     ssrf_blocked = sum(1 for url in malicious_hosts if not validate_url_ssrf_safety(url))
     ssrf_prevention_rate = round((ssrf_blocked / len(malicious_hosts) * 100.0), 2)

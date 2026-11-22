@@ -659,6 +659,61 @@ def test_p02_fabricated_fact_rejected_by_hallucination_checker():
     assert len(unverified) > 0
 
 
+# ---------------------------------------------------------
+# P08 SaaS Competitor Intelligence Regressions
+# ---------------------------------------------------------
+
+def test_p08_decimal_ip_is_blocked():
+    """Verify decimal IP 2130706433 (127.0.0.1) is blocked with HTTP 400."""
+    resp = client.post("/api/ai/competitor-intel/scan", json={
+        "competitor_name": "Decimal Attacker",
+        "target_url": "http://2130706433/admin"
+    })
+    assert resp.status_code == 400
+    assert "prohibited private/internal address" in resp.json()["detail"] or "SSRF" in resp.json()["detail"]
+
+
+def test_p08_metadata_ip_is_blocked():
+    """Verify cloud metadata IP 169.254.169.254 is blocked with HTTP 400."""
+    resp = client.post("/api/ai/competitor-intel/scan", json={
+        "competitor_name": "Metadata Attacker",
+        "target_url": "http://169.254.169.254/latest/meta-data/"
+    })
+    assert resp.status_code == 400
+    assert "prohibited private/internal address" in resp.json()["detail"] or "SSRF" in resp.json()["detail"]
+
+
+def test_p08_scraping_unreachable_url_returns_scrape_failed():
+    """Verify scraping an unreachable URL returns SCRAPE_FAILED and zero diffs (never canned Notion data)."""
+    resp = client.post("/api/ai/competitor-intel/scan", json={
+        "competitor_name": "Unreachable SaaS",
+        "target_url": "https://example.com/nonexistent_404_unreachable_page_for_test"
+    })
+    assert resp.status_code == 200
+    data = resp.json()
+    assert len(data["changes_detected"]) == 0
+    assert "SCRAPE_FAILED" in data["recommended_action"] or "failed" in data["recommended_action"].lower()
+    # Ensure no canned Notion AI / $10/mo data
+    assert "Notion" not in str(data)
+
+
+def test_p08_identical_snapshots_produce_empty_diff():
+    """Verify identical HTML snapshots produce an empty diff list."""
+    html = "<div>Plan A: $29/mo, Plan B: $79/mo. Includes Slack integration.</div>"
+    resp = client.post("/api/ai/competitor-intel/scan", json={
+        "competitor_name": "Stable Corp",
+        "target_url": "https://example.com/pricing",
+        "previous_html_snapshot": html,
+        "current_html_snapshot": html
+    })
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["diff_count"] == 0
+    assert len(data["changes_detected"]) == 0
+
+
+
+
 
 
 

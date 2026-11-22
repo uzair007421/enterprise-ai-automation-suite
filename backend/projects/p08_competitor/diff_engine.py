@@ -22,9 +22,14 @@ def extract_competitor_diffs(competitor: str, url: str, old_html: str, new_html:
     """
     Computes semantic differences between previous and current snapshots.
     Categorizes into PRICING_CHANGE, FEATURE_LAUNCH, POSITIONING_SHIFT, or DOCS_UPDATE.
+    Returns empty list if snapshots are identical.
     """
-    old_text = strip_html_tags(old_html) if old_html else "Standard baseline tier: $49/mo Starter, $99/mo Pro. Standard REST APIs."
-    new_text = strip_html_tags(new_html) if new_html else old_text
+    old_text = strip_html_tags(old_html) if old_html else ""
+    new_text = strip_html_tags(new_html) if new_html else ""
+
+    # Identical snapshots produce empty diff
+    if old_text == new_text:
+        return []
 
     diffs = []
     now_str = datetime.datetime.now(datetime.timezone.utc).isoformat()

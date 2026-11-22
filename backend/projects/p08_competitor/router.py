@@ -47,20 +47,32 @@ def scan_competitor_changes(req: CompetitorScanRequest, db: DatabaseSession = De
         })
         raise HTTPException(
             status_code=400,
-            detail="SSRF Security Violation: Target resolves to an internal/private network or metadata service."
+            detail="SSRF Security Violation: Target URL resolves to a prohibited private/internal address"
         )
 
     # Determine HTML snapshots (either provided in request or fetched)
-    old_html = req.previous_html_snapshot or "<div>Baseline Starter: $49/mo, Pro: $99/mo. Basic REST API.</div>"
+    old_html = req.previous_html_snapshot or ""
     new_html = req.current_html_snapshot
 
     if not new_html:
         success, fetched = fetch_competitor_html_safe(req.target_url)
-        new_html = fetched if success else old_html
+        if not success:
+            t_elapsed = (time.perf_counter() - t_start) * 1000.0
+            return CompetitorScanResponse(
+                competitor_name=req.competitor_name,
+                target_url=req.target_url,
+                ssrf_validated=True,
+                changes_detected=[],
+                diff_count=0,
+                max_impact_score=0,
+                recommended_action=f"SCRAPE_FAILED: {fetched}",
+                execution_time_ms=round(t_elapsed, 2)
+            )
+        new_html = fetched
 
     # Extract Diffs
     diffs = extract_competitor_diffs(req.competitor_name, req.target_url, old_html, new_html)
-    max_impact = max([d.impact_score for d in diffs], default=1)
+    max_impact = max([d.impact_score for d in diffs], default=0)
     now_str = datetime.datetime.now(datetime.timezone.utc).isoformat()
 
     # Persist in SQLite
@@ -98,6 +110,7 @@ def scan_competitor_changes(req: CompetitorScanRequest, db: DatabaseSession = De
         target_url=req.target_url,
         ssrf_validated=True,
         changes_detected=diffs,
+        diff_count=len(diffs),
         max_impact_score=max_impact,
         recommended_action=action,
         execution_time_ms=round(t_elapsed, 2)

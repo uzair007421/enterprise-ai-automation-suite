@@ -26,6 +26,7 @@ class CompetitorScanResponse(BaseModel):
     target_url: str
     ssrf_validated: bool
     changes_detected: List[CompetitorDiffItem]
+    diff_count: int = 0
     max_impact_score: int
     recommended_action: str
     execution_time_ms: float

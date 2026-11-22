@@ -42,9 +42,31 @@ class SSRFProtection:
             if not hostname:
                 return False, "URL does not contain a valid hostname."
 
+            cleaned_host = hostname.strip("[]").lower()
+
             # Disallow localhost keywords
-            if hostname.lower() in ["localhost", "local", "127.0.0.1", "0.0.0.0", "metadata.google.internal"]:
-                return False, "Targeting local hostnames is strictly forbidden."
+            if cleaned_host in ["localhost", "local", "127.0.0.1", "0.0.0.0", "metadata.google.internal", "169.254.169.254"]:
+                return False, "Target URL resolves to a prohibited private/internal address."
+
+            # Check decimal, octal, hex, or direct IP notation
+            try:
+                if cleaned_host.isdigit():
+                    ip_obj = ipaddress.IPv4Address(int(cleaned_host))
+                    for blocked_net in cls.BLOCKED_NETWORKS:
+                        if ip_obj in blocked_net:
+                            return False, f"Target URL resolves to a prohibited private/internal address: {ip_obj}"
+                elif cleaned_host.startswith("0x"):
+                    ip_obj = ipaddress.IPv4Address(int(cleaned_host, 16))
+                    for blocked_net in cls.BLOCKED_NETWORKS:
+                        if ip_obj in blocked_net:
+                            return False, f"Target URL resolves to a prohibited private/internal address: {ip_obj}"
+                else:
+                    ip_obj = ipaddress.ip_address(cleaned_host)
+                    for blocked_net in cls.BLOCKED_NETWORKS:
+                        if ip_obj in blocked_net:
+                            return False, f"Target URL resolves to a prohibited private/internal address: {ip_obj}"
+            except ValueError:
+                pass
 
             # Resolve DNS to check real destination IP
             addr_info = socket.getaddrinfo(hostname, None)
@@ -54,11 +76,11 @@ class SSRFProtection:
 
                 for blocked_net in cls.BLOCKED_NETWORKS:
                     if ip_obj in blocked_net:
-                        return False, f"Resolved IP {ip_str} belongs to protected internal subnet ({blocked_net})."
+                        return False, f"Target URL resolves to a prohibited private/internal address: {ip_str}"
 
             return True, "Safe"
         except Exception as e:
-            return False, f"DNS resolution failed: {str(e)}"
+            return False, f"Target URL resolves to a prohibited private/internal address (DNS error: {str(e)})"
 
 def validate_url_ssrf_safety(url: str) -> bool:
     """Convenience helper returning boolean for SSRF safety."""
