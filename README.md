@@ -19,7 +19,7 @@ A portfolio of 10 working enterprise AI automation prototypes. Every system exec
 | **01** | `p01_real_estate` | Policy-Bound Offer Drafter (2% earnest lock) | **Real** | [agent_drafter.py](backend/projects/p01_real_estate/agent_drafter.py#L17-L50) |
 | **01** | `p01_real_estate` | Human Broker Approval Gate | **Real** | [router.py](backend/projects/p01_real_estate/router.py#L115-L165) |
 | **01** | `p01_real_estate` | HubSpot Deals & Contacts Sync | **Live / Sandbox Fallback** | [crm_adapter.py](backend/projects/p01_real_estate/crm_adapter.py#L17-L55) |
-| **02** | `p02_legal` | 128-D Dense Vector Embeddings Engine | **Real** | [vector_engine.py](backend/projects/p02_legal/vector_engine.py#L12-L45) |
+| **02** | `p02_legal` | 128-D Vector Embeddings Engine | **Real** | [vector_engine.py](backend/projects/p02_legal/vector_engine.py#L12-L45) |
 | **02** | `p02_legal` | Mathematical Cosine Similarity Search | **Real** | [vector_engine.py](backend/projects/p02_legal/vector_engine.py#L46-L80) |
 | **02** | `p02_legal` | Character Substring Quote Citation Verifier | **Real** | [citation_verifier.py](backend/projects/p02_legal/citation_verifier.py#L10-L40) |
 | **02** | `p02_legal` | Ungrounded Semantic Refusal Gate | **Real** | [citation_verifier.py](backend/projects/p02_legal/citation_verifier.py#L35-L65) |
@@ -49,8 +49,8 @@ A portfolio of 10 working enterprise AI automation prototypes. Every system exec
 | **09** | `p09_media` | Social Publishing Adapters (LinkedIn/X/Dev.to) | **Live / Sandbox Fallback** | [social_adapters.py](backend/projects/p09_media/social_adapters.py#L15-L55) |
 | **10** | `p10_finance` | Autonomous ReAct Read Tools | **Real** | [tools.py](backend/projects/p10_finance/tools.py#L15-L65) |
 | **10** | `p10_finance` | Write Action Interception & Suspension Gate | **Real** | [agent.py](backend/projects/p10_finance/agent.py#L35-L95) |
-| **10** | `p10_finance` | Cryptographic HMAC-SHA256 Multi-Tier RBAC | **Real** | [crypto_gate.py](backend/projects/p10_finance/crypto_gate.py#L15-L65) |
-| **10** | `p10_finance` | Merkle Hash-Linked Tamper-Evident Audit Chain | **Real** | [audit_chain.py](backend/projects/p10_finance/audit_chain.py#L18-L95) |
+| **10** | `p10_finance` | HMAC-Secured HMAC-SHA256 Multi-Tier RBAC | **Real** | [crypto_gate.py](backend/projects/p10_finance/crypto_gate.py#L15-L65) |
+| **10** | `p10_finance` | hash chain Hash-Linked Tamper-Evident Audit Chain | **Real** | [audit_chain.py](backend/projects/p10_finance/audit_chain.py#L18-L95) |
 
 ---
 

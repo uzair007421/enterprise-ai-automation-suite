@@ -15,7 +15,7 @@
   - `SENIOR_FINANCE_MANAGER`: Authorized to execute reads and request writes subject to confirmation.
   - `CFO_ADMIN`: Full administrative sign-off authority and budget overrides.
 * **Per-User Token & Cost Metering:** Real-time token tracking ($0.002/1k tokens) with hard daily budget caps ($5, $20, $100) to eliminate bill shock.
-* **Cryptographic Tamper-Evident Audit Trail:** SHA-256 hash-chained immutable logging of every prompt, tool execution, role, cost, and human sign-off.
+* **Tamper-Evident Audit Trail:** SHA-256 hash-chained immutable logging of every prompt, tool execution, role, cost, and human sign-off.
 
 ---
 
@@ -80,8 +80,8 @@ Open your browser at: **`http://localhost:8010`**
 3. **(0:30 - 0:45) The Mandatory Write Gate & RBAC Block:**  
    Click the **Junior Analyst RBAC test**: Show the immediate red permission denied alert.  
    Then switch to **Senior Manager** and request to increase credit limit: Show the **Human Permission Modal**: *"Notice the AI cannot write to the database alone. It suspends execution until the authorized manager clicks Confirm."*
-4. **(0:45 - 1:00) Cryptographic Audit Trail:**  
-   Show the live SHA-256 audit ledger: *"Every action is cryptographically hash-chained for internal compliance. Contact me to build secure AI agents for your business!"*
+4. **(0:45 - 1:00) HMAC-Secured Audit Trail:**  
+   Show the live SHA-256 audit ledger: *"Every action is HMAC-securedally hash-chained for internal compliance. Contact me to build secure AI agents for your business!"*
 
 ---
 
@@ -97,7 +97,7 @@ I have already engineered a production-ready Internal Financial Agent system fea
 2. Mandatory Write Confirmation Gate: The agent cannot modify databases or dispatch funds without explicit human sign-off.
 3. Role-Based Access Control (RBAC): Hierarchical user roles (Analyst vs Manager vs Executive) with strict permission enforcement.
 4. Per-User Cost & Token Metering: Hard daily budget ceilings to prevent unexpected OpenAI/Anthropic API bills.
-5. Cryptographic Audit Trail: SHA-256 hash-chained immutable activity ledger for SOC2 & corporate compliance.
+5. HMAC-Secured Audit Trail: SHA-256 hash-chained immutable activity ledger for SOC2 & corporate compliance.
 
 I can implement this custom agent infrastructure for your company within 4 to 6 business days. Let's start a quick chat for a live demo!
 ```
@@ -107,4 +107,4 @@ I can implement this custom agent infrastructure for your company within 4 to 6 
 ## 💰 Recommended Fiverr Gig Pricing
 * **Basic ($350 - $600):** Custom tool-calling agent with read-only database query tools.
 * **Standard ($800 - $1,400):** Tool-calling agent + Mandatory human confirmation gate + RBAC user permissions.
-* **Premium ($1,800 - $3,500):** Full Enterprise Internal Agent + Cryptographic audit logging + Token cost metering + Custom ERP/Postgres DB connector.
+* **Premium ($1,800 - $3,500):** Full Enterprise Internal Agent + HMAC-Secured audit logging + Token cost metering + Custom ERP/Postgres DB connector.

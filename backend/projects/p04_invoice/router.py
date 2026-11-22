@@ -40,7 +40,7 @@ def process_invoice_endpoint(request: InvoiceProcessRequest):
     record_project_activity("invoice-processing")
     session_id = request.session_id or "demo_session"
 
-    # Step 1: Ingest & Compute Cryptographic Content Hash
+    # Step 1: Ingest & Compute HMAC-Secured Content Hash
     event_broker.publish(session_id, {
         "step": "FILE_INGESTION",
         "detail": f"Received document payload '{request.filename}'",

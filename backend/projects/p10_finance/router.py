@@ -1,5 +1,5 @@
 """
-FinGuard Financial Agent & Cryptographic Approval Gate Router
+FinGuard Financial Agent & Human Approval Gate Router
 Mounted under /api/ai/finance-agent-gate
 """
 import time
@@ -60,7 +60,7 @@ def login_endpoint(credentials: LoginRequest):
     - analyst / analyst123 -> role: ANALYST
     - manager / mgr123 -> role: MANAGER
     - cfo / cfo123 -> role: CFO
-    Issues cryptographically signed JWT. Role is strictly embedded in token.
+    Issues server-signed JWT. Role is strictly embedded in token.
     """
     username = credentials.username.strip().lower()
     acc = ACCOUNTS.get(username)
@@ -95,7 +95,8 @@ def execute_agent_query(
     from fastapi.params import Depends as DependsType
     if isinstance(current_user, DependsType) or current_user is None:
         user_id = request.user_id or "analyst"
-        role = request.role or "ANALYST"
+        # Unauthenticated calls are strictly clamped to ANALYST (cannot self-claim elevated CFO/TREASURY_MANAGER role)
+        role = "ANALYST"
     else:
         user_id = current_user["user_id"]
         role = current_user["role"]
@@ -143,7 +144,7 @@ def approve_write_action(
     current_user: Optional[Dict[str, str]] = Depends(get_auth_token_from_header)
 ):
     """
-    Human Cryptographic Approval Gate.
+    Human Human Approval Gate.
     Approver role and ID are derived strictly from the verified JWT over HTTP.
     Enforces separation of duties (creator cannot approve) and RBAC limits.
     Signs execution with server-held APPROVAL_SIGNING_KEY and appends to audit chain.
@@ -262,7 +263,7 @@ def approve_write_action(
                 amount=amount
             )
 
-        # Step 7: Append to Cryptographic Audit Chain with server signature
+        # Step 7: Append to HMAC-Secured Audit Chain with server signature
         audit_entry = audit_chain_manager.append_block(
             action_type="LEDGER_MUTATION_EXECUTED",
             payload={
@@ -324,7 +325,7 @@ def get_audit_chain_blocks(limit: int = 50):
 @router.get("/audit-chain/verify", response_model=AuditChainVerificationResponse)
 def verify_audit_chain():
     """
-    Executes full cryptographic verification of the SHA-256 audit chain.
+    Executes full hash-chain verification of the SHA-256 audit chain.
     Confirms zero tampering, broken links, or altered signatures.
     """
     return audit_chain_manager.verify_chain_integrity()

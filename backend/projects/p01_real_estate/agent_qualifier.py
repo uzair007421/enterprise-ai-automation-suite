@@ -31,16 +31,21 @@ def qualify_lead_from_text(raw_text: str) -> QualifiedLead:
     )
 
     # Extract name heuristics
-    name_match = re.search(r"(?:name is|i am|this is|from|dr\.|mr\.|mrs\.)[:\s]*([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)", raw_text)
-    name = name_match.group(1).strip() if name_match else "Marcus Sterling"
+    name_match = re.search(r"(?:name is|i am|i'm|this is|from|buyer|reach|contact|dr\.|mr\.|mrs\.)[:\s]*([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)", raw_text, re.IGNORECASE)
+    if name_match:
+        name = name_match.group(1).strip().title()
+    else:
+        first_line = raw_text.splitlines()[0].strip() if raw_text else ""
+        line_match = re.match(r"^([A-Z][a-z]+(?:\s+[A-Z][a-z]+){1,2})\b", first_line)
+        name = line_match.group(1).strip() if line_match else "Unspecified Lead"
 
     # Extract email heuristics
-    email_match = re.search(r"[\w\.-]+@[\w\.-]+\.\w+", raw_text)
-    email = email_match.group(0) if email_match else f"{name.lower().replace(' ', '.')}@example.com"
+    email_match = re.search(r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b", raw_text)
+    email = email_match.group(0) if email_match else "N/A"
 
     # Extract phone heuristics
-    phone_match = re.search(r"\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}", raw_text)
-    phone = phone_match.group(0) if phone_match else "(512) 555-0199"
+    phone_match = re.search(r"(?:\+?1[-.\s]*)?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}", raw_text)
+    phone = phone_match.group(0) if phone_match else "N/A"
 
     # Extract budget with support for $1.5M, $800k, $800,000, $800/mo notation
     budget = 0.0
@@ -66,10 +71,30 @@ def qualify_lead_from_text(raw_text: str) -> QualifiedLead:
     bedrooms = int(bed_match.group(1)) if bed_match else 3
 
     # Extract location
-    location = "Austin, TX"
-    if "seattle" in text_lower: location = "Seattle, WA"
-    elif "dallas" in text_lower: location = "Dallas, TX"
-    elif "denver" in text_lower: location = "Denver, CO"
+    location = "Unspecified Location"
+    city_map = {
+        "austin": "Austin, TX",
+        "seattle": "Seattle, WA",
+        "dallas": "Dallas, TX",
+        "denver": "Denver, CO",
+        "houston": "Houston, TX",
+        "chicago": "Chicago, IL",
+        "miami": "Miami, FL",
+        "phoenix": "Phoenix, AZ",
+        "san francisco": "San Francisco, CA",
+        "new york": "New York, NY",
+        "los angeles": "Los Angeles, CA",
+        "atlanta": "Atlanta, GA",
+        "boston": "Boston, MA"
+    }
+    for city_key, city_val in city_map.items():
+        if city_key in text_lower:
+            location = city_val
+            break
+    if location == "Unspecified Location":
+        loc_match = re.search(r"(?:in|near|around)\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?(?:\s*,\s*[A-Z]{2})?)", raw_text)
+        if loc_match:
+            location = loc_match.group(1).strip()
 
     # Extract timeline
     timeline = "Within 30 Days"

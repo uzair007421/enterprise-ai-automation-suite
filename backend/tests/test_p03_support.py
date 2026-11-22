@@ -30,7 +30,8 @@ def test_roman_urdu_order_tracking_lookup():
     """Verify Roman Urdu inquiry extracts order ID and returns tracking details."""
     req = CustomerMessageRequest(
         session_id="test_sess_tracking",
-        text="Mera parcel kahan pohancha hai order #1042 ka?"
+        text="Mera parcel kahan pohancha hai order #1042 ka?",
+        phone="+923001234567"
     )
     resp = handle_customer_message(req)
     assert resp.order_data is not None

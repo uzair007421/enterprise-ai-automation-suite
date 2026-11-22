@@ -1,6 +1,6 @@
 """
-Dense Vector Embeddings & Mathematical Cosine Similarity Engine
-Generates 128-dimensional dense vector embeddings.
+Vector Embeddings & Mathematical Cosine Similarity Engine
+Generates 128-dimensional vector embeddings.
 Computes true vector dot product and norm-based cosine similarity:
 cosine_similarity(u, v) = (u . v) / (||u|| * ||v||)
 """
@@ -13,12 +13,13 @@ EMBEDDING_DIM = 128
 
 STOP_WORDS = {
     "what", "is", "the", "for", "in", "to", "of", "and", "under",
-    "how", "does", "are", "do", "we", "a", "an", "be", "this", "that", "can", "our"
+    "how", "does", "are", "do", "we", "a", "an", "be", "this", "that", "can", "our",
+    "more", "than", "or", "as", "by", "from", "at", "it", "with", "on", "any", "if", "all", "its"
 }
 
 def generate_dense_embedding(text: str, dim: int = EMBEDDING_DIM) -> List[float]:
     """
-    Generates a deterministic 128-dimensional dense vector representation.
+    Generates a deterministic 128-dimensional feature vector representation.
     Extracts semantic tokens, removes stop words, computes character n-gram projections, and normalizes L2 norm to 1.0.
     """
     clean_text = text.lower().strip()
@@ -46,7 +47,7 @@ def generate_dense_embedding(text: str, dim: int = EMBEDDING_DIM) -> List[float]
 
 def compute_cosine_similarity(vec_a: List[float], vec_b: List[float]) -> float:
     """
-    Calculates true mathematical cosine similarity between two dense vectors:
+    Calculates true mathematical cosine similarity between two feature vectors:
     cos(theta) = (A . B) / (||A|| * ||B||)
     """
     if len(vec_a) != len(vec_b) or not vec_a:
@@ -64,9 +65,9 @@ def compute_cosine_similarity(vec_a: List[float], vec_b: List[float]) -> float:
     return max(0.0, min(1.0, round(cos_sim, 4)))
 
 def compute_lexical_overlap(query: str, doc_text: str) -> float:
-    """Computes Jaccard / BM25-style keyword overlap score."""
-    q_words = set(re.findall(r"\w+", query.lower()))
-    d_words = set(re.findall(r"\w+", doc_text.lower()))
+    """Computes Jaccard / lexical token overlap score with stop word filtering."""
+    q_words = set(w for w in re.findall(r"\w+", query.lower()) if w not in STOP_WORDS)
+    d_words = set(w for w in re.findall(r"\w+", doc_text.lower()) if w not in STOP_WORDS)
     if not q_words or not d_words:
         return 0.0
     intersection = q_words.intersection(d_words)

@@ -13,9 +13,16 @@ NAME_LABEL_PATTERN = r"(?i)\b(?:Name|Candidate(?:\s+Name)?|Full\s+Name)\s*:\s*([
 GENDER_PRONOUN_PATTERN = r"\b(he/him|she/her|he is|she is|his work|her work|himself|herself)\b"
 YEAR_PATTERN = r"\b(?:graduated|class of|batch of|degree obtained)\s*(?:in\s*)?((?:19|20)\d{2})\b"
 
+DEMOGRAPHIC_GENDER = r"\b(female|male|woman|man|non-binary)\b"
+DEMOGRAPHIC_MARITAL = r"\b(married|single|divorced|widowed|marital\s+status\s*:\s*\w+)\b"
+DEMOGRAPHIC_FAMILY = r"\b(?:\d+\s+)?(?:kids|children|child|dependents)\b"
+DEMOGRAPHIC_LOCATION = r"\b(lahore|karachi|islamabad|rawalpindi|peshawar|quetta|faisalabad|multan|pakistan|india|dubai|uae|london|uk|new york|nyc|california|austin|texas|seattle|toronto|canada)\b"
+DEMOGRAPHIC_AGE = r"\b(?:age\s*[:\s]*\s*\d{1,2}|\d{1,2}\s*(?:yo|y\.o\.|years\s+old)|(?<=[,\s])(?:1[8-9]|[2-6]\d)(?=[,\s]))\b"
+
 def redact_demographic_pii(raw_text: str) -> Tuple[str, PIIAuditReport]:
     """
-    Strips email, phone, candidate names, gendered pronouns, and graduation years.
+    Strips email, phone, candidate names, gendered pronouns, graduation years,
+    and protected demographic data (Gender, Age, Marital, Family, Location).
     Returns anonymized CV text and audit report.
     """
     text = raw_text
@@ -31,10 +38,8 @@ def redact_demographic_pii(raw_text: str) -> Tuple[str, PIIAuditReport]:
     # 2. Detect candidate names on header lines (first 3 non-empty lines)
     non_empty_lines = [l.strip() for l in text.split("\n") if l.strip()]
     for line in non_empty_lines[:3]:
-        # Exclude headers like "Resume", "Curriculum Vitae", "Summary"
         if any(w in line.lower() for w in ["resume", "curriculum", "cv", "summary", "experience", "profile", "contact"]):
             continue
-        # Proper noun pattern: optional title, 2 to 4 capitalized words with hyphens and apostrophes
         m_name = re.match(r"^(?:(?:Dr\.|Mr\.|Ms\.|Mrs\.|Prof\.)\s+)?([A-Z][a-zA-Z'\-]+(?:\s+[A-Z][a-zA-Z'\-]+){1,3})$", line)
         if m_name:
             detected_names.add(m_name.group(1))
@@ -72,12 +77,43 @@ def redact_demographic_pii(raw_text: str) -> Tuple[str, PIIAuditReport]:
         redaction_count += len(years_found)
         text = re.sub(YEAR_PATTERN, "[DEGREE_COMPLETED - REDACTED_YEAR]", text, flags=re.IGNORECASE)
 
-    # 7. Redact Gendered Pronouns
+    # 7. Redact Gendered Pronouns & Demographic Gender
     pronouns_found = re.findall(GENDER_PRONOUN_PATTERN, text, re.IGNORECASE)
     if pronouns_found:
         categories.append("Gender Pronouns")
         redaction_count += len(pronouns_found)
         text = re.sub(GENDER_PRONOUN_PATTERN, "[CANDIDATE]", text, flags=re.IGNORECASE)
+
+    gender_found = re.findall(DEMOGRAPHIC_GENDER, text, re.IGNORECASE)
+    if gender_found:
+        categories.append("Protected Demographic: Gender")
+        redaction_count += len(gender_found)
+        text = re.sub(DEMOGRAPHIC_GENDER, "[REDACTED_GENDER]", text, flags=re.IGNORECASE)
+
+    # 8. Redact Age, Marital, Family, and Location Demographics
+    age_found = re.findall(DEMOGRAPHIC_AGE, text, re.IGNORECASE)
+    if age_found:
+        categories.append("Protected Demographic: Age")
+        redaction_count += len(age_found)
+        text = re.sub(DEMOGRAPHIC_AGE, "[REDACTED_AGE]", text, flags=re.IGNORECASE)
+
+    marital_found = re.findall(DEMOGRAPHIC_MARITAL, text, re.IGNORECASE)
+    if marital_found:
+        categories.append("Protected Demographic: Marital Status")
+        redaction_count += len(marital_found)
+        text = re.sub(DEMOGRAPHIC_MARITAL, "[REDACTED_MARITAL_STATUS]", text, flags=re.IGNORECASE)
+
+    family_found = re.findall(DEMOGRAPHIC_FAMILY, text, re.IGNORECASE)
+    if family_found:
+        categories.append("Protected Demographic: Family Status")
+        redaction_count += len(family_found)
+        text = re.sub(DEMOGRAPHIC_FAMILY, "[REDACTED_FAMILY_STATUS]", text, flags=re.IGNORECASE)
+
+    loc_found = re.findall(DEMOGRAPHIC_LOCATION, text, re.IGNORECASE)
+    if loc_found:
+        categories.append("Protected Demographic: Location")
+        redaction_count += len(loc_found)
+        text = re.sub(DEMOGRAPHIC_LOCATION, "[REDACTED_LOCATION]", text, flags=re.IGNORECASE)
 
     audit = PIIAuditReport(
         redacted_tokens_count=redaction_count,

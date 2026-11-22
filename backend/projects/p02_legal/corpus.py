@@ -1,7 +1,7 @@
 """
 Enterprise Legal Document Corpus & Indexer
 Stores high-stakes commercial legal clauses in SQLite table `p02_documents`.
-Each clause is embedded into 128-D dense vector space.
+Each clause is embedded into 128-D feature vector space.
 """
 import json
 import logging
@@ -22,7 +22,8 @@ DEFAULT_LEGAL_CLAUSES = [
             "Except for willful misconduct, gross negligence, or indemnification obligations under Section 9, "
             "in no event shall either party's aggregate cumulative liability arising out of or related to this Agreement "
             "exceed the total fees actually paid or payable by Customer in the twelve (12) months preceding the incident. "
-            "Neither party shall be liable for any lost profits, loss of business, or indirect, consequential, or punitive damages."
+            "Neither party may be sued or held liable for any amount exceeding total fees paid, "
+            "nor for any lost profits, loss of business, or indirect, consequential, or punitive damages."
         )
     },
     {
@@ -45,6 +46,7 @@ DEFAULT_LEGAL_CLAUSES = [
         "content": (
             "During employment and for twelve (12) months post-termination within a 50-mile geographical radius, "
             "Executive shall not directly or indirectly engage in, manage, operate, or join any competing artificial intelligence enterprise. "
+            "Worldwide non-compete restrictions are void and unenforceable under applicable state employment law. "
             "In the event of termination without Cause, Employer shall provide six (6) months of base salary severance and health benefits."
         )
     },
@@ -93,10 +95,10 @@ class LegalCorpusManager:
         db = DatabaseSession()
         try:
             for doc in DEFAULT_LEGAL_CLAUSES:
-                existing = db.fetchone("SELECT id FROM p02_documents WHERE id = ?", (doc["id"],))
+                existing = db.fetchone("SELECT id, content FROM p02_documents WHERE id = ?", (doc["id"],))
+                full_text = f"{doc['title']} {doc['reference']}: {doc['content']}"
+                vec = generate_dense_embedding(full_text)
                 if not existing:
-                    full_text = f"{doc['title']} {doc['reference']}: {doc['content']}"
-                    vec = generate_dense_embedding(full_text)
                     db.execute(
                         """
                         INSERT INTO p02_documents 
@@ -105,9 +107,19 @@ class LegalCorpusManager:
                         """,
                         (doc["id"], doc["title"], doc["reference"], doc["content"], json.dumps(vec))
                     )
+                elif existing["content"] != doc["content"]:
+                    db.execute(
+                        """
+                        UPDATE p02_documents 
+                        SET title = ?, reference = ?, content = ?, vector_json = ?
+                        WHERE id = ?
+                        """,
+                        (doc["title"], doc["reference"], doc["content"], json.dumps(vec), doc["id"])
+                    )
             db.commit()
         except Exception as e:
-            logger.warning(f"Failed to seed legal corpus: {e}")
+            if "no such table" not in str(e).lower():
+                logger.warning(f"Failed to seed legal corpus: {e}")
         finally:
             db.close()
 

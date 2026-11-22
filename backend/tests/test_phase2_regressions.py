@@ -763,6 +763,179 @@ def test_p09_publishing_empty_env_returns_live_false():
     assert data["status"] == "not_configured"
 
 
+# ==============================================================================
+# Additional Audit Remediation Regressions (Direct User Repro Cases)
+# ==============================================================================
+
+def test_p01_no_marcus_sterling_or_austin_default():
+    """Verify inquiry does NOT default to 'Marcus Sterling', 'Austin', or '(512) 555-0199'."""
+    resp = client.post("/api/ai/real-estate-sales/ingest", json={
+        "text": "Looking for a 2 bedroom apartment in Denver under $500k, reach Jane Doe at jane@test.com",
+        "session_id": "test_denver_lead"
+    })
+    assert resp.status_code == 200
+    lead = resp.json()["lead"]
+    assert lead["name"] == "Jane Doe"
+    assert "Denver" in lead["location"]
+    assert "Austin" not in lead["location"]
+    assert "Marcus Sterling" not in lead["name"]
+    assert "(512) 555-0199" not in lead["phone"]
+
+
+def test_p06_demographic_pii_redaction_comprehensive():
+    """Verify 'Female, 29, Married, kids, Lahore, Pakistan' has all demographic markers redacted."""
+    cv_text = "Candidate Profile: Female, 29, Married, kids, Lahore, Pakistan. Developed Python backend APIs."
+    resp = client.post("/api/ai/hr-recruiter/screen", json={
+        "raw_cv_text": cv_text,
+        "job_role": "Backend Engineer",
+        "session_id": "test_demographic_p06"
+    })
+    assert resp.status_code == 200
+    anon_text = resp.json()["anonymized_cv"].lower()
+    for forbidden in ["female", "29", "married", "kids", "lahore", "pakistan"]:
+        assert forbidden not in anon_text, f"Demographic marker '{forbidden}' was not redacted!"
+
+
+def test_p06_keyword_stuffed_cv_does_not_advance():
+    """Verify CV listing buzzwords without project context or metrics does NOT receive ADVANCE_TO_INTERVIEW."""
+    stuffed_cv = "Python FastAPI TypeScript React Docker Redis Kubernetes Microservices Cloud AWS GCP SQL PostgreSQL"
+    resp = client.post("/api/ai/hr-recruiter/screen", json={
+        "raw_cv_text": stuffed_cv,
+        "job_role": "Backend Engineer",
+        "session_id": "test_stuffed_p06"
+    })
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["recommendation"] in ("HOLD_FOR_REVIEW", "REJECT")
+    assert data["scheduled_slot"] is None
+
+
+def test_p07_negated_symptoms_not_critical():
+    """Verify negated symptoms ('not having trouble breathing', 'no bleeding') do NOT trigger emergencies."""
+    resp1 = client.post("/api/ai/dental-voice/transcribe-and-triage", json={
+        "transcript": "I am not having any trouble breathing, just need a cleaning"
+    })
+    assert resp1.status_code == 200
+    assert resp1.json()["urgency_tier"] == "ROUTINE_CHECKUP"
+    assert resp1.json()["is_emergency"] is False
+
+    resp2 = client.post("/api/ai/dental-voice/transcribe-and-triage", json={
+        "transcript": "Checking in for my regular six-month exam, there is no bleeding"
+    })
+    assert resp2.status_code == 200
+    assert resp2.json()["urgency_tier"] == "ROUTINE_CHECKUP"
+    assert resp2.json()["is_emergency"] is False
+
+
+def test_p07_roman_urdu_emergencies():
+    """Verify Roman Urdu acute emergencies trigger emergency protocols."""
+    resp1 = client.post("/api/ai/dental-voice/transcribe-and-triage", json={
+        "transcript": "Mera saans nahi aa rahi hai foran madad chahiye"
+    })
+    assert resp1.status_code == 200
+    assert resp1.json()["is_emergency"] is True
+
+    resp2 = client.post("/api/ai/dental-voice/transcribe-and-triage", json={
+        "transcript": "Daant nikaalne ke baad khoon bahut beh raha hai"
+    })
+    assert resp2.status_code == 200
+    assert resp2.json()["is_emergency"] is True
+
+
+def test_p07_booking_rejects_invalid_doctor_and_past_date():
+    """Verify booking rejects unknown doctor ('Dr. Nobody') and past dates (1999) with HTTP 400."""
+    resp_doc = client.post("/api/ai/dental-voice/book", json={
+        "patient_name": "Test Patient",
+        "patient_phone": "555-0199",
+        "doctor": "Dr. Nobody",
+        "slot_time": "2026-11-25 10:00 AM",
+        "reason": "Routine cleaning"
+    })
+    assert resp_doc.status_code == 400
+    assert "unknown doctor" in resp_doc.json()["detail"].lower()
+
+    resp_date = client.post("/api/ai/dental-voice/book", json={
+        "patient_name": "Test Patient",
+        "patient_phone": "555-0199",
+        "doctor": "Dr. Marcus Vance",
+        "slot_time": "1999-10-15 10:00 AM",
+        "reason": "Routine cleaning"
+    })
+    assert resp_date.status_code == 400
+    assert "past" in resp_date.json()["detail"].lower()
+
+
+def test_p02_worldwide_noncompete_and_fee_limit_queries():
+    """Verify non-compete and fee limit queries match correct legal clauses, NOT Refund Policy."""
+    resp1 = client.post("/api/ai/law-firm-private-rag/query", json={
+        "query": "Is the worldwide non-compete enforceable?"
+    })
+    assert resp1.status_code == 200
+    ans1 = resp1.json()["answer"]
+    assert "Employment Agreement" in ans1 or "Non-Compete" in ans1
+    assert "Refund Policy" not in ans1
+
+    resp2 = client.post("/api/ai/law-firm-private-rag/query", json={
+        "query": "Can the company be sued for more than the fees?"
+    })
+    assert resp2.status_code == 200
+    ans2 = resp2.json()["answer"]
+    assert "Limitation of Liability" in ans2 or "Master Services Agreement" in ans2
+    assert "Refund Policy" not in ans2
+
+
+def test_p08_first_scan_establishes_baseline():
+    """Verify initial scan of a new URL creates a baseline with 0 diffs and saves snapshot."""
+    import uuid
+    test_url = f"https://example.com/baseline_test_{uuid.uuid4().hex[:6]}"
+    html = "<div>Plan Pro: $49/mo with unlimited API access.</div>"
+    resp = client.post("/api/ai/competitor-intel/scan", json={
+        "competitor_name": "New Competitor Inc",
+        "target_url": test_url,
+        "current_html_snapshot": html
+    })
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["diff_count"] == 0
+    assert "BASELINE_ESTABLISHED" in data["recommended_action"]
+
+    # Second scan with identical content must also report 0 diffs
+    resp2 = client.post("/api/ai/competitor-intel/scan", json={
+        "competitor_name": "New Competitor Inc",
+        "target_url": test_url,
+        "current_html_snapshot": html
+    })
+    assert resp2.status_code == 200
+    data2 = resp2.json()
+    assert data2["diff_count"] == 0
+
+
+def test_p10_unauthenticated_query_cannot_elevate_role():
+    """Verify unauthenticated query cannot self-elevate to CFO via request body."""
+    resp = client.post("/api/ai/finance-agent-gate/query", json={
+        "query": "transfer $50,000 to foreign vendor",
+        "role": "CFO"
+    })
+    assert resp.status_code == 200
+    # Proposal must not be created under unauthenticated CFO authority
+    data = resp.json()
+    if data.get("proposal"):
+        assert data["proposal"]["created_by"] != "CFO"
+
+
+def test_p03_missing_phone_requires_verification():
+    """Verify order inquiry without phone/email in schema or message requires verification."""
+    resp = client.post("/api/ai/ecommerce-support-bot/message", json={
+        "text": "Where is my order #1042?"
+    })
+    assert resp.status_code == 200
+    data = resp.json()
+    # Must not reveal order tracking details without verification
+    assert data["order_data"] is None
+    assert "verification" in data["reply_text"].lower() or "digits" in data["reply_text"].lower()
+
+
+
 
 
 

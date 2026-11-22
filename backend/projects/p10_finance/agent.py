@@ -79,7 +79,7 @@ class FinGuardAgent:
 
             reasoning = (
                 f"Action involves mutating credit limit facility: setting credit limit for {entity} to ${amount:,.2f}. "
-                f"MANDATORY CRYPTOGRAPHIC WRITE GATE ENGAGED: Autonomous execution is prohibited. "
+                f"MANDATORY HUMAN APPROVAL WRITE GATE ENGAGED: Autonomous execution is prohibited. "
                 f"Generated Action Proposal {proposal_id} suspended in PENDING_HUMAN_APPROVAL state."
             )
 
@@ -110,7 +110,7 @@ class FinGuardAgent:
             )
 
             answer = (
-                f"⚠️ **Cryptographic Write Gate Engaged**\n\n"
+                f"⚠️ **Human Approval Write Gate Engaged**\n\n"
                 f"Formulated execution proposal to update credit limit for **{entity}** to **${amount:,.2f}**.\n"
                 f"• Proposal ID: `{proposal_id}`\n"
                 f"• Payload SHA-256 Digest: `{digest[:16]}...`\n"
@@ -145,7 +145,7 @@ class FinGuardAgent:
 
             reasoning = (
                 f"Action involves mutating financial assets: transferring ${amount:,.2f} from {source} to {dest}. "
-                f"MANDATORY CRYPTOGRAPHIC WRITE GATE ENGAGED: Autonomous agent execution is strictly prohibited. "
+                f"MANDATORY HUMAN APPROVAL WRITE GATE ENGAGED: Autonomous agent execution is strictly prohibited. "
                 f"Generated Action Proposal {proposal_id} suspended in PENDING_HUMAN_APPROVAL state."
             )
 
@@ -175,7 +175,7 @@ class FinGuardAgent:
             )
 
             answer = (
-                f"⚠️ **Cryptographic Write Gate Engaged**\n\n"
+                f"⚠️ **Human Approval Write Gate Engaged**\n\n"
                 f"The AI Agent has formulated an execution proposal to transfer **${amount:,.2f}** to **{dest}**.\n"
                 f"• Proposal ID: `{proposal_id}`\n"
                 f"• Payload SHA-256 Digest: `{digest[:16]}...`\n"
@@ -201,7 +201,7 @@ class FinGuardAgent:
 
             reasoning = (
                 f"Action involves modifying financial ledger: adjusting {account} by ${amount:,.2f}. "
-                f"MANDATORY CRYPTOGRAPHIC WRITE GATE ENGAGED. Proposal {proposal_id} suspended in PENDING_HUMAN_APPROVAL state."
+                f"MANDATORY HUMAN APPROVAL WRITE GATE ENGAGED. Proposal {proposal_id} suspended in PENDING_HUMAN_APPROVAL state."
             )
 
             db = DatabaseSession()

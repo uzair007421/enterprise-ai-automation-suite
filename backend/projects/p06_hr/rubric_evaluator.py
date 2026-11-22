@@ -112,6 +112,16 @@ def evaluate_candidate_rubric(anonymized_cv: str, job_role: Optional[str] = None
         impact_score = 0
         growth_areas.append("Resume lacks measurable business KPIs and quantified metrics")
 
+    # Keyword stuffing check: lists of buzzwords without project context or quantified metrics
+    action_verbs = ["built", "developed", "implemented", "engineered", "architected", "designed", "managed", "led", "delivered", "deployed"]
+    has_action_context = any(v in text_lower for v in action_verbs)
+    is_keyword_stuffed = len(tech_hits) >= 3 and not impact_hits and (not has_action_context or len(text_lower.split()) < 35)
+
+    if is_keyword_stuffed:
+        tech_score = min(20, tech_score)
+        arch_score = min(10, arch_score)
+        growth_areas.append("Keyword stuffing detected: resume lists technologies without verifiable project execution or quantified impact")
+
     total_score = tech_score + arch_score + impact_score
     rubric = RubricBreakdown(
         technical_skills=tech_score,
@@ -120,10 +130,15 @@ def evaluate_candidate_rubric(anonymized_cv: str, job_role: Optional[str] = None
         total_score=total_score
     )
 
-    if total_score >= 40:
+    if total_score >= 40 and not is_keyword_stuffed:
         recommendation = "ADVANCE_TO_INTERVIEW"
-        scheduled_slot = "Thursday 2:00 PM EST (Technical Round)"
-    elif total_score >= 15:
+        import datetime
+        now = datetime.datetime.now(datetime.timezone.utc)
+        slot_day = now + datetime.timedelta(days=3)
+        while slot_day.weekday() >= 5:
+            slot_day += datetime.timedelta(days=1)
+        scheduled_slot = f"{slot_day.strftime('%A, %b %d')} at 2:00 PM EST (Technical Round)"
+    elif total_score >= 15 or is_keyword_stuffed:
         recommendation = "HOLD_FOR_REVIEW"
         scheduled_slot = None
     else:

@@ -1,5 +1,5 @@
 """
-Cryptographic Tamper-Evident SHA-256 Audit Chain
+Tamper-Evident SHA-256 Audit Chain
 Maintains a verifiable ledger of every sensitive action, approval signature,
 and state change in SQLite table `p10_audit_chain`.
 """
@@ -22,44 +22,50 @@ def compute_block_hash(
     hmac_signature: str,
     timestamp: str
 ) -> str:
-    """Calculates immutable cryptographic SHA-256 hash for an audit block."""
+    """Calculates immutable SHA-256 hash for an audit block."""
     data = f"{previous_hash}|{action_type}|{payload_json}|{actor_role}|{hmac_signature}|{timestamp}"
     return hashlib.sha256(data.encode("utf-8")).hexdigest()
 
 class AuditChainManager:
 
     def __init__(self):
-        self._ensure_genesis_block()
+        # Lazy initialization: do not query DB at module import time
+        pass
 
     def _ensure_genesis_block(self):
         """Initializes Block 0 (Genesis) if audit chain is empty."""
-        db = DatabaseSession()
         try:
-            row = db.fetchone("SELECT COUNT(*) as cnt FROM p10_audit_chain")
-            if row and row["cnt"] == 0:
-                ts = "2026-11-20T00:00:00Z"
-                genesis_payload = json.dumps({"service": "FinGuard Autonomous Enterprise Core"}, sort_keys=True)
-                gen_hash = compute_block_hash(
-                    previous_hash=GENESIS_PREV_HASH,
-                    action_type="GENESIS_INITIALIZATION",
-                    payload_json=genesis_payload,
-                    actor_role="SYSTEM_SECURITY_ROOT",
-                    hmac_signature="GENESIS_ROOT_SIGNATURE_2026",
-                    timestamp=ts
-                )
-                db.execute(
-                    """
-                    INSERT INTO p10_audit_chain 
-                    (id, block_index, previous_hash, action_type, payload_json, actor_role, hmac_signature, block_hash, created_at)
-                    VALUES (?, 0, ?, 'GENESIS_INITIALIZATION', ?, 'SYSTEM_SECURITY_ROOT', 'GENESIS_ROOT_SIGNATURE_2026', ?, ?)
-                    """,
-                    ("BLK-GENESIS-0", GENESIS_PREV_HASH, genesis_payload, gen_hash, ts)
-                )
-        finally:
-            db.close()
+            db = DatabaseSession()
+            try:
+                row = db.fetchone("SELECT COUNT(*) as cnt FROM p10_audit_chain")
+                if row and row["cnt"] == 0:
+                    ts = "2026-11-20T00:00:00Z"
+                    genesis_payload = json.dumps({"service": "FinGuard Autonomous Enterprise Core"}, sort_keys=True)
+                    gen_hash = compute_block_hash(
+                        previous_hash=GENESIS_PREV_HASH,
+                        action_type="GENESIS_INITIALIZATION",
+                        payload_json=genesis_payload,
+                        actor_role="SYSTEM_SECURITY_ROOT",
+                        hmac_signature="GENESIS_ROOT_SIGNATURE_2026",
+                        timestamp=ts
+                    )
+                    db.execute(
+                        """
+                        INSERT INTO p10_audit_chain 
+                        (id, block_index, previous_hash, action_type, payload_json, actor_role, hmac_signature, block_hash, created_at)
+                        VALUES (?, 0, ?, 'GENESIS_INITIALIZATION', ?, 'SYSTEM_SECURITY_ROOT', 'GENESIS_ROOT_SIGNATURE_2026', ?, ?)
+                        """,
+                        ("BLK-GENESIS-0", GENESIS_PREV_HASH, genesis_payload, gen_hash, ts)
+                    )
+            finally:
+                db.close()
+        except Exception:
+            # Table not yet created (e.g. before init_db() runs in lifespan)
+            pass
 
     def get_latest_block(self) -> Dict[str, Any]:
         """Returns the current tip block of the audit chain."""
+        self._ensure_genesis_block()
         db = DatabaseSession()
         try:
             row = db.fetchone("SELECT * FROM p10_audit_chain ORDER BY block_index DESC LIMIT 1")
@@ -74,7 +80,8 @@ class AuditChainManager:
         actor_role: str,
         hmac_signature: str
     ) -> Dict[str, Any]:
-        """Appends a new cryptographically verified block to the chain."""
+        """Appends a new HMAC-verified block to the chain."""
+        self._ensure_genesis_block()
         latest = self.get_latest_block()
         prev_hash = latest.get("block_hash", GENESIS_PREV_HASH)
         next_index = latest.get("block_index", 0) + 1
@@ -114,9 +121,10 @@ class AuditChainManager:
 
     def verify_chain_integrity(self) -> AuditChainVerificationResponse:
         """
-        Cryptographic verification: walks from Genesis to Tip, re-calculating hashes
+        Verification: walks from Genesis to Tip, re-calculating hashes
         and confirming zero tampering has occurred.
         """
+        self._ensure_genesis_block()
         db = DatabaseSession()
         try:
             blocks = db.fetchall("SELECT * FROM p10_audit_chain ORDER BY block_index ASC")
@@ -207,7 +215,7 @@ class AuditChainManager:
                 genesis_hash=blocks[0]["block_hash"],
                 tip_hash=blocks[-1]["block_hash"],
                 tampered_block_index=None,
-                audit_verdict="CRYPTOGRAPHIC_CHAIN_VERIFIED_100_PERCENT: All block digests and Merkle links match."
+                audit_verdict="HASH_CHAIN_VERIFIED: All block digests and sequential hash links match."
             )
         finally:
             db.close()

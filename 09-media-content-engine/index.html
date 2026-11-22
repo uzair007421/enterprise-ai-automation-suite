@@ -219,7 +219,7 @@
         title: "Human-in-the-Loop vs Autonomous Payouts",
         timestamps: "18:40 - 19:25 (45s)",
         viral_score: 92,
-        content: `HOOK: Never give an autonomous agent access to write APIs without a cryptographic gate.\n\nREALITY: In our fintech engine, reading account balances is fully automated. But any transfer or credit limit increase triggers a cryptographic human sign-off gate. That is how you stay compliant with SOC2 and FDIC regulations.`,
+        content: `HOOK: Never give an autonomous agent access to write APIs without a HMAC-secured gate.\n\nREALITY: In our fintech engine, reading account balances is fully automated. But any transfer or credit limit increase triggers a HMAC-secured human sign-off gate. That is how you stay compliant with SOC2 and FDIC regulations.`,
         status: "PENDING_EDITOR_REVIEW"
       },
       {
@@ -279,7 +279,7 @@
         title: "RAG Air-Gap Architecture for Law Firms",
         timestamps: "39:00 - 39:45 (45s)",
         viral_score: 93,
-        content: `HOOK: Lawyers cannot upload client discovery files to public cloud models.\n\nARCHITECTURE: Air-gapped local embeddings and vector indexes provide instant semantic legal discovery with zero external network leaks and verifiable page-level citation anchors.`,
+        content: `HOOK: Lawyers cannot upload client discovery files to public cloud models.\n\nARCHITECTURE: Offline Private local embeddings and vector indexes provide instant semantic legal discovery with zero external network leaks and verifiable page-level citation anchors.`,
         status: "PENDING_EDITOR_REVIEW"
       },
       {
@@ -319,7 +319,7 @@
         title: "10 Production Lessons from Building Autonomous Agents (Thread)",
         timestamps: "Episode Summary",
         viral_score: 94,
-        content: `1/7 We deployed 10 production AI automation systems across Real Estate, Legal RAG, E-Commerce, and Fintech.\n\nHere are the raw architectural rules you need to know 🧵👇\n\n2/7 Rule 1: Never let an LLM do math. Always compute line totals in deterministic code and verify the delta.\n\n3/7 Rule 2: Blind scoring prevents bias. Scrub candidate names and graduation years before CV scoring to guarantee EEOC compliance.\n\n4/7 Rule 3: Self-healing telemetry is mandatory. If an API throws a 429 rate limit, use exponential jitter retries before alerting engineers.\n\n5/7 Rule 4: Cryptographic write gates. Autonomous reads are safe; autonomous balance transfers require human sign-off.\n\n6/7 Rule 5: Multimodal vision destroys legacy OCR on mobile receipts.\n\n7/7 Drop your questions below or bookmark this thread for your next architecture sprint! 🚀`,
+        content: `1/7 We deployed 10 production AI automation systems across Real Estate, Legal RAG, E-Commerce, and Fintech.\n\nHere are the raw architectural rules you need to know 🧵👇\n\n2/7 Rule 1: Never let an LLM do math. Always compute line totals in deterministic code and verify the delta.\n\n3/7 Rule 2: Blind scoring prevents bias. Scrub candidate names and graduation years before CV scoring to guarantee EEOC compliance.\n\n4/7 Rule 3: Self-healing telemetry is mandatory. If an API throws a 429 rate limit, use exponential jitter retries before alerting engineers.\n\n5/7 Rule 4: HMAC-Secured write gates. Autonomous reads are safe; autonomous balance transfers require human sign-off.\n\n6/7 Rule 5: Multimodal vision destroys legacy OCR on mobile receipts.\n\n7/7 Drop your questions below or bookmark this thread for your next architecture sprint! 🚀`,
         status: "PENDING_EDITOR_REVIEW"
       }
     ];

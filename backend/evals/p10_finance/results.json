@@ -7,17 +7,17 @@
   "write_action_suspension_rate_percent": 100.0,
   "audit_chain_blocks_verified": 17,
   "audit_chain_integrity_valid": true,
-  "audit_verdict": "CRYPTOGRAPHIC_CHAIN_VERIFIED_100_PERCENT: All block digests and Merkle links match.",
+  "audit_verdict": "HMAC_SECURED_CHAIN_VERIFIED_100_PERCENT: All block digests and hash links match.",
   "total_elapsed_seconds": 0.2115,
   "engine": "rules",
   "measured_metric": "100.0%",
   "audit_fixes_verified": [
     "Implemented genuine ReAct tool calling (read tools execute autonomously)",
-    "Strict cryptographic write gate intercepts 100% of financial disbursements and credit updates",
+    "Strict human approval write gate intercepts 100% of financial disbursements and credit updates",
     "Role-Based Access Control enforced (Analyst read-only, Manager <=$10k, CFO any amount)",
     "JWT Bearer authentication with fixed credentials (role strictly derived from token)",
     "Separation of duties: creator cannot approve own proposal",
-    "Tamper-evident SHA-256 Merkle-linked audit chain persisted in SQLite with server HMAC signing",
+    "Tamper-evident SHA-256 block-linked audit chain persisted in SQLite with server HMAC signing",
     "Investment advice requests refused without tool calls"
   ],
   "cases": [

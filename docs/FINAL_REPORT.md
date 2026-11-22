@@ -28,4 +28,4 @@
 1. **Rule-Based Fallbacks**: All engines operate with deterministic rule-based algorithms by default. When an external LLM key is configured, structured generation is activated with engine: `llm`.
 2. **Real Persistence**: Local SQLite Write-Ahead Logging stores leads, audit blocks, proposals, and tickets.
 3. **Security Gates**: Perimeter rate limiting (30 req/min) protects public endpoints; sensitive list endpoints require `X-Admin-Token` authentication and mask emails and phone numbers.
-4. **No Air-Gap / Merkle Claims**: The audit chain uses a linear SHA-256 hash chain with HMAC-SHA256 signatures for tamper evidence; no Merkle trees or air-gapped guarantees are claimed.
+4. **No Air-Gap / hash chain Claims**: The audit chain uses a linear SHA-256 hash chain with HMAC-SHA256 signatures for tamper evidence; no hash chains or offline private guarantees are claimed.

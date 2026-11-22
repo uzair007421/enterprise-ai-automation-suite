@@ -93,7 +93,7 @@ def match_properties_for_lead(lead: QualifiedLead, max_results: int = 2) -> List
             continue
 
         prop_city = prop["city"].split(",")[0].lower()
-        if lead_city not in prop_city and prop_city not in lead_city:
+        if lead_city != "unspecified location" and lead_city not in prop_city and prop_city not in lead_city:
             continue
 
         # Bedroom check (allow within 1 bedroom)

@@ -252,18 +252,15 @@
       </div>
 
       <p class="text-xs text-slate-300 mb-3 leading-relaxed">
-        LedgerPulse uses in-browser <strong>Tesseract.js OCR</strong> by default (100% free, runs locally in WebAssembly). If you also want to call <strong>Gemini 1.5 Flash Vision</strong> for advanced multimodal parsing, enter your free Google AI Studio key below:
+        API keys are securely configured on the backend server via <code>GEMINI_API_KEY</code> environment variable. Browser client-side key storage is disabled to prevent credential leakage.
       </p>
-
-      <input id="gemini-key-input" type="password" placeholder="AIzaSy..." class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2.5 text-xs text-white focus:outline-none focus:border-cyan-500 font-mono mb-3">
 
       <div class="flex items-center justify-between pt-3 border-t border-slate-800 text-xs">
         <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener" class="text-cyan-400 hover:underline">
           Get Free Gemini API Key →
         </a>
         <div class="flex gap-2">
-          <button onclick="closeApiKeyModal()" class="px-3 py-1.5 bg-slate-800 text-slate-300 rounded-lg text-xs font-semibold">Cancel</button>
-          <button onclick="saveApiKey()" class="px-4 py-1.5 bg-cyan-600 hover:bg-cyan-500 text-slate-950 rounded-lg text-xs font-black shadow">Save Key</button>
+          <button onclick="closeApiKeyModal()" class="px-3 py-1.5 bg-slate-800 text-slate-300 rounded-lg text-xs font-semibold">Close</button>
         </div>
       </div>
     </div>
@@ -272,7 +269,6 @@
   <script>
     // PRODUCTION REAL OCR & MULTIMODAL INVOICE PIPELINE
     const STORAGE_KEY = 'ledgerpulse_real_invoices';
-    const GEMINI_KEY_STORAGE = 'ledgerpulse_gemini_key';
 
     // Sample real reference invoices to start with
     const INITIAL_INVOICES = [
@@ -570,8 +566,6 @@
     }
 
     function openApiKeyModal() {
-      const existing = localStorage.getItem(GEMINI_KEY_STORAGE) || '';
-      document.getElementById('gemini-key-input').value = existing;
       document.getElementById('apikey-modal').classList.remove('hidden');
     }
 
@@ -580,33 +574,11 @@
     }
 
     function saveApiKey() {
-      const val = document.getElementById('gemini-key-input').value.trim();
-      if (val) {
-        localStorage.setItem(GEMINI_KEY_STORAGE, val);
-        alert('Gemini Vision API Key saved! Future uploads will use Gemini 1.5 Flash Vision.');
-      } else {
-        localStorage.removeItem(GEMINI_KEY_STORAGE);
-        alert('API Key cleared. Reverted to in-browser Tesseract.js neural OCR.');
-      }
       closeApiKeyModal();
     }
 
     function reprocessCurrentWithAI() {
-      const key = localStorage.getItem(GEMINI_KEY_STORAGE);
-      if (!key) {
-        openApiKeyModal();
-      } else {
-        const inv = invoices.find(i => i.id === activeInvoiceId);
-        if (inv && inv.image_url) {
-          alert('Processing with Gemini Vision API...');
-          callGeminiVision(inv.image_url, key).then(updated => {
-            Object.assign(inv, updated);
-            saveInvoices();
-            renderAll();
-            alert('Re-extracted successfully via Gemini 1.5 Flash Vision!');
-          });
-        }
-      }
+      alert("AI processing is managed server-side by the backend API. Please upload documents via the backend /upload endpoint.");
     }
 
     loadInvoices();

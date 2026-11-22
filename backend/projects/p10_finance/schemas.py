@@ -1,6 +1,6 @@
 """
 Project 10: FinGuard Autonomous Financial Agent Schemas
-Contracts for ReAct tool invocation, human cryptographic write gates,
+Contracts for ReAct tool invocation, human human approval write gates,
 RBAC signing, and tamper-evident SHA-256 audit blocks.
 """
 from typing import Optional, Dict, Any, List

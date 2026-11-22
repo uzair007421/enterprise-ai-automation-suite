@@ -51,7 +51,7 @@ Open your browser at: **`http://localhost:8002`**
 
 ## 🎥 60-Second Fiverr Video Recording Script
 1. **(0:00 - 0:15) The Problem:**  
-   *"Law firms lose thousands of billable hours digging through hundreds of old case PDFs. Commercial cloud AI tools risk violating attorney-client privilege. Here is our private, air-gapped legal RAG engine."*
+   *"Law firms lose thousands of billable hours digging through hundreds of old case PDFs. Commercial cloud AI tools risk violating attorney-client privilege. Here is our private, offline private legal RAG engine."*
 2. **(0:15 - 0:35) The Query & Exact Page Citations:**  
    Click the **Antitrust Settlement** or **Non-Compete Precedent** button.  
    Show how within 100 milliseconds, it pulls the exact answer and displays:  

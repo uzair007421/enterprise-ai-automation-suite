@@ -1,8 +1,8 @@
 """
-Cryptographic Human Approval Gate & RBAC Validator
+HMAC-Secured Human Approval Gate & RBAC Validator
 Guarantees:
 1. Every write proposal has an immutable SHA-256 payload digest.
-2. Approval requires a cryptographically valid HMAC-SHA256 signature generated with server-held APPROVAL_SIGNING_KEY.
+2. Approval requires a HMAC-valid HMAC-SHA256 signature generated with server-held APPROVAL_SIGNING_KEY.
 3. Role-Based Access Control (RBAC):
    - ANALYST: Cannot approve write operations.
    - MANAGER: Can approve up to $10,000.00.
@@ -51,7 +51,7 @@ def create_access_token(user_id: str, role: str, expires_delta_seconds: int = 86
     return f"{signing_input}.{b64url_encode(sig)}"
 
 def verify_access_token(token: str) -> Dict[str, Any]:
-    """Decodes and cryptographically verifies JWT access token."""
+    """Decodes and HMAC-securedally verifies JWT access token."""
     parts = token.split('.')
     if len(parts) != 3:
         raise ValueError("Invalid JWT format")

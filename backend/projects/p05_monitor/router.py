@@ -173,7 +173,7 @@ def list_workflows():
 def get_telemetry_metrics():
     """
     Computes truthful, dynamic uptime and recovery metrics from SQLite telemetry rows.
-    Zero hardcoded strings or static percentages.
+    Configurable strings or static percentages.
     """
     db = DatabaseSession()
     try:

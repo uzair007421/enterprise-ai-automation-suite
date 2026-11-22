@@ -25,7 +25,7 @@
           <h1 class="text-base font-bold tracking-tight text-white flex items-center gap-2">
             LexiRAG <span class="text-[10px] bg-amber-500/20 text-amber-300 border border-amber-500/30 px-2 py-0.5 rounded-full font-mono uppercase">Vector Cosine Engine</span>
           </h1>
-          <p class="text-xs text-slate-400">Dense Vector Embeddings • Mathematical Cosine Similarity • Page-Level Citations</p>
+          <p class="text-xs text-slate-400">Vector Embeddings • Mathematical Cosine Similarity • Page-Level Citations</p>
         </div>
       </div>
       <div class="flex items-center gap-2">
@@ -230,7 +230,7 @@
     let corpus = [];
 
     // REAL MATHEMATICAL VECTOR ENCODER
-    // Hashes n-grams and terms into 128-dimensional dense vector with L2 unit normalization
+    // Hashes n-grams and terms into 128-dimensional feature vector with L2 unit normalization
     function generateDenseVector(text) {
       const vec = new Float32Array(VECTOR_DIMENSIONS);
       const cleanText = text.toLowerCase().replace(/[^a-z0-9\s]/g, ' ');
@@ -293,7 +293,7 @@
         corpus = JSON.parse(JSON.stringify(DEFAULT_DOCUMENTS));
       }
 
-      // Precompute dense vectors for corpus
+      // Precompute feature vectors for corpus
       corpus.forEach(doc => {
         doc.vector = generateDenseVector(doc.title + ' ' + doc.reference + ' ' + doc.content);
       });

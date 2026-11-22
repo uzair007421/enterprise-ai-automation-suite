@@ -9,7 +9,7 @@ from pydantic import BaseModel, Field
 class CustomerMessageRequest(BaseModel):
     session_id: str = Field(default="demo_customer_1", description="Unique session or phone identifier")
     text: str = Field(description="Customer's message in English, Urdu, or Roman Urdu")
-    phone: Optional[str] = Field(default="+923001234567", description="Customer phone number")
+    phone: Optional[str] = Field(default=None, description="Customer phone number")
     email: Optional[str] = Field(default=None, description="Customer email address if provided")
     customer_name: Optional[str] = Field(default="Customer", description="Customer name if known")
 

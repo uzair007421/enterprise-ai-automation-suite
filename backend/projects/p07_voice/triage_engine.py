@@ -18,7 +18,12 @@ MEDICAL_EMERGENCY_INDICATORS = [
     r"\bheart\s+attack\b",
     r"\bstroke\b",
     r"\bunconscious(?:ness)?\b",
-    r"\bhead\s+injury\b"
+    r"\bhead\s+injury\b",
+    r"\bsaans\s+(?:nahi|na)\s+aa\s+rahi\b",
+    r"\bsaans\s+lene\s+me\s+(?:masla|takleef)\b",
+    r"\bseene\s+me\s+dard\b",
+    r"\bdil\s+ka\s+dora\b",
+    r"\bbehosh\b"
 ]
 
 EMERGENCY_INDICATORS = [
@@ -39,7 +44,13 @@ EMERGENCY_INDICATORS = [
     r"\bthrobbing\b",
     r"\bpus\b",
     r"\bcan'?t\s+(?:sleep|eat|swallow|open)\b",
-    r"\bemergency\b"
+    r"\bemergency\b",
+    r"\bkhoon\s+bahut\s+beh\s+raha\b",
+    r"\bkhoon\s+(?:nahi\s+ruk\s+raha|nikal\s+raha)\b",
+    r"\bdaant\s+(?:toot\s+gaya|toota|nikal\s+gaya)\b",
+    r"\bshadeed\s+dard\b",
+    r"\bbohat\s+dard\b",
+    r"\bsoojan\b"
 ]
 
 URGENT_INDICATORS = [
@@ -53,19 +64,35 @@ URGENT_INDICATORS = [
     r"\bsensitive\b",
     r"\bdull\s+ache\b",
     r"\bcracked\s+tooth\b",
-    r"\bsomething\s+today\b"
+    r"\bsomething\s+today\b",
+    r"\bdaant\s+(?:me\s+)?dard\b",
+    r"\baaj\s+(?:ka\s+)?appointment\b"
 ]
+
+NEGATION_PATTERNS = [
+    (r"\b(?:not?\s+(?:having|have|experience|experiencing)?\s*(?:any)?|no|without|never|zero)\s+(?:trouble\s+breathing|difficulty\s+breathing|shortness\s+of\s+breath|chest\s+pain|bleeding|pain|swelling|fever|abscess)\b", " [NEGATED_SYMPTOM] "),
+    (r"\b(?:don'?t|doesn'?t|didnt|did\s+not)\s+(?:have|feel)\s*(?:any)?\s+(?:trouble\s+breathing|difficulty\s+breathing|shortness\s+of\s+breath|chest\s+pain|bleeding|pain|swelling|fever)\b", " [NEGATED_SYMPTOM] "),
+    (r"\b(?:there\s+is\s+no|is\s+not|are\s+not|have\s+no)\s+(?:bleeding|pain|swelling|fever|trouble\s+breathing)\b", " [NEGATED_SYMPTOM] "),
+    (r"\bkoi\s+(?:dard|takleef|khoon|masla)\s+(?:nahi|na)\s+hai\b", " [NEGATED_SYMPTOM] ")
+]
+
+def strip_negations(text: str) -> str:
+    """Replaces negated symptom phrases so they do not falsely trigger emergency protocols."""
+    cleaned = text
+    for pat, rep in NEGATION_PATTERNS:
+        cleaned = re.sub(pat, rep, cleaned, flags=re.IGNORECASE)
+    return cleaned
 
 def triage_dental_inquiry(transcript: str) -> VoiceTriageResponse:
     """
     Evaluates patient inquiry transcript and assigns clinical urgency tier & intent.
     Guarantees >=98% recall on critical dental emergencies.
-    Guarantees immediate 911 referral for life-threatening medical emergencies.
+    Guarantees immediate 911 / 1122 referral for life-threatening medical emergencies.
     """
-    text_lower = transcript.lower()
+    text_lower = strip_negations(transcript.lower())
     symptoms = []
 
-    # 1. Life-Threatening Medical Emergencies (Immediate 911 protocol)
+    # 1. Life-Threatening Medical Emergencies (Immediate 911 / 1122 protocol)
     medical_hits = []
     for pat in MEDICAL_EMERGENCY_INDICATORS:
         if re.search(pat, text_lower):
@@ -79,9 +106,9 @@ def triage_dental_inquiry(transcript: str) -> VoiceTriageResponse:
             intent="EMERGENCY",
             format="text_only",
             symptoms_detected=list(set(medical_hits)),
-            suggested_doctor="Call 911 / Go to Emergency Room",
+            suggested_doctor="Call 911 (or 1122) / Go to Emergency Room",
             recommended_slot="CALL_911_IMMEDIATELY",
-            triage_notes=f"CRITICAL MEDICAL EMERGENCY: {', '.join(medical_hits)}. Call 911 or visit the nearest Emergency Room immediately. Online booking is prohibited.",
+            triage_notes=f"CRITICAL MEDICAL EMERGENCY: {', '.join(medical_hits)}. Call 911 (or 1122 in Pakistan) or visit the nearest Emergency Room immediately. Online booking is prohibited.",
             confidence=1.0
         )
 

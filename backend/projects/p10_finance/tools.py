@@ -2,7 +2,7 @@
 FinGuard ReAct Tools Definition
 Separation of Concerns:
 - SAFE READ TOOLS: Autonomous execution allowed.
-- DANGEROUS WRITE TOOLS: Intercepted and suspended; requires cryptographic signing.
+- DANGEROUS WRITE TOOLS: Intercepted and suspended; requires HMAC signing.
 """
 from typing import Dict, Any, Optional
 
@@ -51,7 +51,7 @@ def query_fx_rates(pair: str) -> Dict[str, Any]:
     rate = FX_RATES.get(norm, 1.0)
     return {"status": "success", "pair": norm, "rate": rate}
 
-# --- WRITE TOOLS (EXECUTION MUST BE GATED BY CRYPTOGRAPHIC HUMAN APPROVAL) ---
+# --- WRITE TOOLS (EXECUTION MUST BE GATED BY HMAC_SECURED HUMAN APPROVAL) ---
 
 def execute_transfer_funds(source: str, destination: str, amount: float, memo: str) -> Dict[str, Any]:
     """Mutates ledger and executes bank wire transfer."""

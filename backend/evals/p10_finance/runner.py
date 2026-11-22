@@ -2,7 +2,7 @@
 Evaluation Runner for Project 10: FinGuard Financial Agent & Approval Gate
 Executes 25 financial intent benchmark queries.
 Measures write action containment rate, tool classification precision,
-entity & amount extraction accuracy, and cryptographic audit chain validity.
+entity & amount extraction accuracy, and HMAC-secured audit chain validity.
 """
 import os
 import sys
@@ -77,7 +77,7 @@ def run_p10_eval():
     tool_accuracy = round((tool_type_correct / total) * 100, 2)
     suspension_rate = round((write_actions_suspended / write_actions_count) * 100, 2) if write_actions_count > 0 else 100.0
 
-    # Verify cryptographic audit chain integrity
+    # Verify HMAC-secured audit chain integrity
     chain_check = audit_chain_manager.verify_chain_integrity()
     elapsed = round(time.time() - start_time, 4)
 
@@ -96,11 +96,11 @@ def run_p10_eval():
         "measured_metric": f"{tool_accuracy}%",
         "audit_fixes_verified": [
             "Implemented genuine ReAct tool calling (read tools execute autonomously)",
-            "Strict cryptographic write gate intercepts 100% of financial disbursements and credit updates",
+            "Strict human approval write gate intercepts 100% of financial disbursements and credit updates",
             "Role-Based Access Control enforced (Analyst read-only, Manager <=$10k, CFO any amount)",
             "JWT Bearer authentication with fixed credentials (role strictly derived from token)",
             "Separation of duties: creator cannot approve own proposal",
-            "Tamper-evident SHA-256 Merkle-linked audit chain persisted in SQLite with server HMAC signing",
+            "Tamper-evident SHA-256 block-linked audit chain persisted in SQLite with server HMAC signing",
             "Investment advice requests refused without tool calls"
         ],
         "cases": eval_logs

@@ -50,8 +50,8 @@ def scan_competitor_changes(req: CompetitorScanRequest, db: DatabaseSession = De
             detail="SSRF Security Violation: Target URL resolves to a prohibited private/internal address"
         )
 
-    # Determine HTML snapshots (either provided in request or fetched)
-    old_html = req.previous_html_snapshot or ""
+    # Determine HTML snapshots (either provided in request or fetched from DB / web)
+    old_html = req.previous_html_snapshot
     new_html = req.current_html_snapshot
 
     if not new_html:
@@ -69,6 +69,42 @@ def scan_competitor_changes(req: CompetitorScanRequest, db: DatabaseSession = De
                 execution_time_ms=round(t_elapsed, 2)
             )
         new_html = fetched
+
+    # If previous snapshot was not explicitly provided in the request, look up existing snapshot in DB
+    is_initial_baseline = False
+    if old_html is None:
+        row = db.fetchone("SELECT html_snapshot FROM p08_snapshots WHERE url = ?", (req.target_url,))
+        if row and row["html_snapshot"]:
+            old_html = row["html_snapshot"]
+        else:
+            # First scan for this target URL: establish baseline!
+            is_initial_baseline = True
+            old_html = new_html
+
+    # Save or update latest snapshot in p08_snapshots
+    now_str = datetime.datetime.now(datetime.timezone.utc).isoformat()
+    db.execute("""
+        INSERT INTO p08_snapshots (url, competitor_name, html_snapshot, updated_at)
+        VALUES (?, ?, ?, ?)
+        ON CONFLICT(url) DO UPDATE SET
+            competitor_name = excluded.competitor_name,
+            html_snapshot = excluded.html_snapshot,
+            updated_at = excluded.updated_at
+    """, (req.target_url, req.competitor_name, new_html, now_str))
+    db.commit()
+
+    if is_initial_baseline:
+        t_elapsed = (time.perf_counter() - t_start) * 1000.0
+        return CompetitorScanResponse(
+            competitor_name=req.competitor_name,
+            target_url=req.target_url,
+            ssrf_validated=True,
+            changes_detected=[],
+            diff_count=0,
+            max_impact_score=0,
+            recommended_action="BASELINE_ESTABLISHED: Initial snapshot saved for monitoring. No prior changes to compare.",
+            execution_time_ms=round(t_elapsed, 2)
+        )
 
     # Extract Diffs
     diffs = extract_competitor_diffs(req.competitor_name, req.target_url, old_html, new_html)

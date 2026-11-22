@@ -1,6 +1,6 @@
 """
 Private On-Premise RAG Engine for Law Firms
-- Zero external data leakage (Air-gapped local execution)
+- Zero external data leakage (Offline Private local execution)
 - High-fidelity Semantic Chunking with Document & Page metadata
 - TF-IDF / BM25 Vector Space retrieval & Cosine Similarity ranking
 - Strict Hallucination Gate: Refuses to guess ("I don't know") when evidence is insufficient

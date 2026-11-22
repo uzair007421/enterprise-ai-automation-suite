@@ -16,19 +16,19 @@
 | **Phase 2** | **Core Enterprise Systems** (10 FinGuard -> 02 Legal RAG -> 01 Real Estate) | **DONE** | None | 100% (16/16 tests passed) |
 | **Phase 3** | **Extended Systems** (07 Voice -> 06 HR -> 09 Media -> 08 Competitor Intel) | **DONE** | None | 100% (15/15 tests passed) |
 | **Phase 4** | **Portfolio Integration & Deliverables** (Clean URLs, Under the Hood SSE stream, Feature Table, Final Report) | **DONE** | None | 100% Complete |
-| **Phase 2 Audit Remediation** | **10 AI Systems Fixes** (Tier 0 Global + Tier A P04/P03/P05/P10 + Tier B P06/P07/P01/P02/P08/P09) | **DONE** | None | 100% Complete (93/93 tests passed) |
+| **Phase 2 Audit Remediation** | **10 AI Systems Fixes** (Tier 0 Global + Tier A P04/P03/P05/P10 + Tier B P06/P07/P01/P02/P08/P09) | **DONE** | None | 100% Complete (103/103 tests passed) |
 
 - Phase 2 Tier 0: Global fixes applied (Python 3.12 compatibility, LLM fabrication removed, truthful health, security middleware & admin gating, hygiene, honest reporting).
-- Phase 2 Tier A: P04 Invoice fixed (deterministic regex heuristic extraction, PDF/text/CSV upload handling with 422 for images without LLM, review-queue duplicate check, UI backend error banner, truthful eval runner).
-- Phase 2 Tier A: P03 Support fixed (order ownership verification, rule sentiment engine with frustration/human-request lexicon, unknown intent to OTHER, 110 evals, UI backend error banner).
+- Phase 2 Tier A: P04 Invoice fixed (deterministic regex heuristic extraction, PDF/text/CSV upload handling with 422 for images without LLM, review-queue duplicate check, UI backend error banner, truthful eval runner, removed localStorage key storage).
+- Phase 2 Tier A: P03 Support fixed (order ownership verification, rule sentiment engine with frustration/human-request lexicon, unknown intent to OTHER, removed demo phone default from schema, 110 evals, UI backend error banner).
 - Phase 2 Tier A: P05 Monitor fixed (40 distinct workflows, local chaos targets, exponential backoff, token refresh, circuit breaker, permanent 500/999 FAILED + alert attempt, UI G3 compliance, truthful 22-fault eval runner).
-- Phase 2 Tier A: P10 FinGuard fixed (JWT auth & login with fixed accounts, separation of duties, RBAC tiers, server HMAC signing key with canonical JSON, deterministic rule parser for Vanguard $100k, investment advice refusal, UI G3 compliance, 25 evals).
-- Phase 2 Tier B: P06 HR fixed (PII redaction for names/emails/phones including hyphens/spaces, role competency alignment with penalty for mismatched skills, UI G3 compliance, 25 evals with 100% anonymization).
-- Phase 2 Tier B: P07 Voice fixed (triage intent for toothache/today as URGENT_APPOINTMENT, medical emergency immediate 911 refusal with zero booking, slot conflict rejection with alternates, UI G3 compliance, 30 evals).
-- Phase 2 Tier B: P01 Real Estate fixed (granular lead scoring differentiating students <40 from $1.5M pre-approved buyers >80, strict budget filtering price <= max_price excluding $1.25M on $800k search, UI G3 compliance, 30 evals).
-- Phase 2 Tier B: P02 Legal fixed (grounded retrieval citing 14-day refund policy, NOT_FOUND_IN_CORPUS on out-of-corpus queries, strict hallucination checker, UI G3 compliance, 40 evals at 100% precision).
-- Phase 2 Tier B: P08 Competitor fixed (SSRF guard blocking decimal/octal/metadata IPs, real HTML fetch with SCRAPE_FAILED on error, diff engine returning empty on identical snapshots, UI G3 compliance, 20 evals).
-- Phase 2 Tier B: P09 Media fixed (case-insensitive banned AI buzzwords stripped/rejected, real input topics extracted for non-tech subjects like sourdough, publishing reports live=False and status='not_configured' without credentials, UI G3 compliance, 20 evals at 100%).
+- Phase 2 Tier A: P10 FinGuard fixed (JWT auth & login with fixed accounts, unauthenticated /query clamped to ANALYST, separation of duties, RBAC tiers, server HMAC signing key with canonical JSON, deterministic rule parser for Vanguard $100k, lazy audit chain genesis init, investment advice refusal, UI G3 compliance, 25 evals).
+- Phase 2 Tier B: P06 HR fixed (demographic PII redaction for Gender, Age, Marital Status, Family Status, Location, role competency alignment, keyword stuffing defense, dynamic date-based interview slots, UI G3 compliance, 25 evals).
+- Phase 2 Tier B: P07 Voice fixed (negation symptom handling, Roman Urdu emergencies, doctor & past date validation, emergency 911 / 1122 guidance, slot conflict rejection with alternates, UI G3 compliance, 30 evals).
+- Phase 2 Tier B: P01 Real Estate fixed (dynamic name, email, phone, and city extraction eliminating false Marcus Sterling/Austin defaults, granular lead scoring, strict budget filtering price <= max_price, UI G3 compliance, 30 evals).
+- Phase 2 Tier B: P02 Legal fixed (stopword filtering, full-document search routing non-compete and liability cap queries accurately, grounded retrieval citing 14-day refund policy, NOT_FOUND_IN_CORPUS on out-of-corpus queries, strict hallucination checker, UI G3 compliance, 40 evals at 100% precision).
+- Phase 2 Tier B: P08 Competitor fixed (p08_snapshots SQLite table created, baseline initial scan with 0 diffs, identical snapshots returning 0 diffs, disabled redirect following for SSRF safety, SSRF guard blocking decimal/octal/metadata IPs, UI G3 compliance, 20 evals).
+- Phase 2 Tier B: P09 Media fixed (deduplicated extracted sentences, clean topic phrasing, dynamic safety scores 90-97, case-insensitive banned AI buzzwords stripped/rejected, removed all client-side simulation fallbacks from static files, publishing reports live=False and status='not_configured' without credentials, UI G3 compliance, 20 evals).
 
 ---
 
@@ -49,6 +49,6 @@
 | 08 | `p08_competitor` | SaaS Market Intel | Passed (4/4) | 100% SSRF Immunity (20/20) | [Proof Pack](proof_packs/p08/README.md) | **DONE** |
 
 **Total Unit & Integration Tests Passed: 52 / 52**  
-**Total Phase 2 Regression Tests Passed: 41 / 41**  
-**Overall Test Suite: 93 / 93 Passed (100%)**  
+**Total Phase 2 Regression Tests Passed: 51 / 51**  
+**Overall Test Suite: 103 / 103 Passed (100%)**  
 **Detailed Benchmark Results:** See [`docs/PHASE2_RESULTS.md`](PHASE2_RESULTS.md)

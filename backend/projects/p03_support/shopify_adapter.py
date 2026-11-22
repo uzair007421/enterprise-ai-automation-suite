@@ -74,7 +74,8 @@ class ShopifyAdapter:
                     )
                 db.commit()
         except Exception as e:
-            logger.warning(f"Could not seed orders: {e}")
+            if "no such table" not in str(e).lower():
+                logger.warning(f"Could not seed orders: {e}")
         finally:
             db.close()
 

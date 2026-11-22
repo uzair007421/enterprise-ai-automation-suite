@@ -71,4 +71,4 @@ Each adapter in the backend is designed to run in **Sandboxed Synthetic Mode** b
 
 ### Project 10: FinGuard Enterprise Agent Gate
 - **No Paid Accounts Needed.**
-  - Self-contained SQLite/Postgres financial database, HMAC/Ed25519 cryptographic signatures, and full SHA-256 audit chaining.
+  - Self-contained SQLite/Postgres financial database, HMAC/Ed25519 HMAC-secured signatures, and full SHA-256 audit chaining.

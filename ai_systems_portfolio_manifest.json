@@ -7,7 +7,7 @@
   "technical_architecture_standards": [
     "Deterministic verification loops over unvalidated LLM output",
     "Real in-browser Tesseract.js neural OCR engine with WebAssembly pixel processing",
-    "128-dimensional dense vector embeddings with mathematical cosine similarity search",
+    "128-dimensional vector embeddings with mathematical cosine similarity search",
     "Real Python Telegram AI support bot with Gemini 1.5 Flash integration",
     "Production n8n workflow monitoring and automated Telegram failure alerts"
   ],
@@ -28,7 +28,7 @@
       "title": "Legal Document Vector Cosine Similarity Search Engine",
       "vertical": "Law Firms & Corporate Legal Counsel",
       "commercial_problem": "Attorneys waste 15+ hours weekly cross-referencing deposition transcripts. Finding exact clauses requires semantic search.",
-      "technical_implementation": "128-dimensional dense vector embedding engine with mathematical dot-product Cosine Similarity. Includes a strict semantic threshold refusal gate (0.22) that blocks out-of-domain queries.",
+      "technical_implementation": "128-dimensional vector embedding engine with mathematical dot-product Cosine Similarity. Includes a strict semantic threshold refusal gate (0.22) that blocks out-of-domain queries.",
       "live_url": "https://uzairio.web.app/projects-live/ai-systems/02-law-firm-rag/index.html"
     },
     {

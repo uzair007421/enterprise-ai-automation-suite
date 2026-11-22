@@ -8,7 +8,7 @@
 ## 🌟 Key Capabilities
 * **Omnichannel Extraction:** Ingests scanned PDFs, smartphone receipt photos, and email attachments.
 * **Math Integrity Verification:** Automatically calculates `Sum(Line Items) == Subtotal` and `Subtotal + Tax == Total`. Flags discrepancy if totals do not reconcile.
-* **Cryptographic Duplicate Detection:** Computes signature hashes `(Vendor + Invoice Number + Total)` against settled accounting records to block double billing.
+* **HMAC-Secured Duplicate Detection:** Computes signature hashes `(Vendor + Invoice Number + Total)` against settled accounting records to block double billing.
 * **Fraud & Anomaly Threshold Filter:** Flags high-value transactions (> $10,000) for mandatory CFO/Controller review.
 * **Human-in-the-Loop Review Desk:** Low-confidence items or flagged invoices are routed to a clean correction modal where accountants can adjust numbers before pushing to QuickBooks or Xero.
 
@@ -78,7 +78,7 @@ I specialize in building intelligent document processing (IDP) pipelines for acc
 
 I have already developed a complete Invoice-to-Accounting Autonomous System featuring:
 1. Multi-Format OCR / Vision AI Extraction: PDF invoices, smartphone photos, and email attachments.
-2. 4-Way Validation Checks: Line-item sum validation, tax reconciliations, and cryptographic duplicate prevention.
+2. 4-Way Validation Checks: Line-item sum validation, tax reconciliations, and HMAC-secured duplicate prevention.
 3. Anomaly & High-Value Flagging: Configurable safety thresholds (e.g., > $10,000 audit flags).
 4. Accountant Review Queue: Interactive dashboard to review, edit, and approve exceptions.
 5. QuickBooks & Xero Direct Ledger Push: Automatic double-entry synchronization with full audit trail.

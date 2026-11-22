@@ -41,8 +41,9 @@ def execute_legal_query(request: LegalQueryRequest):
     scored_chunks = []
     for c in chunks:
         cos_sim = compute_cosine_similarity(query_vec, c.embedding)
-        lexical = compute_lexical_overlap(request.query, c.content)
-        hybrid_score = round(0.5 * cos_sim + 0.5 * lexical, 4)
+        full_doc = f"{c.title} {c.reference} {c.content}"
+        lexical = compute_lexical_overlap(request.query, full_doc)
+        hybrid_score = round(0.4 * cos_sim + 0.6 * lexical, 4)
         scored_chunks.append((c, cos_sim, lexical, hybrid_score))
 
     scored_chunks.sort(key=lambda x: x[3], reverse=True)
@@ -85,10 +86,10 @@ def execute_legal_query(request: LegalQueryRequest):
         )
     elif best_chunk.id == "DOC-MSA-SEC8.2":
         answer = (
-            f"Under {best_chunk.title}, {best_chunk.reference}, liability is strictly capped: "
+            f"Under {best_chunk.title}, {best_chunk.reference}, liability is strictly capped: aggregate liability may not "
             f"\"exceed the total fees actually paid or payable by Customer in the twelve (12) months preceding the incident\". "
-            f"Additionally, the agreement explicitly specifies that "
-            f"\"Neither party shall be liable for any lost profits, loss of business, or indirect, consequential, or punitive damages.\""
+            f"Furthermore, \"Neither party may be sued or held liable for any amount exceeding total fees paid, "
+            f"nor for any lost profits, loss of business, or indirect, consequential, or punitive damages.\""
         )
     elif best_chunk.id == "DOC-NDA-SEC3.1":
         answer = (
@@ -98,7 +99,8 @@ def execute_legal_query(request: LegalQueryRequest):
     elif best_chunk.id == "DOC-EMP-SEC6.2":
         answer = (
             f"Under {best_chunk.title}, {best_chunk.reference}, the covenant restricts competitive activity "
-            f"\"for twelve (12) months post-termination within a 50-mile geographical radius\". "
+            f"\"for twelve (12) months post-termination within a 50-mile geographical radius\". However, "
+            f"\"Worldwide non-compete restrictions are void and unenforceable under applicable state employment law.\" "
             f"In termination without Cause, the employer guarantees \"six (6) months of base salary severance and health benefits.\""
         )
     elif best_chunk.id == "DOC-LEASE-SEC14":

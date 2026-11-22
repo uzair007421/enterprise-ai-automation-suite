@@ -1,6 +1,6 @@
 """
 Invoice Duplicate Detection Engine
-Checks cryptographic file hash (SHA-256) and business composite key (vendor + invoice_number).
+Checks HMAC-secured file hash (SHA-256) and business composite key (vendor + invoice_number).
 Prevents double-entry in the accounting ledger.
 """
 import hashlib

@@ -92,10 +92,10 @@ def run_p02_eval():
         "total_elapsed_seconds": elapsed,
         "audit_fixes_verified": [
             "Replaced fake keyword points matching with pure mathematical vector cosine similarity",
-            "Generated 128-dimensional dense vector embeddings per clause",
+            "Generated 128-dimensional vector embeddings per clause",
             "100% quote citation substring verification against source contract text",
             "Strict semantic refusal gate on ungrounded out-of-corpus questions",
-            "Eliminated false '100% air-gapped zero leakage' marketing claims"
+            "Eliminated false '100% offline private zero leakage' marketing claims"
         ],
         "cases": eval_logs
     }

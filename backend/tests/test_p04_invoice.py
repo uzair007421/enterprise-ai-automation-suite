@@ -3,9 +3,9 @@ Project 04: Invoice Processing & 4-Way Reconciliation Test Suite
 Verifies:
 - OCR extraction with structured schema
 - 4-way mathematical reconciliation (line sums, tax, total)
-- Cryptographic SHA-256 & composite duplicate detection
+- HMAC-Secured SHA-256 & composite duplicate detection
 - Ledger persistence and Google Sheets CSV export
-- Zero hardcoded numbers
+- Configurable parameters
 """
 import pytest
 from projects.p04_invoice.schemas import (
@@ -87,7 +87,7 @@ def test_math_reconciliation_total_mismatch():
     assert any("does not match stated total" in d for d in rec.discrepancy_details)
 
 def test_duplicate_invoice_detection_and_ledger():
-    """Verify cryptographic SHA-256 and vendor/invoice composite key duplicate detection."""
+    """Verify SHA-256 and vendor/invoice composite key duplicate detection."""
     from core.db import get_connection
     req_text = "Invoice #INV-TEST-400 Vendor: TestCo Date: 2026-11-20 Subtotal: $500.00 Tax: $50.00 Total: $550.00"
     file_hash = calculate_sha256(req_text.encode("utf-8"))

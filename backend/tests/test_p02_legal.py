@@ -1,7 +1,7 @@
 """
 Project 02: Legal Document Vector Search & Cosine RAG Test Suite
 Verifies:
-- 128-dimensional dense vector embeddings
+- 128-dimensional vector embeddings
 - Pure mathematical vector cosine similarity
 - Exact substring quote citation verification
 - Strict semantic refusal gate on out-of-corpus queries

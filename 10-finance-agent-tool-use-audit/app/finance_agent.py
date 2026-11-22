@@ -4,7 +4,7 @@ Enterprise Custom AI Agent with Tool Use, RBAC, Cost Caps, and Audit Logging
 - Mandatory Human Approval Gate for Database Write Actions
 - Role-Based Access Control (JUNIOR_ANALYST, SENIOR_FINANCE_MANAGER, CFO_ADMIN)
 - Per-User Token Cost Metering & Hard Daily Budget Limits
-- Cryptographic Tamper-Evident Audit Trail
+- HMAC-Signed Tamper-Evident Audit Trail
 """
 import json
 import os

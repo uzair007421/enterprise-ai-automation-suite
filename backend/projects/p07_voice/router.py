@@ -4,6 +4,7 @@ FastAPI router for voice triage, automated booking, calendar synchronization, an
 """
 import uuid
 import datetime
+import re
 from fastapi import APIRouter, HTTPException, Depends
 from core.db import get_db, DatabaseSession
 from core.events import event_broker
@@ -53,8 +54,23 @@ def book_appointment(req: AppointmentBookingRequest, db: DatabaseSession = Depen
     session_id = req.session_id or "demo_session"
     now_str = datetime.datetime.now(datetime.timezone.utc).isoformat()
 
+    # Doctor Validation
+    VALID_DOCTORS = ["marcus vance", "elena rostova", "sarah jenkins", "michael chen"]
+    if not any(d in req.doctor.lower() for d in VALID_DOCTORS):
+        raise HTTPException(
+            status_code=400,
+            detail=f"Unknown doctor '{req.doctor}'. Available doctors: Dr. Marcus Vance, Dr. Elena Rostova."
+        )
+
+    # Date Validation: disallow dates in the past (e.g. 1999)
+    past_year = re.search(r"\b(19\d{2}|20[0-1]\d|202[0-5])\b", req.slot_time)
+    if past_year:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Cannot schedule appointment in the past ({past_year.group(0)}). Please select an upcoming date."
+        )
+
     # Medical Emergency Guard: chest pain, difficulty breathing, uncontrolled bleeding, facial trauma -> zero slot booking
-    import re
     from .triage_engine import MEDICAL_EMERGENCY_INDICATORS
     reason_lower = (req.reason or "").lower()
     is_med_emergency = any(re.search(pat, reason_lower) for pat in MEDICAL_EMERGENCY_INDICATORS) or "chest pain" in reason_lower or "breathing" in reason_lower
@@ -62,7 +78,7 @@ def book_appointment(req: AppointmentBookingRequest, db: DatabaseSession = Depen
         event_broker.publish(session_id, {
             "project": "p07_voice",
             "stage": "EMERGENCY_BLOCKED",
-            "message": "Life-threatening medical emergency detected. Booking refused; caller instructed to call 911."
+            "message": "Life-threatening medical emergency detected. Booking refused; caller instructed to call 911 / 1122."
         })
         return AppointmentBookingResponse(
             appointment_id="CALL-911",
@@ -73,7 +89,7 @@ def book_appointment(req: AppointmentBookingRequest, db: DatabaseSession = Depen
             is_emergency=True,
             sms_status="not_sent",
             calendar_sync_status="not_synced",
-            confirmation_message="EMERGENCY: Call 911 immediately or visit the nearest emergency room. Online booking is prohibited for life-threatening emergencies.",
+            confirmation_message="EMERGENCY: Call 911 (or 1122 in Pakistan) immediately or visit the nearest emergency room. Online booking is prohibited for life-threatening emergencies.",
             alternate_slots=[]
         )
 

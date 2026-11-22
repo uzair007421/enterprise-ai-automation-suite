@@ -1,10 +1,10 @@
 """
-Project 10: FinGuard Financial Agent & Cryptographic Approval Gate Test Suite
+Project 10: FinGuard Financial Agent & Human Approval Gate Test Suite
 Verifies:
 - ReAct tool calling: Autonomous read vs suspended write actions
-- Human Cryptographic Write Gate: Mandatory proposal suspension
+- Human Human Approval Write Gate: Mandatory proposal suspension
 - Strict RBAC: Analyst (403), Manager (capped at $10k), CFO (unlimited)
-- Tamper-Evident SHA-256 Audit Chain: Merkle link integrity and tamper detection
+- Tamper-Evident SHA-256 Audit Chain: hash link integrity and tamper detection
 """
 import pytest
 from fastapi import HTTPException
@@ -111,7 +111,7 @@ def test_rbac_manager_over_10k_blocked_requires_cfo():
     assert res.status == "APPROVED_EXECUTED"
     assert res.block_index is not None
 
-def test_cryptographic_audit_chain_tamper_detection():
+def test_audit_chain_tamper_detection():
     """Verify the audit chain mathematically detects any unauthorized tampering."""
     # Ensure chain has valid blocks
     verification = verify_audit_chain()

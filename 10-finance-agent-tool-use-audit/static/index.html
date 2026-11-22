@@ -25,7 +25,7 @@
           <h1 class="text-lg font-bold tracking-tight text-white flex items-center gap-2">
             FinGuard AI <span class="text-xs bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 px-2 py-0.5 rounded-full font-mono">Enterprise Agent Gate</span>
           </h1>
-          <p class="text-xs text-slate-400">ReAct Tool Calling • Mandatory Human Write Gate • RBAC • Cryptographic Ledger</p>
+          <p class="text-xs text-slate-400">ReAct Tool Calling • Mandatory Human Write Gate • RBAC • HMAC-Secured Ledger</p>
         </div>
       </div>
       <div class="flex items-center gap-3">
@@ -375,9 +375,9 @@
           state.chat_messages.push({
             role: 'agent',
             title: `ReAct Agent [Suspended: ${tp.tool_name}]`,
-            thought: bData.agent_reasoning || 'Write tool intercepted by mandatory cryptographic write gate.',
+            thought: bData.agent_reasoning || 'Write tool intercepted by mandatory human approval write gate.',
             tool: `${tp.tool_name}(${JSON.stringify(tp.parameters)})`,
-            content: bData.direct_answer || `🛡️ Cryptographic Write Gate Activated: Proposal ${tp.proposal_id} suspended in PENDING_HUMAN_APPROVAL state.`
+            content: bData.direct_answer || `🛡️ Human Approval Write Gate Activated: Proposal ${tp.proposal_id} suspended in PENDING_HUMAN_APPROVAL state.`
           });
           state.pending_writes = [{
             id: tp.proposal_id,
@@ -470,7 +470,7 @@
       const timestamp = new Date().toISOString().replace('T', ' ').substring(0, 19) + ' UTC';
       const payload = `${prevHash}|${actor}|${action}|${target}|${risk}|${timestamp}`;
       
-      // True Web Crypto API SHA-256 Merkle Chain Hash
+      // True Web Crypto API SHA-256 hash chain Chain Hash
       const msgBuffer = new TextEncoder().encode(payload);
       const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
       const hashArray = Array.from(new Uint8Array(hashBuffer));

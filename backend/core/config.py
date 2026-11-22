@@ -76,8 +76,13 @@ class Settings(BaseSettings):
 
     @model_validator(mode="after")
     def validate_production_security(self) -> "Settings":
-        if self.APP_ENV == "production" and self.SECRET_KEY == "production-ai-suite-secret-key-change-in-prod-xyz123":
-            raise ValueError("SECRET_KEY must be changed from default in production environment.")
+        if self.APP_ENV == "production":
+            if self.SECRET_KEY == "production-ai-suite-secret-key-change-in-prod-xyz123":
+                raise ValueError("SECRET_KEY must be changed from default in production environment.")
+            if self.ADMIN_TOKEN == "admin-secret-token-change-in-prod":
+                raise ValueError("ADMIN_TOKEN must be changed from default in production environment.")
+            if self.APPROVAL_SIGNING_KEY == "finguard-signing-key-default-32bytes":
+                raise ValueError("APPROVAL_SIGNING_KEY must be changed from default in production environment.")
         return self
 
 settings = Settings()

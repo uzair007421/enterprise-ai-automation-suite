@@ -242,6 +242,14 @@ def init_db():
                 created_at TEXT NOT NULL
             );
         """)
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS p08_snapshots (
+                url TEXT PRIMARY KEY,
+                competitor_name TEXT NOT NULL,
+                html_snapshot TEXT NOT NULL,
+                updated_at TEXT NOT NULL
+            );
+        """)
 
         # P09 Media Content Repurposed Assets
         conn.execute("""
@@ -285,3 +293,20 @@ def init_db():
             );
         """)
         conn.commit()
+
+    # Seed baseline records if needed
+    try:
+        from projects.p03_support.shopify_adapter import shopify_adapter
+        shopify_adapter._seed_orders_if_needed()
+    except Exception:
+        pass
+    try:
+        from projects.p02_legal.corpus import legal_corpus
+        legal_corpus._seed_documents_if_needed()
+    except Exception:
+        pass
+    try:
+        from projects.p10_finance.audit_chain import audit_chain_manager
+        audit_chain_manager._ensure_genesis_block()
+    except Exception:
+        pass
