@@ -17,6 +17,7 @@ import logging
 from datetime import datetime, timezone
 from typing import Dict, Any, Tuple, Optional
 import httpx
+from core.config import settings
 from core.llm import llm
 from core.db import DatabaseSession
 from .schemas import DiagnosisReport, HealingExecutionResult
@@ -303,6 +304,27 @@ class SelfHealingEngine:
         )
         if final_status == "FAILED":
             alert_dispatched, alert_status = telegram_alerter.dispatch_incident_report(temp_res)
+
+        # N8N_LIVE_MODE: dispatch healing event to n8n webhook when configured
+        n8n_dispatched = False
+        if settings.N8N_LIVE_MODE and settings.N8N_WEBHOOK_URL:
+            try:
+                payload = {
+                    "workflow_id": workflow_id,
+                    "fault_type": fault_type,
+                    "final_status": final_status,
+                    "recovery_strategy": recovery_strategy,
+                    "tenant_id": tenant_id,
+                    "telemetry_id": telemetry_id,
+                    "recovery_time_ms": recovery_time_ms
+                }
+                resp = httpx.post(settings.N8N_WEBHOOK_URL, json=payload, timeout=5.0)
+                n8n_dispatched = resp.status_code < 300
+                logger.info(f"N8N webhook dispatch: status={resp.status_code}")
+            except Exception as exc:
+                logger.warning(f"N8N webhook dispatch failed (non-fatal): {exc}")
+        elif settings.N8N_LIVE_MODE and not settings.N8N_WEBHOOK_URL:
+            logger.warning("N8N_LIVE_MODE=True but N8N_WEBHOOK_URL is not configured. Skipping webhook dispatch.")
 
         temp_res.telegram_dispatched = alert_dispatched
         temp_res.alert_status = alert_status

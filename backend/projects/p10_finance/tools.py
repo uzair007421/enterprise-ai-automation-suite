@@ -29,6 +29,31 @@ FX_RATES = {
 
 # --- READ TOOLS (AUTONOMOUS EXECUTION) ---
 
+# Demo SaaS metrics for ARR/MRR/runway queries (replace with live DB in production)
+SAAS_METRICS = {
+    "arr_usd":        4_800_000.0,   # Annual Recurring Revenue
+    "mrr_usd":          400_000.0,   # Monthly Recurring Revenue
+    "cash_on_hand_usd": 2_100_000.0, # Cash balance for runway calc
+    "monthly_burn_usd":   280_000.0, # Monthly operating burn rate
+}
+
+def query_saas_metrics() -> Dict[str, Any]:
+    """
+    Returns key SaaS financial health indicators: ARR, MRR, and cash runway.
+    Runway = cash_on_hand / monthly_burn (months).
+    NOTE: Values are illustrative demo figures. Connect to live ERP/data warehouse for production.
+    """
+    runway_months = round(SAAS_METRICS["cash_on_hand_usd"] / SAAS_METRICS["monthly_burn_usd"], 1)
+    return {
+        "status": "success",
+        "arr_usd": SAAS_METRICS["arr_usd"],
+        "mrr_usd": SAAS_METRICS["mrr_usd"],
+        "cash_on_hand_usd": SAAS_METRICS["cash_on_hand_usd"],
+        "monthly_burn_usd": SAAS_METRICS["monthly_burn_usd"],
+        "runway_months": runway_months,
+        "data_source": "demo_figures — connect live ERP for production"
+    }
+
 def check_treasury_balance() -> Dict[str, Any]:
     """Returns real-time balances across enterprise treasury reserve accounts."""
     total = sum(TREASURY_ACCOUNTS.values())

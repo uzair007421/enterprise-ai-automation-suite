@@ -7,6 +7,8 @@ Verifies:
 4. Roman Urdu emergency handling.
 5. Dynamic emergency dispatch number from config.
 6. SaaS multi-tenant appointment isolation and conflict resolution.
+7. Paraphrased / natural-language emergency phrases beyond exact-keyword matching.
+   These are REAL audit-identified failing cases now covered by expanded regex patterns.
 """
 import pytest
 from core.db import init_db, DatabaseSession
@@ -134,3 +136,41 @@ def test_saas_multi_tenant_clinic_isolation():
     assert res_south.status == "CONFIRMED"
 
     session.close()
+
+
+# ---------------------------------------------------------------------------
+# Paraphrase Coverage Tests — Audit Issue #2
+# Exact-phrase patterns previously missed these natural-language variants.
+# ---------------------------------------------------------------------------
+
+def test_cannot_breathe_properly_is_emergency():
+    """'i cannot breathe properly' — paraphrase of breathing emergency."""
+    res = triage_dental_inquiry("i cannot breathe properly")
+    assert res.is_emergency is True, (
+        "FAIL: 'i cannot breathe properly' classified as non-emergency. "
+        "Should trigger MEDICAL_EMERGENCY."
+    )
+
+def test_bleeding_wont_stop_for_an_hour_is_emergency():
+    """'bleeding won't stop for an hour' — prolonged uncontrolled bleeding is a medical emergency."""
+    res = triage_dental_inquiry("bleeding won't stop for an hour")
+    assert res.is_emergency is True, (
+        "FAIL: 'bleeding won't stop for an hour' not classified as emergency. "
+        "Should trigger MEDICAL_EMERGENCY (prolonged uncontrolled bleeding)."
+    )
+
+def test_tongue_swelling_cannot_swallow_is_emergency():
+    """'I can't swallow and my tongue is swelling up' — anaphylaxis/airway emergency."""
+    res = triage_dental_inquiry("I can't swallow and my tongue is swelling up")
+    assert res.is_emergency is True, (
+        "FAIL: Tongue swelling + cannot swallow not classified as emergency. "
+        "Should trigger MEDICAL_EMERGENCY (airway compromise)."
+    )
+
+def test_urdu_face_swelling_with_fever_triage():
+    """'mera chehra bohat sooj gaya hai aur bukhar hai' — Urdu facial swelling + fever."""
+    res = triage_dental_inquiry("mera chehra bohat sooj gaya hai aur bukhar hai")
+    # Systemic fever + facial swelling = URGENT at minimum (may be MEDICAL_EMERGENCY with airway concern)
+    assert res.urgency_tier in ("URGENT_APPOINTMENT", "MEDICAL_EMERGENCY", "CRITICAL_EMERGENCY"), (
+        f"FAIL: Urdu facial swelling + fever got '{res.urgency_tier}', expected URGENT or higher."
+    )

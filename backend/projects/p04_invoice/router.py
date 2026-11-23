@@ -8,11 +8,12 @@ import uuid
 from datetime import datetime, timezone
 from typing import Optional, List, Dict, Any
 import pypdf
-from fastapi import APIRouter, UploadFile, File, Form, HTTPException, Query, Response
+from fastapi import APIRouter, UploadFile, File, Form, HTTPException, Query, Response, Depends
 from pydantic import BaseModel
 from core.config import settings
 from core.db import DatabaseSession
 from core.events import event_broker
+from core.security import get_tenant_id
 from core.health import record_project_activity
 from core.llm import llm
 from .schemas import (
@@ -31,7 +32,7 @@ from .accounting_adapter import accounting_adapter
 router = APIRouter(prefix="/api/ai/invoice-processing", tags=["Invoice Processing Pipeline"])
 
 @router.post("/process", response_model=InvoiceProcessResponse)
-def process_invoice_endpoint(request: InvoiceProcessRequest):
+def process_invoice_endpoint(request: InvoiceProcessRequest, tenant_id: str = Depends(get_tenant_id)):
     """
     Main invoice ingestion endpoint.
     Performs OCR extraction, 4-way math check, duplicate detection, and ledger sync.
@@ -39,7 +40,8 @@ def process_invoice_endpoint(request: InvoiceProcessRequest):
     start_time = time.time()
     record_project_activity("invoice-processing")
     session_id = request.session_id or "demo_session"
-    tenant_id = getattr(request, "tenant_id", "tenant_default") or "tenant_default"
+    # tenant_id comes from verified X-Tenant-ID header (Depends(get_tenant_id))
+    # NOT from request body — body field is ignored to prevent tenant spoofing.
 
     # Step 1: Ingest & Compute HMAC-Secured Content Hash
     event_broker.publish(session_id, {
@@ -198,37 +200,30 @@ async def upload_file_endpoint(
     return process_invoice_endpoint(req)
 
 @router.get("/ledger")
-def get_ledger(limit: int = 50, status_filter: Optional[str] = None, tenant_id: Optional[str] = None):
-    """Returns persistent invoices from SQLite database scoped to tenant."""
+def get_ledger(limit: int = 50, status_filter: Optional[str] = None, tenant_id: str = Depends(get_tenant_id)):
+    """
+    Returns persistent invoices from SQLite database scoped to the authenticated tenant.
+    tenant_id is derived from X-Tenant-ID + X-Tenant-Key headers — never from query params.
+    """
     db = DatabaseSession()
     try:
-        if tenant_id and status_filter:
+        if status_filter:
             rows = db.fetchall(
                 "SELECT * FROM p04_invoices WHERE tenant_id = ? AND status = ? ORDER BY created_at DESC LIMIT ?",
                 (tenant_id, status_filter, limit)
             )
-        elif tenant_id:
+        else:
             rows = db.fetchall(
                 "SELECT * FROM p04_invoices WHERE tenant_id = ? ORDER BY created_at DESC LIMIT ?",
                 (tenant_id, limit)
             )
-        elif status_filter:
-            rows = db.fetchall(
-                "SELECT * FROM p04_invoices WHERE status = ? ORDER BY created_at DESC LIMIT ?",
-                (status_filter, limit)
-            )
-        else:
-            rows = db.fetchall(
-                "SELECT * FROM p04_invoices ORDER BY created_at DESC LIMIT ?",
-                (limit,)
-            )
-        return {"total": len(rows), "invoices": rows}
+        return {"total": len(rows), "invoices": rows, "tenant_id": tenant_id}
     finally:
         db.close()
 
 @router.get("/export/csv")
-def export_csv_endpoint(tenant_id: Optional[str] = None):
-    """Generates and downloads CSV ledger for Google Sheets integration."""
+def export_csv_endpoint(tenant_id: str = Depends(get_tenant_id)):
+    """Generates and downloads CSV ledger for Google Sheets integration, scoped to authenticated tenant."""
     csv_data = accounting_adapter.export_ledger_csv(tenant_id=tenant_id)
     return Response(
         content=csv_data,

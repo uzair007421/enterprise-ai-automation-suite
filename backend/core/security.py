@@ -199,3 +199,72 @@ def mask_phone(phone: Optional[str]) -> Optional[str]:
     if len(digits) >= 6:
         return phone[:3] + " *** " + phone[-4:]
     return "***-***"
+
+
+# ---------------------------------------------------------------------------
+# Tenant Isolation: Header-Based Tenant Authentication
+# ---------------------------------------------------------------------------
+# NOTE: This is a demonstration-grade tenant guard.
+# In a production SaaS system, tenant_id MUST be derived from a verified JWT
+# or mTLS certificate — never from a request body or unauthenticated header.
+# Here we enforce X-Tenant-ID header and validate against an ADMIN_TOKEN
+# for write operations, satisfying the requirement that tenant identity is
+# not silently accepted from an arbitrary request body field.
+# ---------------------------------------------------------------------------
+
+DEMO_TENANT_API_KEYS: Dict[str, str] = {
+    # Format: "tenant_id": "shared-api-key-for-demo"
+    # In production: derive tenant from signed JWT, never from this map.
+    "tenant_default":       "demo-key-default",
+    "tenant_company_alpha": "demo-key-alpha",
+    "tenant_company_beta":  "demo-key-beta",
+    "tenant_clinic_a":      "demo-key-clinic-a",
+    "tenant_clinic_b":      "demo-key-clinic-b",
+}
+
+
+def get_tenant_id(
+    x_tenant_id: Optional[str] = Header(None, alias="X-Tenant-ID"),
+    x_tenant_key: Optional[str] = Header(None, alias="X-Tenant-Key"),
+) -> str:
+    """
+    FastAPI dependency: extracts tenant identity from the X-Tenant-ID header.
+    Validates that the caller also provides the matching X-Tenant-Key for the
+    declared tenant (demo-grade shared secret; replace with JWT in production).
+
+    If neither header is supplied the caller gets the read-only 'demo_visitor'
+    partition which cannot write to any tenant's data.
+
+    Raises HTTP 401 when the key does not match the declared tenant.
+    Raises HTTP 400 when X-Tenant-ID is supplied without X-Tenant-Key.
+    """
+    if not x_tenant_id:
+        # Unauthenticated callers land in isolated demo partition
+        return "demo_visitor"
+
+    if not x_tenant_key:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=(
+                "X-Tenant-ID supplied without X-Tenant-Key. "
+                "Provide the matching shared secret for your tenant, "
+                "or omit both headers to use the read-only demo partition."
+            ),
+        )
+
+    expected_key = DEMO_TENANT_API_KEYS.get(x_tenant_id)
+    # Allow admin token as universal override (for integration tests / ops)
+    if x_tenant_key == settings.ADMIN_TOKEN:
+        return x_tenant_id
+
+    if expected_key is None or x_tenant_key != expected_key:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=(
+                f"Invalid X-Tenant-Key for tenant '{x_tenant_id}'. "
+                "Access denied. tenant_id is not accepted from the request body."
+            ),
+        )
+
+    return x_tenant_id
+

@@ -17,12 +17,30 @@ def get_emergency_number() -> str:
 
 MEDICAL_EMERGENCY_INDICATORS = [
     r"\bchest\s+pain\b",
-    r"\bdifficulty\s+breathing\b",
+    r"\bdifficulty\s+(?:breathing|breath)\b",
     r"\bshortness\s+of\s+breath\b",
     r"\btrouble\s+breathing\b",
     r"\bcan'?t\s+breathe\b",
+    r"\bcannot\s+breathe\b",
+    # Covers: "i cannot breathe properly", "having trouble to breathe"
+    r"\b(?:i\s+)?(?:am\s+)?(?:not|cannot|can'?t)\s+breath(?:e|ing)?\s*(?:properly|well|at\s+all)?\b",
+    r"\b(?:hard|difficult|struggling)\s+to\s+breath(?:e|ing)?\b",
+    r"\bairway\b",
+    # Prolonged bleeding: "bleeding won't stop", "bleeding for an hour", "won't stop bleeding"
+    r"\bbleed(?:ing)?\s+(?:won'?t|will\s+not|does\s+not|doesn'?t)\s+stop\b",
+    r"\bbleeding\s+for\s+(?:an?\s+)?(?:hour|hours|long\s+time|while)\b",
+    r"\bwon'?t\s+stop\s+bleed(?:ing)?\b",
+    r"\bblood\s+won'?t\s+stop\b",
     r"\buncontrolled\s+bleeding\b",
-    r"\bfacial\s+trauma\b",
+    # Anaphylaxis / airway swelling: "tongue is swelling", "throat closing", "can't swallow"
+    r"\btongue\s+(?:is\s+)?(?:swelling|swollen|enlarged)\b",
+    r"\bthroat\s+(?:is\s+)?(?:swelling|closing|tightening|closing\s+up)\b",
+    r"\b(?:i\s+)?can'?t\s+swallow\b",
+    r"\bcannot\s+swallow\b",
+    r"\bhaving\s+(?:trouble|difficulty|problem)\s+swallow(?:ing)?\b",
+    # Facial swelling with systemic signs (not mere dental swelling)
+    r"\b(?:chehra|mera\s+chehra)\s+(?:bohat\s+)?(?:sooj|phool)\b",
+    r"\bfacial\s+(?:swelling|trauma|edema)\b",
     r"\bheart\s+attack\b",
     r"\bstroke\b",
     r"\bunconscious(?:ness)?\b",
@@ -46,7 +64,6 @@ CRITICAL_DENTAL_INDICATORS = [
     r"\bbroken\s+(?:jaw|bone)\b",
     r"\bacute\s+trauma\b"
 ]
-
 URGENT_DENTAL_INDICATORS = [
     r"\btoothache\b",
     r"\bsevere\s+toothache\b",

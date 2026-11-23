@@ -35,12 +35,15 @@ class LegalRAGResponse(BaseModel):
     answer: str
     status: str  # "ANSWERED" | "REFUSAL_GROUNDED" | "NOT_FOUND_IN_CORPUS" | "HALLUCINATION_REJECTED"
     confidence_score: float
-    similarity_score: float = 0.0
-    lexical_overlap_score: float = 0.0
-    # Backward compatibility aliases for legacy frontend clients:
-    dense_cosine_score: float = 0.0
-    lexical_bm25_score: float = 0.0
-    retrieval_method: str = "hybrid_feature_matching"
+    similarity_score: float = 0.0        # canonical field: TF-IDF cosine similarity
+    lexical_overlap_score: float = 0.0   # canonical field: lexical overlap ratio
+    # DEPRECATED aliases kept for backward API compatibility only.
+    # These are NOT BM25 or dense-vector scores. The retrieval engine uses
+    # TF-IDF cosine + lexical overlap (rule-based). No dense-vector index exists.
+    # Will be removed in v2.0 of this API.
+    dense_cosine_score: float = 0.0      # alias for similarity_score
+    lexical_bm25_score: float = 0.0     # alias for lexical_overlap_score
+    retrieval_method: str = "tfidf_cosine_plus_lexical_overlap"
     engine: str = "rules"  # "rules" | "gemini"
     tenant_id: str = "default_firm"
     citations: List[CitationVerification]

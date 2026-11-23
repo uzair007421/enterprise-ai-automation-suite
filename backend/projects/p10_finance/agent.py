@@ -15,7 +15,8 @@ from .schemas import ToolCallProposal
 from .tools import (
     check_treasury_balance,
     get_vendor_invoice,
-    query_fx_rates
+    query_fx_rates,
+    query_saas_metrics
 )
 from .crypto_gate import hash_payload
 
@@ -292,7 +293,35 @@ class FinGuardAgent:
             )
             return reasoning, proposal, answer
 
-        # 7. READ: FX Rates
+        # 7. READ: SaaS Metrics — ARR, MRR, Runway
+        saas_kw = ["arr", "mrr", "runway", "annual recurring", "monthly recurring", "burn rate", "burn", "cash runway"]
+        if any(kw in q_lower for kw in saas_kw):
+            res = query_saas_metrics()
+            reasoning = "Query requests SaaS financial health metrics (ARR/MRR/runway). Executing autonomous read tool 'query_saas_metrics'."
+            answer = (
+                f"SaaS Financial Metrics (Demo Figures):\n"
+                f"• ARR: ${res['arr_usd']:,.0f}\n"
+                f"• MRR: ${res['mrr_usd']:,.0f}\n"
+                f"• Cash on Hand: ${res['cash_on_hand_usd']:,.0f}\n"
+                f"• Monthly Burn: ${res['monthly_burn_usd']:,.0f}\n"
+                f"• Runway: {res['runway_months']} months\n"
+                f"⚠️ Note: {res['data_source']}"
+            )
+            proposal = ToolCallProposal(
+                proposal_id=f"PROP-READ-{uuid.uuid4().hex[:6].upper()}",
+                tool_name="query_saas_metrics",
+                tool_type="READ",
+                parameters={},
+                reasoning=reasoning,
+                requires_human_approval=False,
+                payload_sha256=hash_payload({}),
+                status="EXECUTED_AUTONOMOUSLY",
+                result=res,
+                tenant_id=tenant_id
+            )
+            return reasoning, proposal, answer
+
+        # 8. READ: FX Rates
         if "fx" in q_lower or "exchange rate" in q_lower or "pkr" in q_lower or "eur" in q_lower or "gbp" in q_lower:
             pair = "USD/PKR" if "pkr" in q_lower else ("USD/GBP" if "gbp" in q_lower else "USD/EUR")
             res = query_fx_rates(pair)
@@ -311,9 +340,9 @@ class FinGuardAgent:
             )
             return reasoning, proposal, answer
 
-        # 8. Unmapped Request: Polite Refusal Without Tool Call
+        # 9. Unmapped Request: Polite Refusal Without Tool Call
         reasoning = "Query cannot be mapped to any authorized financial tool or treasury procedure."
-        answer = "I could not map your request to an authorized treasury operation. I can only assist with treasury inquiries (balances, invoices, FX rates) and gated operational proposals (wire transfers, credit limits, ledger adjustments)."
+        answer = "I could not map your request to an authorized treasury operation. I can assist with: treasury balances, vendor invoices, FX rates, SaaS metrics (ARR/MRR/runway), and gated write operations (wire transfers, credit limits, ledger adjustments)."
         return reasoning, None, answer
 
 finguard_agent = FinGuardAgent()

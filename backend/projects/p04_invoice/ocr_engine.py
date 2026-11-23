@@ -34,10 +34,17 @@ def parse_text_heuristics(text: str) -> InvoiceExtractedData:
 
     # 1. Check for invoice number
     inv_num = None
-    num_match = re.search(r"\b(?:invoice|inv|bill)\s*(?:number|num|no)?\s*[:#]\s*([A-Za-z0-9\-_]+)|\b(INV-[A-Za-z0-9\-_]+)", clean_text, re.IGNORECASE)
+    # Covers: "Invoice #: S-1001", "Invoice No: INV-999", "Bill #123", "INV-5566"
+    num_match = re.search(
+        r"\b(?:invoice|inv|bill)\s*(?:number|num|no|#)?\s*[:#]?\s*#?\s*([A-Za-z0-9][-A-Za-z0-9_/]{0,30})"
+        r"|\b(INV-[A-Za-z0-9\-_]+)",
+        clean_text, re.IGNORECASE
+    )
     if num_match:
         extracted_num = (num_match.group(1) or num_match.group(2) or "").strip()
-        if len(extracted_num) >= 2 and extracted_num.lower() not in ("and", "the", "for", "with", "from"):
+        # Strip trailing noise tokens
+        extracted_num = re.split(r"\s+(?:dated?|from|vendor|total|amount|due)\b", extracted_num, flags=re.IGNORECASE)[0].strip()
+        if len(extracted_num) >= 2 and extracted_num.lower() not in ("and", "the", "for", "with", "from", "number", "num"):
             inv_num = extracted_num
 
     # 2. Check for dates
@@ -84,11 +91,14 @@ def parse_text_heuristics(text: str) -> InvoiceExtractedData:
 
     # 4. Check for vendor
     vendor = None
-    vend_match = re.search(r"(?:vendor|from|seller|supplier|billed\s*by)[:\s]+([^\n\r]+)", clean_text, re.IGNORECASE)
+    vend_match = re.search(r"(?:vendor|from|seller|supplier|billed\s*by)[:\s]+([^\n\r|,;]+)", clean_text, re.IGNORECASE)
     if vend_match:
         candidate = vend_match.group(1).strip()
-        candidate = re.split(r"\b(?:date|inv|invoice|bill\s*to)[:#]", candidate, flags=re.IGNORECASE)[0].strip()
-        if candidate and len(candidate) > 1:
+        # Stop at common invoice field delimiters that appear on the same line
+        candidate = re.split(r"\s+(?:date|inv(?:oice)?|bill\s*to|total|amount|no\.?|#)\b", candidate, flags=re.IGNORECASE)[0].strip()
+        # Trim trailing punctuation
+        candidate = candidate.rstrip(".,;:").strip()
+        if candidate and 1 < len(candidate) <= 80:
             vendor = candidate
 
     # Line items

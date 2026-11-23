@@ -6,7 +6,7 @@ Verifies:
   - 429 -> Exponential backoff with jitter
   - 401 -> OAuth token exchange refresh
   - 504 -> Circuit breaker state machine
-- Dynamic measured uptime & latency metrics (zero hardcoded strings)
+- Dynamic measured uptime & latency metrics (values computed at runtime, not hardcoded)
 - Plain-English root cause diagnostics
 """
 import pytest
