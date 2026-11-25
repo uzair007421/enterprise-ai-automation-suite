@@ -4,7 +4,7 @@ Working prototypes. Rule-based engines by default; optional LLM mode with your o
 **Architect:** Muhammad Uzair  
 **Portfolio Hub:** [https://uzairio.web.app/ai-automations](https://uzairio.web.app/ai-automations)  
 **Backend:** FastAPI 0.115+, Pydantic v2, SQLite WAL Mode  
-**Test Suite:** 52 / 52 Passed (100% Green)
+**Test Suite:** Automated Pytest Suite (see `backend/tests/`) & Realistic Adversarial Evals (`backend/evals/`)
 
 A portfolio of 10 working enterprise AI automation prototypes. Every system executes live backend logic with rule-based fallbacks, enforces human-in-the-loop security gates, and logs to real database audit trails.
 
@@ -38,7 +38,7 @@ A portfolio of 10 working enterprise AI automation prototypes. Every system exec
 | **06** | `p06_hr` | Demographic PII Anonymizer (Blind Screening) | **Real** | [pii_redactor.py](backend/projects/p06_hr/pii_redactor.py#L12-L65) |
 | **06** | `p06_hr` | Objective 100-Point Competency Rubric | **Real** | [rubric_evaluator.py](backend/projects/p06_hr/rubric_evaluator.py#L25-L95) |
 | **06** | `p06_hr` | Calendar Interview Slot Proposer | **Real** | [rubric_evaluator.py](backend/projects/p06_hr/rubric_evaluator.py#L75-L90) |
-| **07** | `p07_voice` | 98%+ Emergency Dental Recall Triage Engine | **Real** | [triage_engine.py](backend/projects/p07_voice/triage_engine.py#L25-L85) |
+| **07** | `p07_voice` | Rule-Based Dental Appointment Intake & Symptom Keyword Routing (Non-Diagnostic Demo) | **Prototype** | [triage_engine.py](backend/projects/p07_voice/triage_engine.py#L1-L85) |
 | **07** | `p07_voice` | Doctor Anti-Conflict Booking Engine | **Real** | [router.py](backend/projects/p07_voice/router.py#L40-L90) |
 | **07** | `p07_voice` | Twilio SMS Confirmation Adapter | **Live / Sandbox Fallback** | [notification_adapter.py](backend/projects/p07_voice/notification_adapter.py#L15-L45) |
 | **08** | `p08_competitor` | Anti-SSRF Crawler Security Filter | **Real** | [crawler.py](backend/projects/p08_competitor/crawler.py#L12-L40) |
@@ -63,7 +63,7 @@ python -m uvicorn main:app --host 0.0.0.0 --port 8000 --reload
 ```
 API Documentation will be live at: [http://localhost:8000/docs](http://localhost:8000/docs)
 
-### 2. Run the Full Test Suite (52 Tests)
+### 2. Run the Full Test Suite
 ```bash
 cd backend
 python -m pytest tests/ -v

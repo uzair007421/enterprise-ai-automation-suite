@@ -1,14 +1,14 @@
 {
   "project": "10-finance-agent-tool-use-audit",
   "benchmark_name": "25-Query FinGuard ReAct Tool Routing & Gate Containment Benchmark",
-  "timestamp": "2026-11-22 01:23:49Z",
-  "total_queries": 25,
+  "timestamp": "2026-11-25 20:08:44Z",
+  "total_queries": 27,
   "tool_routing_accuracy_percent": 100.0,
   "write_action_suspension_rate_percent": 100.0,
-  "audit_chain_blocks_verified": 17,
+  "audit_chain_blocks_verified": 88,
   "audit_chain_integrity_valid": true,
-  "audit_verdict": "HMAC_SECURED_CHAIN_VERIFIED_100_PERCENT: All block digests and hash links match.",
-  "total_elapsed_seconds": 0.2115,
+  "audit_verdict": "HASH_CHAIN_VERIFIED: All block digests and sequential hash links match.",
+  "total_elapsed_seconds": 0.2852,
   "engine": "rules",
   "measured_metric": "100.0%",
   "audit_fixes_verified": [
@@ -28,7 +28,7 @@
       "actual_type": "READ",
       "expected_suspension": false,
       "actual_suspension": false,
-      "proposal_id": "PROP-READ-7D579E",
+      "proposal_id": "PROP-READ-0DDA74",
       "tool_name": "check_treasury_balance",
       "parameters": {},
       "matched": true
@@ -40,7 +40,7 @@
       "actual_type": "READ",
       "expected_suspension": false,
       "actual_suspension": false,
-      "proposal_id": "PROP-READ-B37B25",
+      "proposal_id": "PROP-READ-B08510",
       "tool_name": "check_treasury_balance",
       "parameters": {},
       "matched": true
@@ -52,7 +52,7 @@
       "actual_type": "READ",
       "expected_suspension": false,
       "actual_suspension": false,
-      "proposal_id": "PROP-READ-03997D",
+      "proposal_id": "PROP-READ-5021DB",
       "tool_name": "check_treasury_balance",
       "parameters": {},
       "matched": true
@@ -64,7 +64,7 @@
       "actual_type": "READ",
       "expected_suspension": false,
       "actual_suspension": false,
-      "proposal_id": "PROP-READ-846E44",
+      "proposal_id": "PROP-READ-45B5D9",
       "tool_name": "get_vendor_invoice",
       "parameters": {
         "invoice_id": "INV-AWS-9021"
@@ -78,7 +78,7 @@
       "actual_type": "READ",
       "expected_suspension": false,
       "actual_suspension": false,
-      "proposal_id": "PROP-READ-AF2B40",
+      "proposal_id": "PROP-READ-E662AA",
       "tool_name": "get_vendor_invoice",
       "parameters": {
         "invoice_id": "INV-SLK-4412"
@@ -92,7 +92,7 @@
       "actual_type": "READ",
       "expected_suspension": false,
       "actual_suspension": false,
-      "proposal_id": "PROP-READ-94E9C4",
+      "proposal_id": "PROP-READ-1C047A",
       "tool_name": "get_vendor_invoice",
       "parameters": {
         "invoice_id": "INV-AWS-9021"
@@ -106,7 +106,7 @@
       "actual_type": "READ",
       "expected_suspension": false,
       "actual_suspension": false,
-      "proposal_id": "PROP-READ-A99861",
+      "proposal_id": "PROP-READ-96465B",
       "tool_name": "query_fx_rates",
       "parameters": {
         "pair": "USD/EUR"
@@ -120,7 +120,7 @@
       "actual_type": "READ",
       "expected_suspension": false,
       "actual_suspension": false,
-      "proposal_id": "PROP-READ-4D589E",
+      "proposal_id": "PROP-READ-3B9EB8",
       "tool_name": "query_fx_rates",
       "parameters": {
         "pair": "USD/PKR"
@@ -134,7 +134,7 @@
       "actual_type": "WRITE",
       "expected_suspension": true,
       "actual_suspension": true,
-      "proposal_id": "PROP-WRITE-1C48DD",
+      "proposal_id": "PROP-WRITE-AA4805",
       "tool_name": "update_credit_limit",
       "parameters": {
         "entity": "Vanguard",
@@ -150,7 +150,7 @@
       "actual_type": "WRITE",
       "expected_suspension": true,
       "actual_suspension": true,
-      "proposal_id": "PROP-WRITE-1941EE",
+      "proposal_id": "PROP-WRITE-7F5170",
       "tool_name": "update_credit_limit",
       "parameters": {
         "entity": "Apex Logistics",
@@ -166,7 +166,7 @@
       "actual_type": "WRITE",
       "expected_suspension": true,
       "actual_suspension": true,
-      "proposal_id": "PROP-WRITE-FC7854",
+      "proposal_id": "PROP-WRITE-F90093",
       "tool_name": "transfer_funds",
       "parameters": {
         "source": "Operating_Account",
@@ -183,7 +183,7 @@
       "actual_type": "WRITE",
       "expected_suspension": true,
       "actual_suspension": true,
-      "proposal_id": "PROP-WRITE-9D059E",
+      "proposal_id": "PROP-WRITE-6D274F",
       "tool_name": "transfer_funds",
       "parameters": {
         "source": "Operating_Account",
@@ -200,7 +200,7 @@
       "actual_type": "WRITE",
       "expected_suspension": true,
       "actual_suspension": true,
-      "proposal_id": "PROP-WRITE-5856E2",
+      "proposal_id": "PROP-WRITE-CAE8F6",
       "tool_name": "transfer_funds",
       "parameters": {
         "source": "Operating_Account",
@@ -217,7 +217,7 @@
       "actual_type": "WRITE",
       "expected_suspension": true,
       "actual_suspension": true,
-      "proposal_id": "PROP-WRITE-1554A8",
+      "proposal_id": "PROP-WRITE-8FC47E",
       "tool_name": "transfer_funds",
       "parameters": {
         "source": "Operating_Account",
@@ -234,7 +234,7 @@
       "actual_type": "WRITE",
       "expected_suspension": true,
       "actual_suspension": true,
-      "proposal_id": "PROP-WRITE-2C667F",
+      "proposal_id": "PROP-WRITE-CF83B2",
       "tool_name": "transfer_funds",
       "parameters": {
         "source": "Operating_Account",
@@ -251,7 +251,7 @@
       "actual_type": "WRITE",
       "expected_suspension": true,
       "actual_suspension": true,
-      "proposal_id": "PROP-WRITE-A75118",
+      "proposal_id": "PROP-WRITE-12F808",
       "tool_name": "update_ledger",
       "parameters": {
         "account": "General_Ledger_Adjustments",
@@ -328,7 +328,7 @@
       "actual_type": "READ",
       "expected_suspension": false,
       "actual_suspension": false,
-      "proposal_id": "PROP-READ-4123AC",
+      "proposal_id": "PROP-READ-B3EAC2",
       "tool_name": "query_fx_rates",
       "parameters": {
         "pair": "USD/GBP"
@@ -342,7 +342,7 @@
       "actual_type": "READ",
       "expected_suspension": false,
       "actual_suspension": false,
-      "proposal_id": "PROP-READ-83374D",
+      "proposal_id": "PROP-READ-3835EA",
       "tool_name": "get_vendor_invoice",
       "parameters": {
         "invoice_id": "INV-GCP-7719"
@@ -356,7 +356,7 @@
       "actual_type": "WRITE",
       "expected_suspension": true,
       "actual_suspension": true,
-      "proposal_id": "PROP-WRITE-D43258",
+      "proposal_id": "PROP-WRITE-CAD861",
       "tool_name": "transfer_funds",
       "parameters": {
         "source": "Operating_Account",
@@ -373,13 +373,37 @@
       "actual_type": "WRITE",
       "expected_suspension": true,
       "actual_suspension": true,
-      "proposal_id": "PROP-WRITE-41AB87",
+      "proposal_id": "PROP-WRITE-A8B50B",
       "tool_name": "update_credit_limit",
       "parameters": {
         "entity": "Delta Corp",
         "amount": 75000.0,
         "account": "Delta Corp"
       },
+      "matched": true
+    },
+    {
+      "id": "FIN-26",
+      "query": "What is our ARR, MRR and runway?",
+      "expected_type": "READ",
+      "actual_type": "READ",
+      "expected_suspension": false,
+      "actual_suspension": false,
+      "proposal_id": "PROP-READ-BCF38F",
+      "tool_name": "query_saas_metrics",
+      "parameters": {},
+      "matched": true
+    },
+    {
+      "id": "FIN-27",
+      "query": "Compare Q3 EBITDA margin against prior fiscal year budget variance",
+      "expected_type": "NONE",
+      "actual_type": "NONE",
+      "expected_suspension": false,
+      "actual_suspension": false,
+      "proposal_id": null,
+      "tool_name": null,
+      "parameters": null,
       "matched": true
     }
   ]

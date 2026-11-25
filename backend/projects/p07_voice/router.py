@@ -26,9 +26,9 @@ router = APIRouter(prefix="/api/ai/dental-voice", tags=["P07 Dental Voice Agent"
 @router.post("/transcribe-and-triage", response_model=VoiceTriageResponse)
 def transcribe_and_triage(req: VoiceTriageRequest):
     """
-    Analyzes patient voice inquiry, detects emergency symptoms with >=98% recall,
-    and returns clinical urgency tier with recommended doctor and slot.
-    Multi-tenant SaaS enabled: partitions by tenant_id.
+    Analyzes dental appointment inquiry using rule-based keyword/regex matching
+    and routes to an urgency tier and suggested scheduling slot.
+    Non-diagnostic scheduling demo — NOT a medical triage tool.
     """
     session_id = req.session_id or "demo_session"
     tenant_id = req.tenant_id or "default_clinic"

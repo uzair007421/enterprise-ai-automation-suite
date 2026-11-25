@@ -1,13 +1,13 @@
 {
   "project": "02-law-firm-private-rag",
   "benchmark_name": "40-Query Legal Vector Embeddings & Quote Citation Benchmark",
-  "timestamp": "2026-11-22 14:51:19Z",
-  "total_queries": 40,
-  "query_routing_accuracy_percent": 100.0,
+  "timestamp": "2026-11-25 20:08:38Z",
+  "total_queries": 42,
+  "query_routing_accuracy_percent": 95.24,
   "quote_citation_substring_validity_percent": 100.0,
-  "semantic_refusal_precision_percent": 100.0,
-  "total_citations_evaluated": 45,
-  "total_elapsed_seconds": 0.0399,
+  "semantic_refusal_precision_percent": 90.91,
+  "total_citations_evaluated": 55,
+  "total_elapsed_seconds": 0.1362,
   "audit_fixes_verified": [
     "Replaced fake keyword points matching with pure mathematical vector cosine similarity",
     "Generated 128-dimensional vector embeddings per clause",
@@ -22,7 +22,7 @@
       "expected_status": "ANSWERED",
       "actual_status": "ANSWERED",
       "expected_doc": "DOC-MSA-SEC8.2",
-      "dense_cosine_score": 0.1718,
+      "dense_cosine_score": 0.3335,
       "citations_count": 2,
       "citations_verified": true,
       "matched": true
@@ -33,7 +33,7 @@
       "expected_status": "ANSWERED",
       "actual_status": "ANSWERED",
       "expected_doc": "DOC-MSA-SEC8.2",
-      "dense_cosine_score": 0.2655,
+      "dense_cosine_score": 0.268,
       "citations_count": 2,
       "citations_verified": true,
       "matched": true
@@ -44,7 +44,7 @@
       "expected_status": "ANSWERED",
       "actual_status": "ANSWERED",
       "expected_doc": "DOC-MSA-SEC8.2",
-      "dense_cosine_score": 0.2013,
+      "dense_cosine_score": 0.3188,
       "citations_count": 2,
       "citations_verified": true,
       "matched": true
@@ -55,7 +55,7 @@
       "expected_status": "ANSWERED",
       "actual_status": "ANSWERED",
       "expected_doc": "DOC-MSA-SEC8.2",
-      "dense_cosine_score": 0.2158,
+      "dense_cosine_score": 0.3257,
       "citations_count": 2,
       "citations_verified": true,
       "matched": true
@@ -66,7 +66,7 @@
       "expected_status": "ANSWERED",
       "actual_status": "ANSWERED",
       "expected_doc": "DOC-MSA-SEC8.2",
-      "dense_cosine_score": 0.2819,
+      "dense_cosine_score": 0.316,
       "citations_count": 2,
       "citations_verified": true,
       "matched": true
@@ -121,8 +121,8 @@
       "expected_status": "ANSWERED",
       "actual_status": "ANSWERED",
       "expected_doc": "DOC-EMP-SEC6.2",
-      "dense_cosine_score": 0.3383,
-      "citations_count": 2,
+      "dense_cosine_score": 0.2975,
+      "citations_count": 3,
       "citations_verified": true,
       "matched": true
     },
@@ -132,8 +132,8 @@
       "expected_status": "ANSWERED",
       "actual_status": "ANSWERED",
       "expected_doc": "DOC-EMP-SEC6.2",
-      "dense_cosine_score": 0.3952,
-      "citations_count": 2,
+      "dense_cosine_score": 0.0716,
+      "citations_count": 3,
       "citations_verified": true,
       "matched": true
     },
@@ -143,8 +143,8 @@
       "expected_status": "ANSWERED",
       "actual_status": "ANSWERED",
       "expected_doc": "DOC-EMP-SEC6.2",
-      "dense_cosine_score": 0.2859,
-      "citations_count": 2,
+      "dense_cosine_score": 0.1249,
+      "citations_count": 3,
       "citations_verified": true,
       "matched": true
     },
@@ -154,8 +154,8 @@
       "expected_status": "ANSWERED",
       "actual_status": "ANSWERED",
       "expected_doc": "DOC-EMP-SEC6.2",
-      "dense_cosine_score": 0.4339,
-      "citations_count": 2,
+      "dense_cosine_score": 0.3816,
+      "citations_count": 3,
       "citations_verified": true,
       "matched": true
     },
@@ -165,8 +165,8 @@
       "expected_status": "ANSWERED",
       "actual_status": "ANSWERED",
       "expected_doc": "DOC-EMP-SEC6.2",
-      "dense_cosine_score": 0.2976,
-      "citations_count": 2,
+      "dense_cosine_score": 0.2746,
+      "citations_count": 3,
       "citations_verified": true,
       "matched": true
     },
@@ -187,7 +187,7 @@
       "expected_status": "ANSWERED",
       "actual_status": "ANSWERED",
       "expected_doc": "DOC-LEASE-SEC14",
-      "dense_cosine_score": 0.5532,
+      "dense_cosine_score": 0.5542,
       "citations_count": 1,
       "citations_verified": true,
       "matched": true
@@ -198,7 +198,7 @@
       "expected_status": "ANSWERED",
       "actual_status": "ANSWERED",
       "expected_doc": "DOC-LEASE-SEC14",
-      "dense_cosine_score": 0.431,
+      "dense_cosine_score": 0.4976,
       "citations_count": 1,
       "citations_verified": true,
       "matched": true
@@ -231,7 +231,7 @@
       "expected_status": "ANSWERED",
       "actual_status": "ANSWERED",
       "expected_doc": "DOC-DPA-SEC4.3",
-      "dense_cosine_score": 0.124,
+      "dense_cosine_score": 0.1498,
       "citations_count": 1,
       "citations_verified": true,
       "matched": true
@@ -253,7 +253,7 @@
       "expected_status": "ANSWERED",
       "actual_status": "ANSWERED",
       "expected_doc": "DOC-DPA-SEC4.3",
-      "dense_cosine_score": 0.3685,
+      "dense_cosine_score": 0.3561,
       "citations_count": 1,
       "citations_verified": true,
       "matched": true
@@ -265,7 +265,7 @@
       "actual_status": "ANSWERED",
       "expected_doc": "DOC-REFUND-SEC2.1",
       "dense_cosine_score": 0.2806,
-      "citations_count": 1,
+      "citations_count": 2,
       "citations_verified": true,
       "matched": true
     },
@@ -275,7 +275,7 @@
       "expected_status": "NOT_FOUND_IN_CORPUS",
       "actual_status": "NOT_FOUND_IN_CORPUS",
       "expected_doc": "NONE",
-      "dense_cosine_score": 0.1846,
+      "dense_cosine_score": 0.2368,
       "citations_count": 0,
       "citations_verified": true,
       "matched": true
@@ -286,8 +286,8 @@
       "expected_status": "ANSWERED",
       "actual_status": "ANSWERED",
       "expected_doc": "DOC-EMP-SEC6.2",
-      "dense_cosine_score": 0.1958,
-      "citations_count": 2,
+      "dense_cosine_score": 0.1847,
+      "citations_count": 3,
       "citations_verified": true,
       "matched": true
     },
@@ -308,7 +308,7 @@
       "expected_status": "REFUSAL_GROUNDED",
       "actual_status": "REFUSAL_GROUNDED",
       "expected_doc": "NONE",
-      "dense_cosine_score": 0.1672,
+      "dense_cosine_score": 0.2995,
       "citations_count": 0,
       "citations_verified": true,
       "matched": true
@@ -330,7 +330,7 @@
       "expected_status": "REFUSAL_GROUNDED",
       "actual_status": "REFUSAL_GROUNDED",
       "expected_doc": "NONE",
-      "dense_cosine_score": 0.0694,
+      "dense_cosine_score": 0.0,
       "citations_count": 0,
       "citations_verified": true,
       "matched": true
@@ -341,7 +341,7 @@
       "expected_status": "REFUSAL_GROUNDED",
       "actual_status": "REFUSAL_GROUNDED",
       "expected_doc": "NONE",
-      "dense_cosine_score": 0.0675,
+      "dense_cosine_score": 0.1089,
       "citations_count": 0,
       "citations_verified": true,
       "matched": true
@@ -352,7 +352,7 @@
       "expected_status": "REFUSAL_GROUNDED",
       "actual_status": "REFUSAL_GROUNDED",
       "expected_doc": "NONE",
-      "dense_cosine_score": 0.1712,
+      "dense_cosine_score": 0.255,
       "citations_count": 0,
       "citations_verified": true,
       "matched": true
@@ -363,7 +363,7 @@
       "expected_status": "ANSWERED",
       "actual_status": "ANSWERED",
       "expected_doc": "DOC-MSA-SEC8.2",
-      "dense_cosine_score": 0.2851,
+      "dense_cosine_score": 0.3956,
       "citations_count": 2,
       "citations_verified": true,
       "matched": true
@@ -372,12 +372,12 @@
       "id": "LEG-33",
       "query": "How long do we protect confidential data after signing NDA?",
       "expected_status": "ANSWERED",
-      "actual_status": "ANSWERED",
+      "actual_status": "NOT_FOUND_IN_CORPUS",
       "expected_doc": "DOC-NDA-SEC3.1",
       "dense_cosine_score": 0.2771,
-      "citations_count": 1,
+      "citations_count": 0,
       "citations_verified": true,
-      "matched": true
+      "matched": false
     },
     {
       "id": "LEG-34",
@@ -385,7 +385,7 @@
       "expected_status": "ANSWERED",
       "actual_status": "ANSWERED",
       "expected_doc": "DOC-NDA-SEC3.1",
-      "dense_cosine_score": 0.2833,
+      "dense_cosine_score": 0.3689,
       "citations_count": 1,
       "citations_verified": true,
       "matched": true
@@ -396,8 +396,8 @@
       "expected_status": "ANSWERED",
       "actual_status": "ANSWERED",
       "expected_doc": "DOC-EMP-SEC6.2",
-      "dense_cosine_score": 0.3599,
-      "citations_count": 2,
+      "dense_cosine_score": 0.3159,
+      "citations_count": 3,
       "citations_verified": true,
       "matched": true
     },
@@ -407,8 +407,8 @@
       "expected_status": "ANSWERED",
       "actual_status": "ANSWERED",
       "expected_doc": "DOC-EMP-SEC6.2",
-      "dense_cosine_score": 0.3717,
-      "citations_count": 2,
+      "dense_cosine_score": 0.2143,
+      "citations_count": 3,
       "citations_verified": true,
       "matched": true
     },
@@ -440,7 +440,7 @@
       "expected_status": "REFUSAL_GROUNDED",
       "actual_status": "REFUSAL_GROUNDED",
       "expected_doc": "NONE",
-      "dense_cosine_score": 0.2603,
+      "dense_cosine_score": 0.1296,
       "citations_count": 0,
       "citations_verified": true,
       "matched": true
@@ -451,7 +451,29 @@
       "expected_status": "REFUSAL_GROUNDED",
       "actual_status": "REFUSAL_GROUNDED",
       "expected_doc": "NONE",
-      "dense_cosine_score": 0.0494,
+      "dense_cosine_score": 0.0961,
+      "citations_count": 0,
+      "citations_verified": true,
+      "matched": true
+    },
+    {
+      "id": "LEG-41",
+      "query": "What is the termination notice period for convenience in the SaaS agreement?",
+      "expected_status": "NOT_FOUND_IN_CORPUS",
+      "actual_status": "ANSWERED",
+      "expected_doc": "NONE",
+      "dense_cosine_score": 0.1123,
+      "citations_count": 2,
+      "citations_verified": true,
+      "matched": false
+    },
+    {
+      "id": "LEG-42",
+      "query": "What does the agreement say about subprocessor audits and annual SOC2 reports?",
+      "expected_status": "NOT_FOUND_IN_CORPUS",
+      "actual_status": "NOT_FOUND_IN_CORPUS",
+      "expected_doc": "NONE",
+      "dense_cosine_score": 0.0432,
       "citations_count": 0,
       "citations_verified": true,
       "matched": true

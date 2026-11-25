@@ -174,3 +174,28 @@ def test_urdu_face_swelling_with_fever_triage():
     assert res.urgency_tier in ("URGENT_APPOINTMENT", "MEDICAL_EMERGENCY", "CRITICAL_EMERGENCY"), (
         f"FAIL: Urdu facial swelling + fever got '{res.urgency_tier}', expected URGENT or higher."
     )
+
+
+def test_additional_paraphrased_emergencies_and_non_emergency_precision():
+    """Cover choking, air hunger, pouring blood, hardly breathing, and Urdu phrasing without false positives."""
+    emergencies = [
+        "I am choking",
+        "can't get any air",
+        "blood keeps pouring from my mouth",
+        "I can hardly breathe",
+        "the bleeding is not stopping",
+        "meri saans phool rahi hai",
+        "muh se khoon band nahi ho raha",
+    ]
+    for phrase in emergencies:
+        res = triage_dental_inquiry(phrase)
+        assert res.is_emergency is True, f"Missed emergency paraphrase: '{phrase}' -> {res.urgency_tier}"
+
+    routines = [
+        "I would like to schedule a teeth cleaning next Friday",
+        "Can we book a routine checkup for next month?",
+        "my gum is bleeding a little when I brush",
+    ]
+    for phrase in routines:
+        res = triage_dental_inquiry(phrase)
+        assert res.is_emergency is False, f"False emergency alarm on routine: '{phrase}' -> {res.urgency_tier}"

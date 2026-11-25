@@ -9,11 +9,12 @@ from datetime import datetime, timezone
 from typing import Optional, List, Dict, Any
 import pypdf
 from fastapi import APIRouter, UploadFile, File, Form, HTTPException, Query, Response, Depends
+from fastapi.params import Depends as DependsType
 from pydantic import BaseModel
 from core.config import settings
 from core.db import DatabaseSession
 from core.events import event_broker
-from core.security import get_tenant_id
+from core.security import get_tenant_id, require_tenant_read_access, UNAUTHENTICATED_TENANT
 from core.health import record_project_activity
 from core.llm import llm
 from .schemas import (
@@ -40,8 +41,10 @@ def process_invoice_endpoint(request: InvoiceProcessRequest, tenant_id: str = De
     start_time = time.time()
     record_project_activity("invoice-processing")
     session_id = request.session_id or "demo_session"
-    # tenant_id comes from verified X-Tenant-ID header (Depends(get_tenant_id))
-    # NOT from request body — body field is ignored to prevent tenant spoofing.
+    if isinstance(tenant_id, DependsType) or not tenant_id:
+        tenant_id = UNAUTHENTICATED_TENANT
+    # tenant_id comes from verified JWT / configured X-Tenant-Key / X-Session-ID header,
+    # NOT from request body.
 
     # Step 1: Ingest & Compute HMAC-Secured Content Hash
     event_broker.publish(session_id, {
@@ -162,7 +165,8 @@ def process_invoice_endpoint(request: InvoiceProcessRequest, tenant_id: str = De
 @router.post("/upload")
 async def upload_file_endpoint(
     file: UploadFile = File(...),
-    session_id: Optional[str] = Form("demo_session")
+    session_id: Optional[str] = Form("demo_session"),
+    tenant_id: str = Depends(get_tenant_id),
 ):
     """Multipart file upload endpoint accepting PDF, PNG, JPG, or TXT."""
     record_project_activity("invoice-processing")
@@ -197,14 +201,17 @@ async def upload_file_endpoint(
         filename=filename,
         session_id=session_id
     )
-    return process_invoice_endpoint(req)
+    return process_invoice_endpoint(req, tenant_id=tenant_id)
 
 @router.get("/ledger")
-def get_ledger(limit: int = 50, status_filter: Optional[str] = None, tenant_id: str = Depends(get_tenant_id)):
+def get_ledger(limit: int = 50, status_filter: Optional[str] = None, tenant_id: str = Depends(require_tenant_read_access)):
     """
-    Returns persistent invoices from SQLite database scoped to the authenticated tenant.
-    tenant_id is derived from X-Tenant-ID + X-Tenant-Key headers — never from query params.
+    Returns persistent invoices from SQLite database scoped to the authenticated tenant
+    (Bearer JWT / configured X-Tenant-Key) or scoped X-Session-ID sandbox.
+    Unauthenticated callers without X-Session-ID receive HTTP 401.
     """
+    if isinstance(tenant_id, DependsType):
+        raise HTTPException(status_code=401, detail="Authentication required.")
     db = DatabaseSession()
     try:
         if status_filter:
@@ -222,8 +229,10 @@ def get_ledger(limit: int = 50, status_filter: Optional[str] = None, tenant_id: 
         db.close()
 
 @router.get("/export/csv")
-def export_csv_endpoint(tenant_id: str = Depends(get_tenant_id)):
-    """Generates and downloads CSV ledger for Google Sheets integration, scoped to authenticated tenant."""
+def export_csv_endpoint(tenant_id: str = Depends(require_tenant_read_access)):
+    """Generates and downloads CSV ledger scoped to the authenticated tenant or session."""
+    if isinstance(tenant_id, DependsType):
+        raise HTTPException(status_code=401, detail="Authentication required.")
     csv_data = accounting_adapter.export_ledger_csv(tenant_id=tenant_id)
     return Response(
         content=csv_data,

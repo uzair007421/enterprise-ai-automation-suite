@@ -92,7 +92,7 @@ Hi [Client Name],
 
 I specialize in building secure, enterprise-grade AI agents with strict tool-calling safeguards, RBAC permissions, and human approval gates.
 
-I have already engineered a production-ready Internal Financial Agent system featuring:
+I have already engineered a working prototype Internal Financial Agent system featuring:
 1. ReAct Tool Architecture: Clear separation between auto-executed read tools and gated write tools.
 2. Mandatory Write Confirmation Gate: The agent cannot modify databases or dispatch funds without explicit human sign-off.
 3. Role-Based Access Control (RBAC): Hierarchical user roles (Analyst vs Manager vs Executive) with strict permission enforcement.

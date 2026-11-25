@@ -70,10 +70,10 @@
     {
       "id": "07-dental-voice",
       "number": "07",
-      "title": "Voice AI Medical & Dental Appointment Triage Agent",
-      "vertical": "Healthcare Clinics, Dental Practices & Hospitals",
-      "commercial_problem": "Overloaded receptionists miss after-hours emergency calls, costing practices $140,000+ in annual lost patient revenue.",
-      "technical_implementation": "Conversational Web Speech API audio synthesis with clinical intent parsing, acute emergency triage routing (transfers trauma cases to surgeon), and appointment confirmation dispatch.",
+      "title": "Dental Appointment Intake & Booking Prototype (Non-Diagnostic)",
+      "vertical": "Dental Practices & Clinic Scheduling",
+      "commercial_problem": "Overloaded receptionists miss after-hours scheduling requests and double-book slots.",
+      "technical_implementation": "Web Speech API audio synthesis with rule-based symptom keyword routing, doctor slot conflict checking in SQLite, and optional Twilio SMS confirmation (scheduling demo only — not a medical triage tool).",
       "live_url": "https://uzairio.web.app/projects-live/ai-systems/07-dental-voice/index.html"
     },
     {

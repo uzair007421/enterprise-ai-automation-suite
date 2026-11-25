@@ -38,3 +38,5 @@
 {"id": "LEG-38", "query": "What is the GDPR data breach SLA timeframe?", "expected_doc": "DOC-DPA-SEC4.3", "expected_status": "ANSWERED"}
 {"id": "LEG-39", "query": "Can you recommend a good movie to watch tonight?", "expected_doc": "NONE", "expected_status": "REFUSAL_GROUNDED"}
 {"id": "LEG-40", "query": "What ingredients do I need for pizza dough recipe?", "expected_doc": "NONE", "expected_status": "REFUSAL_GROUNDED"}
+{"id": "LEG-41", "query": "What is the termination notice period for convenience in the SaaS agreement?", "expected_doc": "NONE", "expected_status": "NOT_FOUND_IN_CORPUS"}
+{"id": "LEG-42", "query": "What does the agreement say about subprocessor audits and annual SOC2 reports?", "expected_doc": "NONE", "expected_status": "NOT_FOUND_IN_CORPUS"}

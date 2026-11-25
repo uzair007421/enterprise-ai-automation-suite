@@ -43,7 +43,7 @@
 | 10 | `p10_finance` | FinTech & Treasury | Passed (6/6) | 100% (25/25) | [Proof Pack](proof_packs/p10/README.md) | **DONE** |
 | 02 | `p02_legal` | Legal Counsel | Passed (5/5) | 100% (40/40) | [Proof Pack](proof_packs/p02/README.md) | **DONE** |
 | 01 | `p01_real_estate` | Real Estate MLS | Passed (5/5) | 96.67% (30/30) | [Proof Pack](proof_packs/p01/README.md) | **DONE** |
-| 07 | `p07_voice` | Healthcare & Dental | Passed (4/4) | 100% Recall (30/30) | [Proof Pack](proof_packs/p07/README.md) | **DONE** |
+| 07 | `p07_voice` | Healthcare & Dental | Passed | Keyword Intake Routing (Non-Diagnostic) | [Proof Pack](proof_packs/p07/README.md) | **DONE** |
 | 06 | `p06_hr` | HR & Recruiting | Passed (4/4) | 100% PII Redaction (25/25) | [Proof Pack](proof_packs/p06/README.md) | **DONE** |
 | 09 | `p09_media` | Content & Media | Passed (3/3) | 100% (20/20) | [Proof Pack](proof_packs/p09/README.md) | **DONE** |
 | 08 | `p08_competitor` | SaaS Market Intel | Passed (4/4) | 100% SSRF Immunity (20/20) | [Proof Pack](proof_packs/p08/README.md) | **DONE** |

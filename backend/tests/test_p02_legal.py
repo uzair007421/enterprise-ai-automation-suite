@@ -18,8 +18,8 @@ from projects.p02_legal.vector_engine import (
 from projects.p02_legal.router import execute_legal_query, list_corpus_documents, ingest_legal_document
 from projects.p02_legal.corpus import legal_corpus
 
-def test_dense_vector_dimensions_and_unit_norm():
-    """Verify 128-D vector generation with Euclidean unit length normalization."""
+def test_feature_vector_dimensions_and_unit_norm():
+    """Verify 128-D deterministic feature vector generation with Euclidean unit length normalization."""
     vec = generate_dense_embedding("Limitation of liability under SaaS agreement.")
     assert len(vec) == 128
     # L2 norm must equal 1.0 (+/- tolerance)

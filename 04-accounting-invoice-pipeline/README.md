@@ -60,7 +60,7 @@ Open your browser at: **`http://localhost:8004`**
    *"Accounting teams waste hundreds of hours manually typing invoices into QuickBooks, and human error leads to costly double payments. Here is our autonomous Invoice-to-Accounting pipeline."*
 2. **(0:15 - 0:30) Automated Clean Processing:**  
    Click the preset: *"AWS Cloud Services ($1,458.00)"*.  
-   Show the ledger immediately update: *"Clean invoices with 98% confidence and zero discrepancies post instantly to the general ledger with zero human intervention."*
+   Show the ledger immediately update: *"Invoices with high extraction confidence and zero reconciliation discrepancies can be routed to the local sandbox ledger."*
 3. **(0:30 - 0:45) Catching Math Discrepancy & Duplicates:**  
    Click the **Staples Receipt (Math Error)** or **AWS Duplicate**.  
    Show the red warning: *"Notice the AI immediately caught the math discrepancy where tax doesn't equal total, and flagged the duplicate invoice before money leaves the bank."*

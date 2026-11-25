@@ -38,10 +38,10 @@ def execute_legal_query(request: LegalQueryRequest):
     session_id = request.session_id or "demo_session"
     tenant_id = request.tenant_id or "default_firm"
 
-    # Step 1: Embed Query into 128-D Vector Space
+    # Step 1: Project Query into 128-D Feature Vector Space
     event_broker.publish(session_id, {
-        "step": "DENSE_VECTOR_EMBEDDING",
-        "detail": f"Projecting query '{request.query[:40]}...' into 128-D normalized vector space (Tenant: {tenant_id})",
+        "step": "FEATURE_VECTOR_EMBEDDING",
+        "detail": f"Projecting query '{request.query[:40]}...' into 128-D normalized feature vector space (Tenant: {tenant_id})",
         "timestamp": time.time()
     })
     query_vec = generate_dense_embedding(request.query)

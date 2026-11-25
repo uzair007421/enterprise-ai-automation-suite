@@ -15,7 +15,7 @@
 | **Static 99.2% Uptime & 4.2s Recovery** | **RESOLVED** | Dynamic SQL aggregation over real probe and healing events in SQLite table `p05_workflow_telemetry` | [router.py](file:///D:/Projects/ai-automation-portfolio/backend/projects/p05_monitor/router.py#L70-L115) |
 | **Simulated Chaos / No Real Healing** | **RESOLVED** | Real fault simulation engine + exponential jitter backoff (429), token refresh (401), and circuit breaker (504) | [self_healing.py](file:///D:/Projects/ai-automation-portfolio/backend/projects/p05_monitor/self_healing.py#L60-L135) |
 | **Cryptic Errors without Diagnostics** | **RESOLVED** | Plain-English executive root cause translator via structured LLM diagnosis reports | [self_healing.py](file:///D:/Projects/ai-automation-portfolio/backend/projects/p05_monitor/self_healing.py#L25-L55) |
-| **Cosmetic n8n & Telegram Text** | **RESOLVED** | Production-ready n8n workflow JSON (`infra/n8n/self_healing_sentinel.json`) + real Telegram dispatcher | [telegram_alerter.py](file:///D:/Projects/ai-automation-portfolio/backend/projects/p05_monitor/telegram_alerter.py#L15-L50) |
+| **Cosmetic n8n & Telegram Text** | **RESOLVED** | Validated n8n workflow JSON (`infra/n8n/self_healing_sentinel.json`) + optional Telegram/n8n HTTP dispatchers | [telegram_alerter.py](file:///D:/Projects/ai-automation-portfolio/backend/projects/p05_monitor/telegram_alerter.py#L15-L50) |
 
 ---
 

@@ -186,8 +186,27 @@ def test_saas_multitenant_proposal_and_audit_isolation():
     assert beta_verify.is_valid is True
 
 
-def test_fin_environment_toggle_configuration():
-    """Verify banking wire live mode environment toggle is configured safely."""
+def test_fin_environment_toggle_configuration(monkeypatch):
+    """Verify FIN_BANK_LIVE_MODE wiring and ARR/MRR/runway tool mapping."""
     from core.config import settings
+    from projects.p10_finance.tools import execute_transfer_funds
+    from projects.p10_finance.agent import finguard_agent
+
     assert hasattr(settings, "FIN_BANK_LIVE_MODE")
     assert settings.FIN_BANK_LIVE_MODE is False
+
+    # ARR/MRR/runway query maps cleanly to query_saas_metrics
+    _, proposal, answer = finguard_agent.process_query(
+        "What is our ARR, MRR and runway?", "cfo_user", "CFO"
+    )
+    assert proposal is not None
+    assert proposal.tool_name == "query_saas_metrics"
+    assert "ARR" in answer and "Runway" in answer
+
+    # When FIN_BANK_LIVE_MODE=True without API URL/key, transfer is blocked (never faked)
+    monkeypatch.setattr(settings, "FIN_BANK_LIVE_MODE", True)
+    monkeypatch.setattr(settings, "FIN_BANK_API_URL", None)
+    monkeypatch.setattr(settings, "FIN_BANK_API_KEY", None)
+    res = execute_transfer_funds("Operating_Account", "AWS", 100.0, "test")
+    assert res["status"] == "LIVE_BANK_CONFIG_INCOMPLETE"
+    assert res["live_executed"] is False

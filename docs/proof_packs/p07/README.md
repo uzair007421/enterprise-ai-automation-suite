@@ -2,8 +2,8 @@
 
 ## 1. Executive Summary
 - **Slug**: `p07_voice` (`/api/ai/dental-voice`)
-- **System**: Clinical Voice Triage & Automated Scheduling Agent with Twilio SMS confirmations and Anti-Conflict Calendar booking.
-- **Audit Verification**: Previous version was purely browser client-side `speechSynthesis` simulation with zero backend API calls, zero real calendar conflict checks, and no SMS integration. Rebuilt with a 98%+ recall clinical emergency triage engine, SQLite WAL appointment persistence, doctor double-booking conflict resolution, and Twilio SMS adapter.
+- **System**: Rule-Based Dental Appointment Intake & Symptom Keyword Routing Prototype (Non-Diagnostic Demo) with Twilio SMS sandbox/live adapter and Anti-Conflict Calendar booking.
+- **Audit Verification**: Previous version was purely browser client-side `speechSynthesis` simulation with zero backend API calls, zero real calendar conflict checks, and no SMS integration. Rebuilt with rule-based emergency keyword matching, SQLite WAL appointment persistence, doctor double-booking conflict resolution, and Twilio SMS adapter. **Note:** This is a scheduling prototype, NOT a clinical or medical triage tool.
 
 ## 2. Clinical Workflow & Triage Architecture
 ```mermaid

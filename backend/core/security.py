@@ -2,14 +2,17 @@
 Core Security Module: SSRF Protection, Session Isolation & Rate Limiting
 Enforces strict perimeter security for public demos.
 """
+import hmac
 import ipaddress
+import json
 import socket
 import time
 from typing import Dict, List, Optional, Tuple
 from urllib.parse import urlparse
 import re
-from fastapi import Request, HTTPException, status, Header
+from fastapi import Request, HTTPException, status, Header, Depends
 from .config import settings
+from .auth import verify_access_token
 
 class SSRFProtection:
     """Validates URLs to prevent Server-Side Request Forgery against internal infrastructure."""
@@ -202,69 +205,96 @@ def mask_phone(phone: Optional[str]) -> Optional[str]:
 
 
 # ---------------------------------------------------------------------------
-# Tenant Isolation: Header-Based Tenant Authentication
+# Tenant Isolation: JWT / Env-Configured Key / Per-Session Sandbox
 # ---------------------------------------------------------------------------
-# NOTE: This is a demonstration-grade tenant guard.
-# In a production SaaS system, tenant_id MUST be derived from a verified JWT
-# or mTLS certificate — never from a request body or unauthenticated header.
-# Here we enforce X-Tenant-ID header and validate against an ADMIN_TOKEN
-# for write operations, satisfying the requirement that tenant identity is
-# not silently accepted from an arbitrary request body field.
+# No tenant secrets are committed in source code.
+# - Production / Multi-tenant access: supply a signed Bearer JWT containing a
+#   "tenant_id" claim, OR configure TENANT_API_KEYS_JSON in .env and supply
+#   matching X-Tenant-ID + X-Tenant-Key headers.
+# - Public unauthenticated demo: supply X-Session-ID (>= 8 safe chars) to
+#   isolate data to that session only ("demo_session:<id>"). Without any
+#   credentials or session ID, callers land in "__unauthenticated__", and
+#   ledger read endpoints reject unauthenticated reads with HTTP 401.
 # ---------------------------------------------------------------------------
 
-DEMO_TENANT_API_KEYS: Dict[str, str] = {
-    # Format: "tenant_id": "shared-api-key-for-demo"
-    # In production: derive tenant from signed JWT, never from this map.
-    "tenant_default":       "demo-key-default",
-    "tenant_company_alpha": "demo-key-alpha",
-    "tenant_company_beta":  "demo-key-beta",
-    "tenant_clinic_a":      "demo-key-clinic-a",
-    "tenant_clinic_b":      "demo-key-clinic-b",
-}
+UNAUTHENTICATED_TENANT = "__unauthenticated__"
+
+
+def _load_env_tenant_keys() -> Dict[str, str]:
+    raw = getattr(settings, "TENANT_API_KEYS_JSON", None)
+    if not raw:
+        return {}
+    try:
+        parsed = json.loads(raw)
+        if isinstance(parsed, dict):
+            return {str(k): str(v) for k, v in parsed.items() if k and v}
+    except Exception:
+        pass
+    return {}
 
 
 def get_tenant_id(
+    authorization: Optional[str] = Header(None),
     x_tenant_id: Optional[str] = Header(None, alias="X-Tenant-ID"),
     x_tenant_key: Optional[str] = Header(None, alias="X-Tenant-Key"),
+    x_session_id: Optional[str] = Header(None, alias="X-Session-ID"),
 ) -> str:
     """
-    FastAPI dependency: extracts tenant identity from the X-Tenant-ID header.
-    Validates that the caller also provides the matching X-Tenant-Key for the
-    declared tenant (demo-grade shared secret; replace with JWT in production).
-
-    If neither header is supplied the caller gets the read-only 'demo_visitor'
-    partition which cannot write to any tenant's data.
-
-    Raises HTTP 401 when the key does not match the declared tenant.
-    Raises HTTP 400 when X-Tenant-ID is supplied without X-Tenant-Key.
+    FastAPI dependency deriving tenant identity strictly from auth credentials
+    or an explicit per-visitor X-Session-ID (never from request body).
     """
-    if not x_tenant_id:
-        # Unauthenticated callers land in isolated demo partition
-        return "demo_visitor"
+    # 1. Signed Bearer JWT carrying tenant_id claim
+    if authorization and authorization.startswith("Bearer "):
+        token = authorization.split(" ", 1)[1].strip()
+        payload = verify_access_token(token)
+        jwt_tenant = payload.get("tenant_id")
+        if not jwt_tenant or not isinstance(jwt_tenant, str):
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Authenticated JWT is missing required 'tenant_id' claim.",
+            )
+        return jwt_tenant
 
-    if not x_tenant_key:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=(
-                "X-Tenant-ID supplied without X-Tenant-Key. "
-                "Provide the matching shared secret for your tenant, "
-                "or omit both headers to use the read-only demo partition."
-            ),
-        )
-
-    expected_key = DEMO_TENANT_API_KEYS.get(x_tenant_id)
-    # Allow admin token as universal override (for integration tests / ops)
-    if x_tenant_key == settings.ADMIN_TOKEN:
+    # 2. Environment-configured X-Tenant-ID + X-Tenant-Key
+    if x_tenant_id:
+        if not x_tenant_key:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="X-Tenant-ID supplied without X-Tenant-Key.",
+            )
+        tenant_keys = _load_env_tenant_keys()
+        expected_key = tenant_keys.get(x_tenant_id)
+        if not expected_key or not hmac.compare_digest(x_tenant_key, expected_key):
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail=(
+                    f"Invalid or unconfigured X-Tenant-Key for tenant '{x_tenant_id}'. "
+                    "Configure TENANT_API_KEYS_JSON in .env or use a signed Bearer JWT."
+                ),
+            )
         return x_tenant_id
 
-    if expected_key is None or x_tenant_key != expected_key:
+    # 3. Scoped public demo session (prevents cross-visitor data leakage)
+    if x_session_id:
+        clean_sid = re.sub(r"[^A-Za-z0-9_\-]", "", x_session_id.strip())
+        if len(clean_sid) >= 8:
+            return f"demo_session:{clean_sid[:64]}"
+
+    return UNAUTHENTICATED_TENANT
+
+
+def require_tenant_read_access(tenant_id: str = Depends(get_tenant_id)) -> str:
+    """
+    Requires either verified tenant credentials (JWT / X-Tenant-Key) or a
+    scoped X-Session-ID (>= 8 chars) before reading persisted tenant records.
+    """
+    if tenant_id == UNAUTHENTICATED_TENANT:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail=(
-                f"Invalid X-Tenant-Key for tenant '{x_tenant_id}'. "
-                "Access denied. tenant_id is not accepted from the request body."
+                "Authentication required to access persisted ledger data. "
+                "Supply a Bearer JWT with tenant_id, configured X-Tenant-Key, or an X-Session-ID (>= 8 chars)."
             ),
         )
-
-    return x_tenant_id
+    return tenant_id
 

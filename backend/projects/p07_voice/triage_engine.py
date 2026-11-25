@@ -1,10 +1,12 @@
 """
-Project 07: Clinical Voice Triage Engine
-High-precision, high-recall (98%+) classification of dental inquiries into:
-1. Medical Emergency (airway, systemic, acute hemorrhage) -> Immediate Emergency Number referral.
-2. Critical Dental Emergency (acute trauma, knocked-out tooth, massive bleeding) -> Same-day priority walk-in.
-3. Urgent Dental Care (severe toothache, toothache with fever, broken crown, abscess) -> Same-day scheduled slot.
-4. Routine Care (cleaning, mild gingival bleeding on brushing, consultation) -> Routine checkup slot.
+Project 07: Dental Appointment Intake & Symptom Keyword Routing Engine (Non-Diagnostic Demo)
+WARNING: This is a rule-based regex/keyword prototype for scheduling demos.
+It is NOT a clinical or medical triage device and must NOT be relied upon for patient safety.
+Classifies dental intake transcripts into:
+1. Medical Emergency -> Immediate Emergency Number referral.
+2. Critical Dental Emergency -> Same-day priority walk-in.
+3. Urgent Dental Care -> Same-day scheduled slot.
+4. Routine Care -> Routine checkup slot.
 """
 import re
 from typing import List, Tuple
@@ -16,37 +18,46 @@ def get_emergency_number() -> str:
     return getattr(settings, "EMERGENCY_NUMBER", "1122")
 
 MEDICAL_EMERGENCY_INDICATORS = [
+    # Breathing / Airway Obstruction
     r"\bchest\s+pain\b",
     r"\bdifficulty\s+(?:breathing|breath)\b",
     r"\bshortness\s+of\s+breath\b",
-    r"\btrouble\s+breathing\b",
-    r"\bcan'?t\s+breathe\b",
-    r"\bcannot\s+breathe\b",
-    # Covers: "i cannot breathe properly", "having trouble to breathe"
+    r"\btrouble\s+(?:with\s+)?breath(?:ing)?\b",
+    r"\b(?:can'?t|cannot|unable\s+to)\s+breathe\b",
     r"\b(?:i\s+)?(?:am\s+)?(?:not|cannot|can'?t)\s+breath(?:e|ing)?\s*(?:properly|well|at\s+all)?\b",
-    r"\b(?:hard|difficult|struggling)\s+to\s+breath(?:e|ing)?\b",
+    r"\b(?:hard|difficult|hardly|barely|struggl(?:e|ing))\s+(?:to\s+)?breath(?:e|ing)?\b",
+    r"\bcan\s+(?:hardly|barely)\s+breathe\b",
+    r"\b(?:can'?t|cannot)\s+get\s+(?:enough\s+|any\s+)?air\b",
+    r"\bno\s+air\b",
+    r"\bchok(?:ing|e|ed)\b",
+    r"\bsuffocat(?:ing|e)\b",
+    r"\bgasping\b",
     r"\bairway\b",
-    # Prolonged bleeding: "bleeding won't stop", "bleeding for an hour", "won't stop bleeding"
-    r"\bbleed(?:ing)?\s+(?:won'?t|will\s+not|does\s+not|doesn'?t)\s+stop\b",
+    # Severe / Non-Stopping Bleeding
+    r"\bbleed(?:ing)?\s+(?:is\s+)?(?:won'?t|will\s+not|does\s+not|doesn'?t|not|never)\s+stop(?:ping)?\b",
     r"\bbleeding\s+for\s+(?:an?\s+)?(?:hour|hours|long\s+time|while)\b",
     r"\bwon'?t\s+stop\s+bleed(?:ing)?\b",
-    r"\bblood\s+won'?t\s+stop\b",
+    r"\bblood\s+(?:won'?t\s+stop|keeps?\s+(?:pouring|gushing|flowing|streaming))\b",
+    r"\bpouring\s+(?:out\s+)?(?:blood|from\s+my\s+mouth)\b",
+    r"\bnon[\s-]?stop\s+bleed(?:ing)?\b",
     r"\buncontrolled\s+bleeding\b",
-    # Anaphylaxis / airway swelling: "tongue is swelling", "throat closing", "can't swallow"
+    # Anaphylaxis / Airway Swelling
     r"\btongue\s+(?:is\s+)?(?:swelling|swollen|enlarged)\b",
     r"\bthroat\s+(?:is\s+)?(?:swelling|closing|tightening|closing\s+up)\b",
-    r"\b(?:i\s+)?can'?t\s+swallow\b",
-    r"\bcannot\s+swallow\b",
+    r"\b(?:i\s+)?(?:can'?t|cannot)\s+swallow\b",
     r"\bhaving\s+(?:trouble|difficulty|problem)\s+swallow(?:ing)?\b",
-    # Facial swelling with systemic signs (not mere dental swelling)
-    r"\b(?:chehra|mera\s+chehra)\s+(?:bohat\s+)?(?:sooj|phool)\b",
     r"\bfacial\s+(?:swelling|trauma|edema)\b",
     r"\bheart\s+attack\b",
     r"\bstroke\b",
     r"\bunconscious(?:ness)?\b",
     r"\bhead\s+injury\b",
+    # Roman Urdu emergency phrasing
     r"\bsaans\s+(?:nahi|na)\s+aa\s+rahi\b",
+    r"\bsaans\s+(?:phool|ruk|band)\b",
     r"\bsaans\s+lene\s+me\s+(?:masla|takleef)\b",
+    r"\bkhoon\s+(?:band|ruk)\s+nahi\s+(?:ho\s+)?raha\b",
+    r"\bgala\s+(?:band|ghut)\b",
+    r"\b(?:chehra|mera\s+chehra)\s+(?:bohat\s+)?(?:sooj|phool)\b",
     r"\bseene\s+me\s+dard\b",
     r"\bdil\s+ka\s+dora\b",
     r"\bbehosh\b"

@@ -5,6 +5,9 @@ Separation of Concerns:
 - DANGEROUS WRITE TOOLS: Intercepted and suspended; requires HMAC signing.
 """
 from typing import Dict, Any, Optional
+import httpx
+from core.config import settings
+from core.security import validate_url_ssrf_safety
 
 # Mock Enterprise Treasury Accounts
 TREASURY_ACCOUNTS = {
@@ -79,17 +82,79 @@ def query_fx_rates(pair: str) -> Dict[str, Any]:
 # --- WRITE TOOLS (EXECUTION MUST BE GATED BY HMAC_SECURED HUMAN APPROVAL) ---
 
 def execute_transfer_funds(source: str, destination: str, amount: float, memo: str) -> Dict[str, Any]:
-    """Mutates ledger and executes bank wire transfer."""
+    """
+    Mutates local treasury balance in sandbox mode, or dispatches a real bank API call
+    when FIN_BANK_LIVE_MODE=True and FIN_BANK_API_URL + FIN_BANK_API_KEY are configured.
+    Never claims a live bank wire succeeded when configuration or HTTP fails.
+    """
+    if settings.FIN_BANK_LIVE_MODE:
+        if not (settings.FIN_BANK_API_URL and settings.FIN_BANK_API_KEY):
+            return {
+                "status": "LIVE_BANK_CONFIG_INCOMPLETE",
+                "execution_mode": "blocked",
+                "action": "WIRE_TRANSFER",
+                "message": "FIN_BANK_LIVE_MODE=True requires FIN_BANK_API_URL and FIN_BANK_API_KEY.",
+                "live_executed": False,
+            }
+        if not validate_url_ssrf_safety(settings.FIN_BANK_API_URL):
+            return {
+                "status": "LIVE_BANK_URL_REJECTED",
+                "execution_mode": "blocked",
+                "action": "WIRE_TRANSFER",
+                "message": "FIN_BANK_API_URL failed SSRF validation.",
+                "live_executed": False,
+            }
+        try:
+            resp = httpx.post(
+                settings.FIN_BANK_API_URL,
+                json={"source": source, "destination": destination, "amount": amount, "memo": memo},
+                headers={"Authorization": f"Bearer {settings.FIN_BANK_API_KEY}"},
+                timeout=8.0,
+            )
+            if 200 <= resp.status_code < 300:
+                if source in TREASURY_ACCOUNTS:
+                    TREASURY_ACCOUNTS[source] -= amount
+                return {
+                    "status": "LIVE_BANK_EXECUTED",
+                    "execution_mode": "live_bank_api",
+                    "action": "WIRE_TRANSFER",
+                    "source": source,
+                    "destination": destination,
+                    "amount": amount,
+                    "memo": memo,
+                    "http_status": resp.status_code,
+                    "remaining_source_balance": TREASURY_ACCOUNTS.get(source, 0.0),
+                    "live_executed": True,
+                }
+            return {
+                "status": "LIVE_BANK_HTTP_ERROR",
+                "execution_mode": "failed",
+                "action": "WIRE_TRANSFER",
+                "http_status": resp.status_code,
+                "message": f"Bank API returned HTTP {resp.status_code}; transfer was NOT executed.",
+                "live_executed": False,
+            }
+        except Exception as exc:
+            return {
+                "status": "LIVE_BANK_NETWORK_ERROR",
+                "execution_mode": "failed",
+                "action": "WIRE_TRANSFER",
+                "message": f"Bank API request failed ({type(exc).__name__}); transfer was NOT executed.",
+                "live_executed": False,
+            }
+
     if source in TREASURY_ACCOUNTS:
         TREASURY_ACCOUNTS[source] -= amount
     return {
         "status": "MUTATION_EXECUTED",
+        "execution_mode": "sandbox_ledger",
         "action": "WIRE_TRANSFER",
         "source": source,
         "destination": destination,
         "amount": amount,
         "memo": memo,
-        "remaining_source_balance": TREASURY_ACCOUNTS.get(source, 0.0)
+        "remaining_source_balance": TREASURY_ACCOUNTS.get(source, 0.0),
+        "live_executed": False,
     }
 
 def execute_ledger_update(account: str, amount: float, direction: str, reference: str) -> Dict[str, Any]:

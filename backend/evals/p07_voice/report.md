@@ -1,18 +1,14 @@
-# Project 07: Dental Voice Appointment Agent - Clinical Evaluation Report
+# Project 07: Dental Intake & Booking Prototype - Evaluation Report
 
-- **Date**: 2026-11-21
-- **Evaluation Dataset**: 30 Clinical Voice Transcripts (Acute Trauma, Bleeding, Abscess, Urgent Restorations, Routine Checkups)
-- **Status**: **PASSED**
+- **Date**: 2026-11-25
+- **Disclaimer**: Rule-based scheduling prototype — **NOT a clinical or medical triage device**.
+- **Evaluation Dataset**: 38 Transcripts (Standard + Unseen Natural-Language Paraphrases)
+- **Status**: **NEEDS_IMPROVEMENT**
 
-## Measured Clinical Metrics
+## Measured Prototype Metrics
 
-| Metric | Regulatory Target | Measured | Result |
-|---|---|---|---|
-| Critical Emergency Recall | **>= 98.0%** | **100.0%** | PASS (Zero Missed Emergencies) |
-| Urgency Tier Accuracy | >= 90.0% | **93.33%** | PASS |
-| Average Triage Latency | < 50ms | **0.199 ms** | PASS |
-
-## Clinical Protocol Adherence
-- All trauma, knocked-out teeth, and acute hemorrhage cases automatically route to Dr. Marcus Vance with immediate 1-hour priority.
-- Routine cleanings and cosmetic inquiries route to Dr. Elena Rostova.
-- Anti-conflict gate prevents double-booking of doctors in SQLite appointment registry.
+| Metric | Measured | Notes |
+|---|---|---|
+| Emergency Keyword Recall | **61.9%** | Includes unseen natural-language paraphrases |
+| Tier Classification Accuracy | **57.89%** | |
+| Average Routing Latency | **0.724 ms** | |

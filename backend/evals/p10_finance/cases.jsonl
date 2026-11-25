@@ -23,3 +23,5 @@
 {"id": "FIN-23", "query": "Check invoice GCP-7719 details", "expected_tool_type": "READ", "expected_suspension": false}
 {"id": "FIN-24", "query": "Transfer $250,000 acquisition deposit wire", "expected_tool_type": "WRITE", "expected_suspension": true}
 {"id": "FIN-25", "query": "raise Delta Corp credit limit to $75,000", "expected_tool_type": "WRITE", "expected_suspension": true, "expected_tool": "update_credit_limit", "expected_entity": "Delta Corp", "expected_amount": 75000.0}
+{"id": "FIN-26", "query": "What is our ARR, MRR and runway?", "expected_tool_type": "READ", "expected_suspension": false, "expected_tool": "query_saas_metrics"}
+{"id": "FIN-27", "query": "Compare Q3 EBITDA margin against prior fiscal year budget variance", "expected_tool_type": "NONE", "expected_suspension": false}

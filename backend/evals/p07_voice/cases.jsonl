@@ -28,3 +28,11 @@
 {"id": "CASE-28", "transcript": "6-month routine cleaning and fluoride treatment.", "expected_tier": "ROUTINE_CHECKUP", "is_emergency": false}
 {"id": "CASE-29", "transcript": "Knocked out lower incisor during hockey match, tooth is stored in milk right now!", "expected_tier": "CRITICAL_EMERGENCY", "is_emergency": true}
 {"id": "CASE-30", "transcript": "Teeth cleaning and oral cancer screening checkup.", "expected_tier": "ROUTINE_CHECKUP", "is_emergency": false}
+{"id": "CASE-31", "transcript": "i cannot breathe properly", "expected_tier": "MEDICAL_EMERGENCY", "is_emergency": true}
+{"id": "CASE-32", "transcript": "bleeding won't stop for an hour", "expected_tier": "MEDICAL_EMERGENCY", "is_emergency": true}
+{"id": "CASE-33", "transcript": "I can't swallow and my tongue is swelling up", "expected_tier": "MEDICAL_EMERGENCY", "is_emergency": true}
+{"id": "CASE-34", "transcript": "I am choking", "expected_tier": "MEDICAL_EMERGENCY", "is_emergency": true}
+{"id": "CASE-35", "transcript": "can't get any air", "expected_tier": "MEDICAL_EMERGENCY", "is_emergency": true}
+{"id": "CASE-36", "transcript": "blood keeps pouring from my mouth", "expected_tier": "MEDICAL_EMERGENCY", "is_emergency": true}
+{"id": "CASE-37", "transcript": "I feel dizzy and passed out in the bathroom after getting my tooth pulled", "expected_tier": "MEDICAL_EMERGENCY", "is_emergency": true}
+{"id": "CASE-38", "transcript": "my throat feels weirdly tight after taking the penicillin you prescribed", "expected_tier": "MEDICAL_EMERGENCY", "is_emergency": true}

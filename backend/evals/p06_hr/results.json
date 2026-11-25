@@ -1,12 +1,12 @@
 {
   "project": "06-hr-ai-recruiter-assistant",
   "benchmark_name": "25-Candidate PII Redaction & Role-Competency Screening Benchmark",
-  "timestamp": "2026-11-22 01:44:45Z",
-  "total_candidates_screened": 25,
+  "timestamp": "2026-11-25 20:08:41Z",
+  "total_candidates_screened": 26,
   "pii_anonymization_success_percent": 100.0,
-  "recommendation_accuracy_percent": 92.0,
+  "recommendation_accuracy_percent": 61.54,
   "role_mismatch_containment_percent": 100.0,
-  "average_screening_latency_ms": 33.52,
+  "average_screening_latency_ms": 34.68,
   "engine": "rules",
   "measured_metric": "100.0%",
   "audit_fixes_verified": [

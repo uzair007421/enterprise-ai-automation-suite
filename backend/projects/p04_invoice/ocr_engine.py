@@ -13,6 +13,27 @@ from .schemas import InvoiceExtractedData, LineItem
 
 logger = logging.getLogger("p04_invoice.ocr")
 
+_INVOICE_NOISE_WORDS = {
+    "and", "the", "for", "with", "from", "number", "num", "no",
+    "vendor", "date", "dated", "total", "subtotal", "amount", "due",
+    "at", "to", "is", "in", "on", "of", "by", "all", "this", "not",
+}
+
+def _trim_vendor_candidate(raw: str) -> Optional[str]:
+    """Splits a raw vendor line at common inline invoice delimiters and trims noise."""
+    candidate = re.split(
+        r"\s+(?:dated?|inv(?:oice)?(?:\s*(?:no\.?|number|num|#))?|bill\s*to|sub[\s-]?total|tax|total|amount|currency|po\s*#?)\b"
+        r"|\s+[A-Z0-9\-_]*#[A-Za-z0-9\-_]+"
+        r"|\s*[|#;]"
+        r"|\s+-\s+",
+        raw.strip(),
+        flags=re.IGNORECASE,
+    )[0]
+    candidate = candidate.strip(" .,:;-")
+    if candidate and 1 < len(candidate) <= 80:
+        return candidate
+    return None
+
 def parse_text_heuristics(text: str) -> InvoiceExtractedData:
     """
     Rule-based extraction when no LLM key is configured.
@@ -32,19 +53,18 @@ def parse_text_heuristics(text: str) -> InvoiceExtractedData:
             confidence_score=10
         )
 
-    # 1. Check for invoice number
+    # 1. Check for invoice number (strict trailing \b prevents matching 'inv' inside 'invoice')
     inv_num = None
-    # Covers: "Invoice #: S-1001", "Invoice No: INV-999", "Bill #123", "INV-5566"
     num_match = re.search(
-        r"\b(?:invoice|inv|bill)\s*(?:number|num|no|#)?\s*[:#]?\s*#?\s*([A-Za-z0-9][-A-Za-z0-9_/]{0,30})"
-        r"|\b(INV-[A-Za-z0-9\-_]+)",
+        r"\b(?:invoice|inv|bill)\b[ \t]*(?:number|num|no)?[ \t]*[:#][ \t]*[:#]?[ \t]*([A-Za-z0-9][-A-Za-z0-9_/]{0,30})"
+        r"|\b(?:invoice|inv|bill)\b[ \t]+(?:number|num|no)[ \t]+([A-Za-z0-9\-_/]*\d[A-Za-z0-9\-_/]*)"
+        r"|\b(INV-[A-Za-z0-9\-_]*\d[A-Za-z0-9\-_]*)",
         clean_text, re.IGNORECASE
     )
     if num_match:
-        extracted_num = (num_match.group(1) or num_match.group(2) or "").strip()
-        # Strip trailing noise tokens
+        extracted_num = (num_match.group(1) or num_match.group(2) or num_match.group(3) or "").strip()
         extracted_num = re.split(r"\s+(?:dated?|from|vendor|total|amount|due)\b", extracted_num, flags=re.IGNORECASE)[0].strip()
-        if len(extracted_num) >= 2 and extracted_num.lower() not in ("and", "the", "for", "with", "from", "number", "num"):
+        if len(extracted_num) >= 2 and extracted_num.lower() not in _INVOICE_NOISE_WORDS:
             inv_num = extracted_num
 
     # 2. Check for dates
@@ -89,17 +109,14 @@ def parse_text_heuristics(text: str) -> InvoiceExtractedData:
         matched_curr = curr_match.group(0)
         currency = "USD" if matched_curr == "$" else matched_curr.upper()
 
-    # 4. Check for vendor
+    # 4. Check for vendor (requires explicit delimiter after label; 'from' requires ':')
     vendor = None
-    vend_match = re.search(r"(?:vendor|from|seller|supplier|billed\s*by)[:\s]+([^\n\r|,;]+)", clean_text, re.IGNORECASE)
+    vend_match = re.search(
+        r"(?:\b(?:vendor|seller|supplier|billed[ \t]*by)\b[ \t]*[:\-]|\bfrom\b[ \t]*:)[ \t]*([^\n\r|,;]+)",
+        clean_text, re.IGNORECASE
+    )
     if vend_match:
-        candidate = vend_match.group(1).strip()
-        # Stop at common invoice field delimiters that appear on the same line
-        candidate = re.split(r"\s+(?:date|inv(?:oice)?|bill\s*to|total|amount|no\.?|#)\b", candidate, flags=re.IGNORECASE)[0].strip()
-        # Trim trailing punctuation
-        candidate = candidate.rstrip(".,;:").strip()
-        if candidate and 1 < len(candidate) <= 80:
-            vendor = candidate
+        vendor = _trim_vendor_candidate(vend_match.group(1))
 
     # Line items
     line_items = []
@@ -118,10 +135,10 @@ def parse_text_heuristics(text: str) -> InvoiceExtractedData:
 
     if not vendor and (inv_num or total is not None or inv_date or line_items):
         for line in lines:
-            if re.match(r"^(?:invoice|bill\s*to|date|total|subtotal|receipt)\b", line, re.IGNORECASE):
+            if re.match(r"^(?:invoice|inv|bill(?:\s+to)?|date|total|subtotal|tax|amount|receipt|from)\b", line, re.IGNORECASE):
                 continue
             if len(line) >= 2 and not line.startswith("$"):
-                vendor = re.split(r"\b(?:date|inv|invoice)[:#]", line, flags=re.IGNORECASE)[0].strip()
+                vendor = _trim_vendor_candidate(line)
                 if vendor:
                     break
 
