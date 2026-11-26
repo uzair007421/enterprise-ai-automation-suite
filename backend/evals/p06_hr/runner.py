@@ -1,14 +1,16 @@
 """
 Evaluation Harness for Project 06: HR AI Recruiter Assistant
-Measures:
-1. Demographic PII Anonymization Success Rate (100% required across varied names/phones/emails).
-2. Competency Rubric Recommendation Accuracy (Target >= 90.0%).
-3. Skill mismatch containment for cross-role candidates.
+Measures honestly:
+1. PII Redaction & Fail-Closed Gate across benchmark + diverse unseen synthetic CVs.
+2. Per-category leakage check (DOB, nationality, religion/sect, family, URLs, years).
+3. Competency Rubric Recommendation Accuracy.
 """
 import json
+import re
 import time
 import os
 import sys
+import random
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
 backend_root = os.path.abspath(os.path.join(current_dir, "..", ".."))
@@ -16,8 +18,10 @@ if backend_root not in sys.path:
     sys.path.insert(0, backend_root)
 
 from core.db import init_db, DatabaseSession
-from projects.p06_hr.router import screen_candidate
+from projects.p06_hr.pii_redactor import redact_demographic_pii
+from projects.p06_hr.rubric_evaluator import evaluate_candidate_rubric
 from projects.p06_hr.schemas import CandidateScreenRequest
+
 
 def run_eval():
     init_db()
@@ -37,37 +41,46 @@ def run_eval():
     mismatch_total = 0
     latencies = []
 
-    session = DatabaseSession()
-
     for c in cases:
         role = c.get("job_role", "Senior Full-Stack / AI Engineer")
-        req = CandidateScreenRequest(
-            raw_cv_text=c["cv"],
-            job_role=role,
-            session_id="eval_hr_benchmark"
-        )
         t0 = time.perf_counter()
-        res = screen_candidate(req, db=session)
-        elapsed_ms = (time.perf_counter() - t0) * 1000.0
-        latencies.append(elapsed_ms)
+        redacted, audit = redact_demographic_pii(c["cv"])
+        rubric, rec, _, _, _ = evaluate_candidate_rubric(redacted, job_role=role)
+        latencies.append((time.perf_counter() - t0) * 1000.0)
 
-        # Check PII Redaction
-        name_clean = c["name"] not in res.anonymized_cv
-        email_clean = "@" not in res.anonymized_cv
-        phone_clean = c["phone"] not in res.anonymized_cv if c.get("phone") else True
-        if name_clean and email_clean and phone_clean:
+        name_clean = c["name"].lower() not in redacted.lower()
+        email_clean = "@" not in redacted and "[at]" not in redacted.lower()
+        phone_clean = (c["phone"] not in redacted) if c.get("phone") else True
+        if name_clean and email_clean and phone_clean and audit.is_fully_anonymized:
             pii_redacted_cleanly += 1
 
-        # Check recommendation
-        if res.recommendation == c["expected_rec"]:
+        if rec == c["expected_rec"]:
             recommendation_matches += 1
-
         if c.get("max_score"):
             mismatch_total += 1
-            if res.rubric.total_score <= c["max_score"]:
+            if rubric.total_score <= c["max_score"]:
                 mismatch_contained += 1
 
-    session.close()
+    # Diverse unseen synthetic category benchmark (per-category honesty)
+    rng = random.Random(99)
+    synth_specs = [
+        ("dob", ["DOB 14/05/1990", "Born 1988", "Date of Birth: 1992-07-11"]),
+        ("nationality", ["Pakistani national", "Indian citizen", "German national"]),
+        ("religion_sect", ["Sunni", "Shia", "Catholic", "Sikh", "Ahmadi"]),
+        ("family", ["wife", "husband", "divorced", "widower", "2 kids"]),
+        ("urls_handles", ["https://linkedin.com/in/zainraza", "github.com/sanaali", "@omarkhan"]),
+        ("years", ["MBA 2003", "B.Sc. 2015", "Class of 2018"]),
+    ]
+    cat_stats = {}
+    for cat_key, samples in synth_specs:
+        passed = 0
+        for idx, marker in enumerate(samples):
+            cv = f"Candidate Name: Test User{idx}\n{marker}\nPython FastAPI engineer with 5 years of experience."
+            redacted, audit = redact_demographic_pii(cv)
+            tok = marker.split()[-1].lower()
+            if not re.search(rf"\b{re.escape(tok)}\b", redacted.lower()) or not audit.is_fully_anonymized:
+                passed += 1
+        cat_stats[cat_key] = {"passed": passed, "total": len(samples), "pct": round(passed / len(samples) * 100.0, 2)}
 
     anonymization_rate = round((pii_redacted_cleanly / total * 100.0), 2)
     recommendation_accuracy = round((recommendation_matches / total * 100.0), 2)
@@ -75,27 +88,23 @@ def run_eval():
 
     results = {
         "project": "06-hr-ai-recruiter-assistant",
-        "benchmark_name": "25-Candidate PII Redaction & Role-Competency Screening Benchmark",
+        "benchmark_name": "Candidate PII Category Redaction & Fail-Closed Eval",
         "timestamp": time.strftime("%Y-%m-%d %H:%M:%SZ"),
         "total_candidates_screened": total,
         "pii_anonymization_success_percent": anonymization_rate,
+        "synthetic_category_protection": cat_stats,
         "recommendation_accuracy_percent": recommendation_accuracy,
         "role_mismatch_containment_percent": 100.0 if mismatch_total == 0 else round((mismatch_contained / mismatch_total * 100.0), 2),
         "average_screening_latency_ms": avg_latency_ms,
         "engine": "rules",
-        "measured_metric": f"{anonymization_rate}%",
-        "audit_fixes_verified": [
-            "Real regex-based PII redactor (emails, international phones, proper-noun candidate names)",
-            "Zero PII leakage on real varied candidate names (e.g. John Doe) and phones (+1-555-0199)",
-            "Role-specific competency scoring (Python/ML on Junior Frontend gets <40 match)"
-        ]
     }
 
     with open(results_file, "w", encoding="utf-8") as f:
         json.dump(results, f, indent=2)
 
-    print(f"P06 Eval Complete: PII Anonymization={anonymization_rate}%, Recommendation Accuracy={recommendation_accuracy}% in {avg_latency_ms}ms avg")
+    print(json.dumps(results, indent=2))
     return results
+
 
 if __name__ == "__main__":
     run_eval()

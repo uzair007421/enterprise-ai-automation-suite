@@ -9,6 +9,7 @@ import json
 import datetime
 from typing import Optional
 from fastapi import APIRouter, Depends, Query
+from fastapi.responses import JSONResponse
 from core.db import get_db, DatabaseSession
 from core.events import event_broker
 from core.security import verify_admin_token, mask_email, mask_phone
@@ -39,15 +40,26 @@ def screen_candidate(req: CandidateScreenRequest, db: DatabaseSession = Depends(
         "message": f"Ingesting candidate CV for role '{req.job_role}' under organization [{tenant_id}] ({len(req.raw_cv_text)} characters)..."
     })
 
-    # Step 1: Demographic PII & Bias Redaction
+    # Step 1: Demographic PII & Bias Redaction + Mandatory Fail-Closed Residual Check
     anonymized_text, pii_audit = redact_demographic_pii(req.raw_cv_text)
     event_broker.publish(session_id, {
         "project": "p06_hr",
         "stage": "PII_ANONYMIZATION",
         "redacted_count": pii_audit.redacted_tokens_count,
         "categories": pii_audit.categories_redacted,
+        "is_fully_anonymized": pii_audit.is_fully_anonymized,
+        "residual_categories": pii_audit.residual_categories,
         "message": f"Demographic PII stripped: {pii_audit.redacted_tokens_count} tokens redacted ({', '.join(pii_audit.categories_redacted) or 'None'})."
     })
+
+    if not pii_audit.is_fully_anonymized:
+        return JSONResponse(
+            status_code=422,
+            content={
+                "status": "REDACTION_INCOMPLETE",
+                "residual_categories": pii_audit.residual_categories,
+            },
+        )
 
     # Step 2: Competency-Based Rubric Scoring
     rubric, recommendation, strengths, growth_areas, slot = evaluate_candidate_rubric(anonymized_text, job_role=req.job_role)

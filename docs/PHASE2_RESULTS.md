@@ -39,3 +39,14 @@ Every occurrence of the following terms was audited and replaced across all code
 1. **Local OCR**: No native Tesseract engine is installed in the runtime. PDF parsing is handled via `pypdf`; raw image upload requires a configured vision LLM key and returns HTTP 422 if unconfigured.
 2. **LLM Key**: Default engine is deterministic rule-based (`engine: "rules"`). Switching to `engine: "llm"` requires user's `GEMINI_API_KEY`.
 3. **Live Social Posting**: External posting to Twitter/LinkedIn in P09 requires live developer keys; unconfigured keys report `live: false` and `status: "not_configured"`.
+
+---
+
+## Phase 4 Remediation: P06 (Fail-Closed Category Redaction) & P07 (Concept-Group Intake)
+
+| Project | Before (Phase 3 Audit) | After (Phase 4) | Hold-Out / Eval Metrics |
+|---|---|---|---|
+| **P06 HR Redactor** | Leaked DOB/birth years, nationalities (`Pakistani national`), sects (`Sunni`/`Shia`), spouse words, profile URLs/handles, MBA/grad years; `is_fully_anonymized` was `redacted_tokens_count > 0`. | Added generalized category lists (70+ demonyms, sects, family, DOB, URLs/handles, calendar years 1950–2026) + mandatory second-pass `detect_residual_pii()` fail-closed HTTP 422 gate (`REDACTION_INCOMPLETE`). | **100.0%** (22/22) synthetic category check across DOB, nationality, sect, family, URLs, years; **96.15%** (25/26) full CV benchmark; 5/5 counterfactual score equality. |
+| **P07 Dental Intake** | Exact-phrase regexes missed 60% of unseen emergency wording (8/20 caught); negation broke on phrasing like `"not struggling to breathe"`. | Rebuilt `triage_dental_inquiry` with normalization, stemming, English + Roman Urdu concept groups, 5-token per-concept negation windows, and safety-first URGENT fallback. | Hold-out (42 unseen emergencies + 30 non-emergencies): **100.0%** emergency recall, **0/30** false alarms (train/dev: **79.17%** emergency recall, **0/18** false alarms; kept non-diagnostic framing). |
+
+**Still weak:** P06 does not redact uncapitalized lowercase names embedded in prose or spelled-out phone digits (e.g., `"zero-five-zero 5558899"`, caught honestly at 96.15% in evals); P07 remains a rule-based scheduling intake demo (not clinical triage) and struggles with rare idioms lacking any breathing/bleeding/systemic stem.

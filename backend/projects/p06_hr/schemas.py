@@ -15,6 +15,7 @@ class PIIAuditReport(BaseModel):
     redacted_tokens_count: int
     categories_redacted: List[str]
     is_fully_anonymized: bool
+    residual_categories: List[str] = Field(default_factory=list)
 
 class RubricBreakdown(BaseModel):
     technical_skills: int = Field(ge=0, le=40, description="Core programming languages, frameworks, AI SDKs")

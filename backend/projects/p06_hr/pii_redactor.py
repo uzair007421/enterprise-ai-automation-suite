@@ -1,143 +1,259 @@
 """
 Project 06: Demographic PII & Bias Redaction Engine
 Performs blind resume screening by stripping personally identifiable information (PII)
-and protected demographic markers (Gender, Age, Ethnicity, Religion, Family Status, Location, University)
-to enforce unbiased merit-based hiring.
+and protected demographic markers by category, followed by a mandatory second-pass
+residual detector that fails closed if any identifiable token or category survives.
 """
 import re
-from typing import Tuple, List, Set
+from typing import Tuple, List, Set, Dict
 from .schemas import PIIAuditReport
 
 EMAIL_PATTERN = r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b"
+OBFUSCATED_EMAIL_PATTERN = r"\b[A-Za-z0-9._%+-]+\s*(?:\[at\]|\(at\))\s*[A-Za-z0-9.-]+\s*(?:\[dot\]|\(dot\))\s*[A-Za-z]{2,}\b"
 PHONE_PATTERN = r"(?:\+?\d{1,4}[-.\s]*)?(?:\(?\d{2,4}\)?[-.\s]*)?\b\d{3,4}[-.\s]?\d{4}\b"
-NAME_LABEL_PATTERN = r"(?i)\b(?:Name|Candidate(?:\s+Name)?|Full\s+Name)\s*:\s*([A-Z][a-z]+(?:\s+[A-Z][a-z]+)+)"
-GENDER_PRONOUN_PATTERN = r"\b(he/him|she/her|he is|she is|his work|her work|himself|herself)\b"
-YEAR_PATTERN = r"\b(?:graduated(?:\s+from\s+[^,\n]+?)?|class\s+of|batch\s+of|degree\s+obtained)\s*(?:in\s*)?((?:19|20)\d{2})\b"
+URL_AND_HANDLE_PATTERN = (
+    r"(?:https?://[^\s<>\"')]+|www\.[^\s<>\"')]+|"
+    r"\b(?:linkedin\.com/(?:in|pub)|github\.com|gitlab\.com|twitter\.com|x\.com|"
+    r"instagram\.com|facebook\.com|tiktok\.com|youtube\.com|medium\.com|t\.me)/[^\s<>\"')]+|"
+    r"(?<!\S)@[A-Za-z0-9_.\-]{2,32}\b)"
+)
 
-DEMOGRAPHIC_GENDER = r"\b(female|male|woman|man|non-binary)\b"
-DEMOGRAPHIC_FAMILY = r"\b(?:single\s+(?:mother|father|parent)|(?:mother|father|parent)\s+of\s+\w+|\d+\s+(?:kids|children|child|dependents)|kids|children|child|dependents|pregnant|maternity|paternity)\b"
-DEMOGRAPHIC_MARITAL = r"\b(married|single|divorced|widowed|marital\s+status\s*:\s*\w+)\b"
-DEMOGRAPHIC_RELIGION = r"\b(muslim|islamic|islam|christian|christianity|hindu|hinduism|sikh|sikhism|jewish|judaism|buddhist|buddhism|catholic|protestant)\b"
-DEMOGRAPHIC_LOCATION = r"\b(lahore|karachi|islamabad|rawalpindi|peshawar|quetta|faisalabad|multan|pakistan|india|dubai|uae|london|uk|new york|nyc|california|austin|texas|seattle|toronto|canada)\b"
-DEMOGRAPHIC_AGE = r"\b(?:age\s*[:\s]*\s*\d{1,2}|\d{1,2}\s*(?:yo|y\.o\.|years\s+old)|(?<=[,\s])(?:1[8-9]|[2-6]\d)(?=[,\s]))\b"
+NAME_LABEL_PATTERN = r"(?i)\b(?:Name|Candidate(?:\s+Name)?|Full\s+Name|Applicant(?:\s+Name)?|Resume\s+of|Curriculum\s+Vitae\s+(?:for|of))\s*:\s*([A-Z][a-zA-Z'\-]+(?:\s+[A-Z][a-zA-Z'\-]+){1,3})"
+HONORIFIC_NAME_PATTERN = r"\b(?:Dr|Mr|Mrs|Ms|Miss|Mx|Prof)\.?\s+([A-Z][a-zA-Z'\-]+(?:\s+[A-Z][a-zA-Z'\-]+){1,2})\b"
 
-INSTITUTION_PATTERN = r"\b(?:[A-Z][a-zA-Z'\-]*(?:\s+[A-Z][a-zA-Z'\-]*)*\s+(?:University|College|Institute|Academy|School)|(?:University|College|Institute)\s+of\s+(?:the\s+)?[A-Z][a-zA-Z'\-]*(?:\s+[A-Z][a-zA-Z'\-]*)*|LUMS|NUST|FAST(?:-NUCES)?|UET|GIKI|IBA|MIT|UCLA|NYU|USC|Stanford|Harvard|Oxford|Cambridge|Yale|Princeton)\b"
+DOB_PATTERN = (
+    r"(?i)\b(?:date\s+of\s+birth|d\.?o\.?b\.?|dob|birth\s*date|birthdate|born(?:\s+(?:in|on))?)\b"
+    r"\s*[:\-]?\s*(?:\d{1,2}[/\-\.]\d{1,2}[/\-\.](?:19|20)\d{2}|\d{4}[/\-\.]\d{1,2}[/\-\.]\d{1,2}|"
+    r"(?:jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|jun(?:e)?|jul(?:y)?|aug(?:ust)?|"
+    r"sep(?:t(?:ember)?)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)\s+\d{1,2},?\s+(?:19|20)\d{2}|(?:19|20)\d{2})"
+)
+STANDALONE_DATE_PATTERN = r"\b(?:\d{1,2}[/\-\.](?:0?[1-9]|1[0-2])[/\-\.](?:19[5-9]\d|20[0-2]\d)|(?:19[5-9]\d|20[0-2]\d)[/\-\.](?:0?[1-9]|1[0-2])[/\-\.]\d{1,2})\b"
+LABELED_YEAR_PATTERN = r"\b(?:graduated(?:\s+from\s+[^,\n]+?)?|class\s+of|batch\s+of|degree\s+obtained|mba|b\.?sc\.?|m\.?sc\.?|b\.?a\.?|m\.?a\.?|ph\.?d\.?|started\s+in|since)\s*(?:in\s*)?((?:19[5-9]\d|20[0-2]\d))\b"
+STANDALONE_YEAR_PATTERN = r"\b(19[5-9]\d|20(?:[01]\d|2[0-6]))\b(?!\s*years?\b)"
+DEMOGRAPHIC_AGE = r"\b(?:age\s*[:\-]?\s*\d{1,2}|\d{1,2}\s*(?:y/?o|y\.?o\.?|yrs?\s+old|years?\s+old|years?\s+of\s+age)|(?<=[,\s])(?:1[89]|[2-6]\d)(?=[,\s]))\b"
 
-def redact_demographic_pii(raw_text: str) -> Tuple[str, PIIAuditReport]:
-    """
-    Strips email, phone, candidate names, gendered pronouns, graduation years,
-    and protected demographic data (Gender, Age, Marital, Family, Religion, Location, University).
-    Returns anonymized CV text and audit report.
-    """
-    text = raw_text
-    categories: List[str] = []
-    redaction_count = 0
+GENDER_TITLE_AND_PRONOUN_PATTERN = (
+    r"\b(?:mr|mrs|ms|miss|mx)\.(?=\s)|\b(?:mr|mrs|ms|miss|mx)\b(?=\s+[A-Za-z])|"
+    r"\b(?:he/him|she/her|they/them|he\s+is|she\s+is|his\s+work|her\s+work|"
+    r"he|she|him|his|her|hers|himself|herself|"
+    r"female|male|woman|man|gentleman|lady|non-binary|transgender|"
+    r"gender\s*:\s*\w+|sex\s*:\s*\w+)\b"
+)
+
+_DEMONYMS = (
+    "afghan|albanian|algerian|american|argentine|argentinian|australian|austrian|"
+    "bangladeshi|belgian|brazilian|british|bulgarian|canadian|chilean|chinese|colombian|"
+    "croatian|czech|danish|dutch|egyptian|emirati|ethiopian|filipino|finnish|french|"
+    "german|ghanaian|greek|hungarian|indian|indonesian|iranian|iraqi|irish|israeli|italian|"
+    "jamaican|japanese|jordanian|kenyan|korean|kuwaiti|lebanese|malaysian|mexican|moroccan|"
+    "nepalese|nepali|nigerian|norwegian|omani|pakistani|palestinian|peruvian|polish|"
+    "portuguese|qatari|romanian|russian|saudi|scottish|serbian|singaporean|south african|"
+    "spanish|sri lankan|sudanese|swedish|swiss|syrian|taiwanese|thai|tunisian|turkish|"
+    "ukrainian|uruguayan|venezuelan|vietnamese|welsh|yemeni|zimbabwean"
+)
+NATIONALITY_PATTERN = (
+    rf"\b(?:{_DEMONYMS}|"
+    r"nationality\s*:\s*[A-Za-z ]+|citizen(?:ship)?|national(?:ity)?|"
+    r"passport(?:\s+(?:no|number|#))?|visa\s+status|work\s+permit|green\s+card|"
+    r"permanent\s+resident|domicile|cnic)\b"
+)
+
+DEMOGRAPHIC_RELIGION = (
+    r"\b(?:muslim|islam|islamic|sunni|shia|shiite|ahmadi|ahmadiyya|ismaili|wahhabi|salafi|deobandi|barelvi|"
+    r"christian|christianity|catholic|protestant|orthodox|anglican|evangelical|baptist|lutheran|methodist|presbyterian|pentecostal|mormon|"
+    r"hindu|hinduism|vaishnava|shaiva|sikh|sikhism|khalsa|buddhist|buddhism|theravada|mahayana|"
+    r"jewish|judaism|hasidic|sephardic|ashkenazi|jain|jainism|zoroastrian|parsi|bahai|atheist|agnostic|"
+    r"religion\s*:\s*\w+|sect\s*:\s*\w+)\b"
+)
+
+DEMOGRAPHIC_FAMILY = (
+    r"\b(?:single\s+(?:mother|father|parent)|(?:mother|father|parent)\s+of\s+\w+|\d+\s+(?:kids|children|child|dependents)|"
+    r"wife|husband|spouse|fiancee?|married|unmarried|divorced|separated|widow(?:er|ed)?|marital\s+status(?:\s*:\s*\w+)?|"
+    r"kids|children|child|sons?|daughters?|mother|father|parents|dependents|pregnant|pregnancy|maternity|paternity)\b|"
+    r"\bsingle\b(?!\-)"
+)
+
+DEMOGRAPHIC_LOCATION = (
+    r"\b(?:lahore|karachi|islamabad|rawalpindi|peshawar|quetta|faisalabad|multan|"
+    r"pakistan|india|dubai|uae|london|uk|united kingdom|united states|usa|new york|nyc|"
+    r"california|austin|texas|seattle|toronto|canada|berlin|germany|paris|france|"
+    r"tokyo|japan|beijing|shanghai|china|sydney|melbourne|australia|riyadh|jeddah)\b"
+)
+
+INSTITUTION_PATTERN = (
+    r"\b(?:[A-Z][a-zA-Z'\-]*(?:\s+[A-Z][a-zA-Z'\-]*)*\s+(?:University|College|Institute|Academy|School)|"
+    r"(?:University|College|Institute)\s+of\s+(?:the\s+)?[A-Z][a-zA-Z'\-]*(?:\s+[A-Z][a-zA-Z'\-]*)*|"
+    r"LUMS|NUST|FAST(?:-NUCES)?|UET|GIKI|IBA|MIT|UCLA|NYU|USC|Stanford|Harvard|Oxford|Cambridge|Yale|Princeton)\b"
+)
+
+_NON_NAME_HEADER_WORDS = {
+    "resume", "curriculum", "vitae", "cv", "summary", "experience", "profile", "contact",
+    "engineer", "developer", "architect", "manager", "director", "analyst", "scientist",
+    "designer", "consultant", "specialist", "lead", "senior", "junior", "staff", "principal",
+    "full", "stack", "backend", "frontend", "software", "platform", "cloud", "systems",
+    "skills", "education", "projects", "objective", "work", "history", "accomplishments",
+}
+_GENERIC_EMAIL_LOCALS = {"info", "contact", "admin", "mail", "support", "jobs", "careers", "resume", "email", "hello", "work"}
+
+# Ordered category rules shared by redactor pass 1 and residual pass 2
+_CATEGORY_RULES: List[Tuple[str, str, str, int]] = [
+    ("Email Addresses", EMAIL_PATTERN, "[REDACTED_EMAIL]", 0),
+    ("Email Addresses", OBFUSCATED_EMAIL_PATTERN, "[REDACTED_EMAIL]", re.IGNORECASE),
+    ("URLs & Social Handles", URL_AND_HANDLE_PATTERN, "[REDACTED_URL]", re.IGNORECASE),
+    ("Phone Numbers", PHONE_PATTERN, "[REDACTED_PHONE]", 0),
+    ("Dates of Birth", DOB_PATTERN, "[REDACTED_DOB]", 0),
+    ("Dates of Birth", STANDALONE_DATE_PATTERN, "[REDACTED_DOB]", 0),
+    ("Graduation & Calendar Years", LABELED_YEAR_PATTERN, "[DEGREE_COMPLETED - REDACTED_YEAR]", re.IGNORECASE),
+    ("Graduation & Calendar Years", STANDALONE_YEAR_PATTERN, "[REDACTED_YEAR]", 0),
+    ("Protected Demographic: Age", DEMOGRAPHIC_AGE, "[REDACTED_AGE]", re.IGNORECASE),
+    ("Protected Demographic: Nationality", NATIONALITY_PATTERN, "[REDACTED_NATIONALITY]", re.IGNORECASE),
+    ("Protected Demographic: Religion", DEMOGRAPHIC_RELIGION, "[REDACTED_RELIGION]", re.IGNORECASE),
+    ("Protected Demographic: Family & Marital Status", DEMOGRAPHIC_FAMILY, "[REDACTED_FAMILY_STATUS]", re.IGNORECASE),
+    ("Protected Demographic: Gender & Pronouns", GENDER_TITLE_AND_PRONOUN_PATTERN, "[REDACTED_GENDER]", re.IGNORECASE),
+    ("Protected Demographic: Location", DEMOGRAPHIC_LOCATION, "[REDACTED_LOCATION]", re.IGNORECASE),
+    ("Protected Institutional Background", INSTITUTION_PATTERN, "[REDACTED_INSTITUTION]", 0),
+]
+
+
+def _extract_identifiers(raw_text: str) -> Tuple[Set[str], Set[str], Set[str]]:
+    """Extracts candidate full names/tokens, email local parts, and phone digit cores prior to redaction."""
     detected_names: Set[str] = set()
-
-    # 1. Detect candidate names via explicit labels (e.g. "Name: John Doe")
-    label_matches = re.findall(NAME_LABEL_PATTERN, text)
-    for m in label_matches:
+    for m in re.findall(NAME_LABEL_PATTERN, raw_text):
+        detected_names.add(m.strip())
+    for m in re.findall(HONORIFIC_NAME_PATTERN, raw_text):
         detected_names.add(m.strip())
 
-    # 2. Detect candidate names on header lines (first 3 non-empty lines)
-    non_empty_lines = [l.strip() for l in text.split("\n") if l.strip()]
+    non_empty_lines = [l.strip() for l in raw_text.split("\n") if l.strip()]
     for line in non_empty_lines[:3]:
-        if any(w in line.lower() for w in ["resume", "curriculum", "cv", "summary", "experience", "profile", "contact"]):
+        words_lower = set(re.findall(r"[a-z]+", line.lower()))
+        if words_lower & _NON_NAME_HEADER_WORDS:
             continue
-        m_name = re.match(r"^(?:(?:Dr\.|Mr\.|Ms\.|Mrs\.|Prof\.)\s+)?([A-Z][a-zA-Z'\-]+(?:\s+[A-Z][a-zA-Z'\-]+){1,3})$", line)
+        m_name = re.match(r"^(?:(?:Dr|Mr|Ms|Mrs|Mx|Prof)\.?\s+)?([A-Z][a-zA-Z'\-]+(?:\s+[A-Z][a-zA-Z'\-]+){1,3})$", line)
         if m_name:
             detected_names.add(m_name.group(1))
             detected_names.add(line)
 
-    # 3. Redact Emails
-    emails_found = re.findall(EMAIL_PATTERN, text)
-    if emails_found:
-        categories.append("Email Addresses")
-        redaction_count += len(emails_found)
-        text = re.sub(EMAIL_PATTERN, "[REDACTED_EMAIL]", text)
+    email_tokens: Set[str] = set()
+    for em in re.findall(EMAIL_PATTERN, raw_text):
+        local = em.split("@", 1)[0]
+        for tok in re.split(r"[._+\-]+", local):
+            if len(tok) >= 4 and tok.lower() not in _GENERIC_EMAIL_LOCALS and tok.isalpha():
+                email_tokens.add(tok)
 
-    # 4. Redact Phone Numbers
-    phones_found = re.findall(PHONE_PATTERN, text)
-    if phones_found:
-        categories.append("Phone Numbers")
-        redaction_count += len(phones_found)
-        text = re.sub(PHONE_PATTERN, "[REDACTED_PHONE]", text)
+    phone_digits: Set[str] = set()
+    for ph in re.findall(PHONE_PATTERN, raw_text):
+        digits = re.sub(r"\D", "", ph)
+        if len(digits) >= 7:
+            phone_digits.add(digits[-7:])
 
-    # 5. Redact Candidate Names
-    for name in detected_names:
-        categories.append("Candidate Full Name")
-        pattern = rf"\b{re.escape(name)}\b"
-        matches = re.findall(pattern, text, re.IGNORECASE)
-        redaction_count += len(matches)
-        text = re.sub(pattern, "[REDACTED_NAME] [CANDIDATE_ANONYMOUS_PROFILE]", text, flags=re.IGNORECASE)
+    return detected_names, email_tokens, phone_digits
 
-    # If explicit label still has unredacted name
-    text = re.sub(r"(?i)\b(Name|Candidate(?:\s+Name)?|Full\s+Name)\s*:\s*[A-Z][a-z]+(?:\s+[A-Z][a-z]+)+", r"\1: [REDACTED_NAME]", text)
 
-    # 6. Redact Graduation Years / Age indicators
-    years_found = re.findall(YEAR_PATTERN, text, re.IGNORECASE)
-    if years_found:
-        categories.append("Graduation Years (Age Proxy)")
-        redaction_count += len(years_found)
-        text = re.sub(YEAR_PATTERN, "[DEGREE_COMPLETED - REDACTED_YEAR]", text, flags=re.IGNORECASE)
+def detect_residual_pii(
+    redacted_text: str,
+    detected_names: Set[str],
+    email_tokens: Set[str],
+    phone_digits: Set[str],
+) -> List[str]:
+    """Second-pass residual scanner. Returns any PII/demographic categories still present."""
+    residuals: List[str] = []
 
-    # 7. Redact Gendered Pronouns & Demographic Gender
-    pronouns_found = re.findall(GENDER_PRONOUN_PATTERN, text, re.IGNORECASE)
-    if pronouns_found:
-        categories.append("Gender Pronouns")
-        redaction_count += len(pronouns_found)
-        text = re.sub(GENDER_PRONOUN_PATTERN, "[CANDIDATE]", text, flags=re.IGNORECASE)
+    for cat_name, pattern, _, flags in _CATEGORY_RULES:
+        if re.search(pattern, redacted_text, flags=flags):
+            if cat_name not in residuals:
+                residuals.append(cat_name)
 
-    gender_found = re.findall(DEMOGRAPHIC_GENDER, text, re.IGNORECASE)
-    if gender_found:
-        categories.append("Protected Demographic: Gender")
-        redaction_count += len(gender_found)
-        text = re.sub(DEMOGRAPHIC_GENDER, "[REDACTED_GENDER]", text, flags=re.IGNORECASE)
+    for full_name in detected_names:
+        if re.search(rf"\b{re.escape(full_name)}\b", redacted_text, flags=re.IGNORECASE):
+            if "Candidate Full Name" not in residuals:
+                residuals.append("Candidate Full Name")
+        for tok in full_name.split():
+            if len(tok) >= 3 and tok.lower() not in _NON_NAME_HEADER_WORDS:
+                if re.search(rf"\b{re.escape(tok)}\b", redacted_text, flags=re.IGNORECASE):
+                    if "Candidate Name Token" not in residuals:
+                        residuals.append("Candidate Name Token")
 
-    # 8. Redact Protected Religion
-    religion_found = re.findall(DEMOGRAPHIC_RELIGION, text, re.IGNORECASE)
-    if religion_found:
-        categories.append("Protected Demographic: Religion")
-        redaction_count += len(religion_found)
-        text = re.sub(DEMOGRAPHIC_RELIGION, "[REDACTED_RELIGION]", text, flags=re.IGNORECASE)
+    for tok in email_tokens:
+        if re.search(rf"\b{re.escape(tok)}\b", redacted_text, flags=re.IGNORECASE):
+            if "Email Identifier Token" not in residuals:
+                residuals.append("Email Identifier Token")
 
-    # 9. Redact Family & Marital Status (Prioritize multi-word family status e.g. 'single mother' over single marital)
-    family_found = re.findall(DEMOGRAPHIC_FAMILY, text, re.IGNORECASE)
-    if family_found:
-        categories.append("Protected Demographic: Family Status")
-        redaction_count += len(family_found)
-        text = re.sub(DEMOGRAPHIC_FAMILY, "[REDACTED_FAMILY_STATUS]", text, flags=re.IGNORECASE)
+    text_digits = re.sub(r"\D", "", redacted_text)
+    for d in phone_digits:
+        if d in text_digits:
+            if "Phone Digits" not in residuals:
+                residuals.append("Phone Digits")
 
-    marital_found = re.findall(DEMOGRAPHIC_MARITAL, text, re.IGNORECASE)
-    if marital_found:
-        categories.append("Protected Demographic: Marital Status")
-        redaction_count += len(marital_found)
-        text = re.sub(DEMOGRAPHIC_MARITAL, "[REDACTED_MARITAL_STATUS]", text, flags=re.IGNORECASE)
+    return residuals
 
-    # 10. Redact Age & Geographic Location
-    age_found = re.findall(DEMOGRAPHIC_AGE, text, re.IGNORECASE)
-    if age_found:
-        categories.append("Protected Demographic: Age")
-        redaction_count += len(age_found)
-        text = re.sub(DEMOGRAPHIC_AGE, "[REDACTED_AGE]", text, flags=re.IGNORECASE)
 
-    loc_found = re.findall(DEMOGRAPHIC_LOCATION, text, re.IGNORECASE)
-    if loc_found:
-        categories.append("Protected Demographic: Location")
-        redaction_count += len(loc_found)
-        text = re.sub(DEMOGRAPHIC_LOCATION, "[REDACTED_LOCATION]", text, flags=re.IGNORECASE)
+def redact_demographic_pii(raw_text: str) -> Tuple[str, PIIAuditReport]:
+    """
+    Redacts PII & protected demographic categories and runs a mandatory second-pass
+    residual verification scan so `is_fully_anonymized` is never hardcoded.
+    """
+    text = raw_text
+    categories: List[str] = []
+    redaction_count = 0
 
-    # 11. Redact Educational Institutions (Prevent university pedigree bias)
-    inst_found = re.findall(INSTITUTION_PATTERN, text)
-    if inst_found:
-        categories.append("Protected Institutional Background")
-        redaction_count += len(inst_found)
-        text = re.sub(INSTITUTION_PATTERN, "[REDACTED_INSTITUTION]", text)
+    detected_names, email_tokens, phone_digits = _extract_identifiers(raw_text)
+
+    # Pass 1a: Emails, URLs, Phones first (so handles/URLs containing names are caught before name split)
+    for cat_name, pattern, replacement, flags in _CATEGORY_RULES[:4]:
+        matches = re.findall(pattern, text, flags=flags)
+        if matches:
+            categories.append(cat_name)
+            redaction_count += len(matches)
+            text = re.sub(pattern, replacement, text, flags=flags)
+
+    # Pass 1b: Candidate names (full names, then individual non-tech/non-role tokens)
+    for name in sorted(detected_names, key=len, reverse=True):
+        pat = rf"\b{re.escape(name)}\b"
+        matches = re.findall(pat, text, flags=re.IGNORECASE)
+        if matches:
+            categories.append("Candidate Full Name")
+            redaction_count += len(matches)
+            text = re.sub(pat, "[REDACTED_NAME] [CANDIDATE_ANONYMOUS_PROFILE]", text, flags=re.IGNORECASE)
+
+    for full_name in detected_names:
+        for tok in full_name.split():
+            if len(tok) >= 3 and tok.lower() not in _NON_NAME_HEADER_WORDS:
+                pat = rf"\b{re.escape(tok)}\b"
+                matches = re.findall(pat, text, flags=re.IGNORECASE)
+                if matches:
+                    categories.append("Candidate Name Token")
+                    redaction_count += len(matches)
+                    text = re.sub(pat, "[REDACTED_NAME]", text, flags=re.IGNORECASE)
+
+    for tok in email_tokens:
+        pat = rf"\b{re.escape(tok)}\b"
+        matches = re.findall(pat, text, flags=re.IGNORECASE)
+        if matches:
+            categories.append("Email Identifier Token")
+            redaction_count += len(matches)
+            text = re.sub(pat, "[REDACTED_NAME]", text, flags=re.IGNORECASE)
+
+    text = re.sub(
+        r"(?i)\b(Name|Candidate(?:\s+Name)?|Full\s+Name|Applicant(?:\s+Name)?)\s*:\s*[A-Z][a-z]+(?:\s+[A-Z][a-z]+)+",
+        r"\1: [REDACTED_NAME]",
+        text,
+    )
+
+    # Pass 1c: Remaining demographic, DOB, year, location & institution categories
+    for cat_name, pattern, replacement, flags in _CATEGORY_RULES[4:]:
+        matches = re.findall(pattern, text, flags=flags)
+        if matches:
+            categories.append(cat_name)
+            redaction_count += len(matches)
+            text = re.sub(pattern, replacement, text, flags=flags)
+
+    # Pass 2: Mandatory residual verification scan (fail-closed source of truth)
+    residual_categories = detect_residual_pii(text, detected_names, email_tokens, phone_digits)
 
     audit = PIIAuditReport(
         redacted_tokens_count=redaction_count,
-        categories_redacted=list(set(categories)),
-        is_fully_anonymized=redaction_count > 0
+        categories_redacted=sorted(set(categories)),
+        is_fully_anonymized=(len(residual_categories) == 0),
+        residual_categories=residual_categories,
     )
-
     return text, audit

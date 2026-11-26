@@ -1,9 +1,20 @@
 {
-  "benchmark": "P07 Dental Intake Keyword Routing Evaluation (Non-Diagnostic Demo)",
-  "total_cases": 42,
-  "total_critical_emergencies": 24,
-  "emergency_recall_pct": 70.83,
-  "tier_classification_accuracy_pct": 54.76,
-  "average_triage_latency_ms": 2.126,
-  "status": "NEEDS_IMPROVEMENT"
+  "benchmark": "P07 Dental Intake Concept-Group Evaluation (Non-Diagnostic Demo)",
+  "train_dev": {
+    "cases": 42,
+    "emergency_recall_pct": 79.17,
+    "false_alarm_count": 0,
+    "non_emergency_total": 18,
+    "tier_accuracy_pct": 59.52,
+    "avg_latency_ms": 0.361
+  },
+  "holdout": {
+    "cases": 72,
+    "emergency_recall_pct": 100.0,
+    "false_alarm_count": 0,
+    "non_emergency_total": 30,
+    "tier_accuracy_pct": 95.83,
+    "avg_latency_ms": 0.309
+  },
+  "status": "PASSED"
 }

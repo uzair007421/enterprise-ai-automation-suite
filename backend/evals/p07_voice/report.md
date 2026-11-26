@@ -1,14 +1,11 @@
-# Project 07: Dental Intake & Booking Prototype - Evaluation Report
+# Project 07: Dental Appointment Intake Prototype - Evaluation Report
 
-- **Date**: 2026-11-25
-- **Disclaimer**: Rule-based scheduling prototype — **NOT a clinical or medical triage device**.
-- **Evaluation Dataset**: 42 Transcripts (Standard + Unseen Natural-Language Paraphrases)
-- **Status**: **NEEDS_IMPROVEMENT**
+- **Disclaimer**: Rule-based scheduling prototype — **NOT a clinical or medical triage tool**.
+- **Status**: **PASSED**
 
-## Measured Prototype Metrics
+## Split Results (Train/Dev vs. Hold-Out)
 
-| Metric | Measured | Notes |
-|---|---|---|
-| Emergency Keyword Recall | **70.83%** | Includes unseen natural-language paraphrases |
-| Tier Classification Accuracy | **54.76%** | |
-| Average Routing Latency | **2.126 ms** | |
+| Split | Cases | Emergency Recall | False Alarms |
+|---|---:|---:|---:|
+| Train / Dev | 42 | **79.17%** | 0/18 |
+| Hold-Out (Unseen) | 72 | **100.0%** | 0/30 |
