@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>AuraDent Voice | Telephony Receptionist & Emergency Triage Platform</title>
+  <title>AuraDent Voice | Dental Appointment Intake &amp; Booking Prototype (Non-Diagnostic)</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <script src="config.js"></script>
@@ -30,7 +30,7 @@
           <h1 class="text-base font-bold tracking-tight text-white flex items-center gap-2">
             AuraDent Voice <span class="text-[10px] bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 px-2 py-0.5 rounded-full font-mono uppercase">Production v3.6</span>
           </h1>
-          <p class="text-xs text-slate-400">Autonomous Telephony AI Receptionist • Clinical Emergency Triage • Calendar Sync & SMS Gateway</p>
+          <p class="text-xs text-slate-400">Dental Appointment Intake Prototype • Keyword Routing (Non-Diagnostic) • SQLite Slot Lock &amp; SMS Adapter</p>
         </div>
       </div>
       <div class="flex items-center gap-2">
@@ -371,13 +371,13 @@
         let isEmergency = triage.is_emergency;
 
         if (triage.is_emergency) {
-          reply = `URGENT ALERT: I have classified your symptoms as an acute clinical emergency (${triage.symptoms_detected.join(', ')}). I am immediately paging ${triage.suggested_doctor} for priority emergency care. Please remain calm.`;
+          reply = `EMERGENCY INTAKE ALERT: Matched emergency keywords (${triage.symptoms_detected.join(', ')}). Suggested routing: ${triage.suggested_doctor}. (Scheduling demo only — not medical triage.)`;
           
           document.getElementById('sms-status-tag').textContent = 'EMERGENCY DISPATCH TRIGGERED';
           document.getElementById('sms-status-tag').className = 'text-[10px] font-mono text-rose-400 font-bold';
           document.getElementById('sms-preview-card').innerHTML = `
             <div class="space-y-1 text-rose-300">
-              <span class="text-[10px] uppercase font-bold text-rose-400 block"><i class="fa-solid fa-triangle-exclamation mr-1"></i> Live Emergency Triage (${triage.suggested_doctor}):</span>
+              <span class="text-[10px] uppercase font-bold text-rose-400 block"><i class="fa-solid fa-triangle-exclamation mr-1"></i> Emergency Intake Routing (${triage.suggested_doctor}):</span>
               <p class="text-white">"${triage.triage_notes}"</p>
             </div>
           `;
