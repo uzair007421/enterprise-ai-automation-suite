@@ -36,3 +36,7 @@
 {"id": "CASE-36", "transcript": "blood keeps pouring from my mouth", "expected_tier": "MEDICAL_EMERGENCY", "is_emergency": true}
 {"id": "CASE-37", "transcript": "I feel dizzy and passed out in the bathroom after getting my tooth pulled", "expected_tier": "MEDICAL_EMERGENCY", "is_emergency": true}
 {"id": "CASE-38", "transcript": "my throat feels weirdly tight after taking the penicillin you prescribed", "expected_tier": "MEDICAL_EMERGENCY", "is_emergency": true}
+{"id": "CASE-39", "transcript": "I can't catch my breath at all", "expected_tier": "MEDICAL_EMERGENCY", "is_emergency": true}
+{"id": "CASE-40", "transcript": "blood is gushing out of my mouth and won't slow down", "expected_tier": "MEDICAL_EMERGENCY", "is_emergency": true}
+{"id": "CASE-41", "transcript": "there is blood everywhere and I feel like passing out", "expected_tier": "MEDICAL_EMERGENCY", "is_emergency": true}
+{"id": "CASE-42", "transcript": "I am not struggling to breathe, just need a polish", "expected_tier": "ROUTINE_CHECKUP", "is_emergency": false}

@@ -1,9 +1,9 @@
 {
   "benchmark": "P07 Dental Intake Keyword Routing Evaluation (Non-Diagnostic Demo)",
-  "total_cases": 38,
-  "total_critical_emergencies": 21,
-  "emergency_recall_pct": 61.9,
-  "tier_classification_accuracy_pct": 57.89,
-  "average_triage_latency_ms": 0.724,
+  "total_cases": 42,
+  "total_critical_emergencies": 24,
+  "emergency_recall_pct": 70.83,
+  "tier_classification_accuracy_pct": 54.76,
+  "average_triage_latency_ms": 2.126,
   "status": "NEEDS_IMPROVEMENT"
 }

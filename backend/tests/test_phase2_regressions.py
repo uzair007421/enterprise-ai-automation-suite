@@ -735,16 +735,16 @@ def test_p09_sourdough_input_produces_sourdough_content():
 
 
 def test_p09_banned_words_stripped_or_rejected():
-    """Verify banned AI words ('DELVE', 'game-changer', 'revolutionize') are cleanly stripped case-insensitively."""
+    """Verify banned AI words ('DELVE', 'game-changer', 'revolutionize', 'disrupt') are cleanly stripped case-insensitively."""
     resp = client.post("/api/ai/media-engine/repurpose", json={
         "source_title": "DELVE into this game-changer baking method",
-        "source_transcript": "We must revolutionize how we bake baguettes. DELVE into the tapestry of crust formation and unleash the beacon of steam injection. In conclusion, bake at 450F.",
+        "source_transcript": "We must disrupt and revolutionize how we bake baguettes. DELVE into the tapestry of crust formation and unleash the beacon of steam injection. In conclusion, bake at 450F.",
         "session_id": "test_banned_words_session"
     })
     assert resp.status_code == 200
     data = resp.json()
     all_content = " ".join(a["content"] for a in data["assets"]).lower()
-    banned = ["delve", "game-changer", "game changer", "revolutionize", "tapestry", "unleash", "beacon", "in conclusion"]
+    banned = ["delve", "game-changer", "game changer", "revolutionize", "disrupt", "tapestry", "unleash", "beacon", "in conclusion"]
     for b in banned:
         assert b not in all_content, f"Banned word '{b}' found in output!"
 

@@ -23,7 +23,7 @@ BANNED_AI_WORDS = [
     r"\bleveraging\b",
     r"\bsynergy\b",
     r"\bsynergies\b",
-    r"\bdisruptive\b",
+    r"\bdisrupt(?:ing|ive|s|ed|ion)?\b",
     r"\bgame-changer\b",
     r"\bgame changer\b",
     r"\bparadigm\s+shift\b",
@@ -39,7 +39,7 @@ BUZZWORD_PATTERNS = [
     r"\bleveraging\b",
     r"\bsynergy\b",
     r"\bsynergies\b",
-    r"\bdisruptive\b",
+    r"\bdisrupt(?:ing|ive|s|ed|ion)?\b",
     r"\bgame-changer\b",
     r"\bgame changer\b",
     r"\bparadigm\s+shift\b"

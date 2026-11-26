@@ -23,7 +23,7 @@ MEDICAL_EMERGENCY_INDICATORS = [
     r"\bdifficulty\s+(?:breathing|breath)\b",
     r"\bshortness\s+of\s+breath\b",
     r"\btrouble\s+(?:with\s+)?breath(?:ing)?\b",
-    r"\b(?:can'?t|cannot|unable\s+to)\s+breathe\b",
+    r"\b(?:can'?t|cannot|unable\s+to)\s+(?:breathe|catch\s+(?:my\s+)?breath)\b",
     r"\b(?:i\s+)?(?:am\s+)?(?:not|cannot|can'?t)\s+breath(?:e|ing)?\s*(?:properly|well|at\s+all)?\b",
     r"\b(?:hard|difficult|hardly|barely|struggl(?:e|ing))\s+(?:to\s+)?breath(?:e|ing)?\b",
     r"\bcan\s+(?:hardly|barely)\s+breathe\b",
@@ -37,13 +37,14 @@ MEDICAL_EMERGENCY_INDICATORS = [
     r"\bbleed(?:ing)?\s+(?:is\s+)?(?:won'?t|will\s+not|does\s+not|doesn'?t|not|never)\s+stop(?:ping)?\b",
     r"\bbleeding\s+for\s+(?:an?\s+)?(?:hour|hours|long\s+time|while)\b",
     r"\bwon'?t\s+stop\s+bleed(?:ing)?\b",
-    r"\bblood\s+(?:won'?t\s+stop|keeps?\s+(?:pouring|gushing|flowing|streaming))\b",
+    r"\bblood\s+(?:won'?t\s+stop|everywhere|keeps?\s+(?:pouring|gushing|flowing|streaming|spurting)|is\s+(?:gushing|pouring|spurting|streaming|flowing))\b",
     r"\bpouring\s+(?:out\s+)?(?:blood|from\s+my\s+mouth)\b",
     r"\bnon[\s-]?stop\s+bleed(?:ing)?\b",
     r"\buncontrolled\s+bleeding\b",
-    # Anaphylaxis / Airway Swelling
+    # Syncope / Fainting / Anaphylaxis
+    r"\b(?:pass(?:ing|ed)?\s+out|faint(?:ing|ed)?)\b",
     r"\btongue\s+(?:is\s+)?(?:swelling|swollen|enlarged)\b",
-    r"\bthroat\s+(?:is\s+)?(?:swelling|closing|tightening|closing\s+up)\b",
+    r"\bthroat\s+(?:is\s+)?(?:swelling|closing|tightening|tight|closing\s+up)\b",
     r"\b(?:i\s+)?(?:can'?t|cannot)\s+swallow\b",
     r"\bhaving\s+(?:trouble|difficulty|problem)\s+swallow(?:ing)?\b",
     r"\bfacial\s+(?:swelling|trauma|edema)\b",
@@ -54,8 +55,12 @@ MEDICAL_EMERGENCY_INDICATORS = [
     # Roman Urdu emergency phrasing
     r"\bsaans\s+(?:nahi|na)\s+aa\s+rahi\b",
     r"\bsaans\s+(?:phool|ruk|band)\b",
-    r"\bsaans\s+lene\s+me\s+(?:masla|takleef)\b",
+    r"\bsaans\s+lene\s+me(?:in)?\s+.*?(?:masla|takleef|dikkat|mushkil|dushwari)\b",
     r"\bkhoon\s+(?:band|ruk)\s+nahi\s+(?:ho\s+)?raha\b",
+    r"\b(?:munh|muh)\s+se\s+.*?khoon\s+(?:nikal|beh|aa)\s+raha\b",
+    r"\bzyada\s+khoon\s+(?:nikal|beh)\b",
+    r"\bzubaan\s+(?:phool|sooj)\b",
+    r"\bnigal(?:na|ne)?\s+nahi\b",
     r"\bgala\s+(?:band|ghut)\b",
     r"\b(?:chehra|mera\s+chehra)\s+(?:bohat\s+)?(?:sooj|phool)\b",
     r"\bseene\s+me\s+dard\b",
@@ -111,9 +116,10 @@ MILD_ORAL_PATTERNS = [
 ]
 
 NEGATION_PATTERNS = [
-    (r"\b(?:not?\s+(?:having|have|experience|experiencing)?\s*(?:any)?|no|without|never|zero)\s+(?:trouble\s+breathing|difficulty\s+breathing|shortness\s+of\s+breath|chest\s+pain|bleeding|pain|swelling|fever|abscess)\b", " [NEGATED_SYMPTOM] "),
+    (r"\b(?:not?\s+(?:having|have|experience|experiencing)?\s*(?:any)?|no|without|never|zero)\s+(?:struggl(?:e|ing)\s+to\s+breath(?:e|ing)?|hard\s+to\s+breath(?:e|ing)?|catching\s+(?:my\s+)?breath|trouble\s+breath(?:e|ing)?|difficulty\s+breath(?:e|ing)?|shortness\s+of\s+breath|chest\s+pain|bleeding|choking|passing\s+out|pain|swelling|fever|abscess)\b", " [NEGATED_SYMPTOM] "),
+    (r"\b(?:i\s+am\s+|i'?m\s+)?not\s+(?:struggl(?:e|ing)\s+to\s+breath(?:e|ing)?|choking|bleeding|passing\s+out|fainting)\b", " [NEGATED_SYMPTOM] "),
     (r"\b(?:don'?t|doesn'?t|didnt|did\s+not)\s+(?:have|feel)\s*(?:any)?\s+(?:trouble\s+breathing|difficulty\s+breathing|shortness\s+of\s+breath|chest\s+pain|bleeding|pain|swelling|fever)\b", " [NEGATED_SYMPTOM] "),
-    (r"\b(?:there\s+is\s+no|is\s+not|are\s+not|have\s+no)\s+(?:bleeding|pain|swelling|fever|trouble\s+breathing)\b", " [NEGATED_SYMPTOM] "),
+    (r"\b(?:there\s+is\s+no|is\s+not|are\s+not|have\s+no)\s+(?:bleeding|pain|swelling|fever|trouble\s+breathing|struggling\s+to\s+breathe)\b", " [NEGATED_SYMPTOM] "),
     (r"\bkoi\s+(?:dard|takleef|khoon|masla)\s+(?:nahi|na)\s+hai\b", " [NEGATED_SYMPTOM] ")
 ]
 

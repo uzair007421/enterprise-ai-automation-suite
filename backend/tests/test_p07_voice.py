@@ -186,6 +186,12 @@ def test_additional_paraphrased_emergencies_and_non_emergency_precision():
         "the bleeding is not stopping",
         "meri saans phool rahi hai",
         "muh se khoon band nahi ho raha",
+        "I can't catch my breath at all",
+        "blood is gushing out of my mouth",
+        "there is blood everywhere and I feel like passing out",
+        "mujhe saans lene mein bohat dikkat ho rahi hai",
+        "mere munh se bohat zyada khoon nikal raha hai",
+        "zubaan phool gayi hai aur nigalna nahi ho raha",
     ]
     for phrase in emergencies:
         res = triage_dental_inquiry(phrase)
@@ -195,6 +201,7 @@ def test_additional_paraphrased_emergencies_and_non_emergency_precision():
         "I would like to schedule a teeth cleaning next Friday",
         "Can we book a routine checkup for next month?",
         "my gum is bleeding a little when I brush",
+        "I am not struggling to breathe, just need a polish",
     ]
     for phrase in routines:
         res = triage_dental_inquiry(phrase)
