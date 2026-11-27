@@ -5,8 +5,8 @@
     "emergency_recall_pct": 79.17,
     "false_alarm_count": 0,
     "non_emergency_total": 18,
-    "tier_accuracy_pct": 59.52,
-    "avg_latency_ms": 0.361
+    "tier_accuracy_pct": 57.14,
+    "avg_latency_ms": 0.442
   },
   "holdout": {
     "cases": 72,
@@ -14,7 +14,7 @@
     "false_alarm_count": 0,
     "non_emergency_total": 30,
     "tier_accuracy_pct": 95.83,
-    "avg_latency_ms": 0.309
+    "avg_latency_ms": 0.396
   },
   "status": "PASSED"
 }

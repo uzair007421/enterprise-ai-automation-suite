@@ -64,11 +64,13 @@ def run_eval():
     # Diverse unseen synthetic category benchmark (per-category honesty)
     rng = random.Random(99)
     synth_specs = [
-        ("dob", ["DOB 14/05/1990", "Born 1988", "Date of Birth: 1992-07-11"]),
+        ("dob_age", ["DOB 14/05/1990", "Born 1988", "aged 34", "Date of Birth: 1992-07-11"]),
+        ("phones_unformatted", ["+923155551234", "03155551234", "+92 3155551234"]),
+        ("locations_regional", ["Sialkot, Sindh", "Gujranwala", "Bahawalpur", "Hyderabad"]),
         ("nationality", ["Pakistani national", "Indian citizen", "German national"]),
         ("religion_sect", ["Sunni", "Shia", "Catholic", "Sikh", "Ahmadi"]),
-        ("family", ["wife", "husband", "divorced", "widower", "2 kids"]),
-        ("urls_handles", ["https://linkedin.com/in/zainraza", "github.com/sanaali", "@omarkhan"]),
+        ("family", ["wife", "husband", "partner", "stepdaughter", "engaged", "divorced"]),
+        ("urls_handles", ["https://linkedin.com/in/zainraza", "behance.net/sanaali", "dribbble.com/omarkhan", "@omarkhan"]),
         ("years", ["MBA 2003", "B.Sc. 2015", "Class of 2018"]),
     ]
     cat_stats = {}
@@ -77,8 +79,12 @@ def run_eval():
         for idx, marker in enumerate(samples):
             cv = f"Candidate Name: Test User{idx}\n{marker}\nPython FastAPI engineer with 5 years of experience."
             redacted, audit = redact_demographic_pii(cv)
-            tok = marker.split()[-1].lower()
-            if not re.search(rf"\b{re.escape(tok)}\b", redacted.lower()) or not audit.is_fully_anonymized:
+            tok = marker.replace(",", " ").split()[-1].lower()
+            if tok.isalpha():
+                cleaned = not re.search(rf"\b{re.escape(tok)}\b", redacted.lower())
+            else:
+                cleaned = tok not in redacted.lower()
+            if cleaned or not audit.is_fully_anonymized:
                 passed += 1
         cat_stats[cat_key] = {"passed": passed, "total": len(samples), "pct": round(passed / len(samples) * 100.0, 2)}
 

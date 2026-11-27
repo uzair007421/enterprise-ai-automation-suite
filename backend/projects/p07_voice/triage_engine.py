@@ -40,6 +40,19 @@ _CONTRACTIONS = [
     (r"\bthere's\b", "there is"),
 ]
 
+# Roman Urdu spelling normalization so single/double vowel transliterations match uniformly
+_PHONETIC_NORMS = [
+    (r"\bsa+ns\b", "saans"),
+    (r"\bkh(?:oo|u)n\b", "khoon"),
+    (r"\bb(?:e|a|ay)ho+sh\b", "behosh"),
+    (r"\bn+a+h+i+\b|\bnhi\b", "nahi"),
+    (r"\bb(?:a|u)nd\b", "band"),
+    (r"\bph(?:oo|u)l", "phool"),
+    (r"\bs(?:oo|u)j", "sooj"),
+    (r"\btakl(?:ee|i)f\b", "takleef"),
+    (r"\bdikk?at\b", "dikkat"),
+]
+
 _STEM_RULES = [
     (r"^breath.*", "breath"),
     (r"^bleed.*", "bleed"),
@@ -61,6 +74,11 @@ _STEM_RULES = [
     (r"^spread.*", "spread"),
     (r"^fractur.*", "fractur"),
     (r"^unconscious.*", "unconscious"),
+    (r"^unrespons.*", "unrespons"),
+    (r"^respond.*", "respond"),
+    (r"^respons.*", "respond"),
+    (r"^collaps.*", "collaps"),
+    (r"^seiz.*", "seiz"),
     (r"^pass(?:ing|ed)?$", "pass"),
     (r"^sooj.*", "sooj"),
     (r"^nigal.*", "nigal"),
@@ -68,7 +86,8 @@ _STEM_RULES = [
     (r"^ruk.*", "ruk"),
 ]
 
-_CLAUSE_SPLIT_RE = re.compile(r"[,;.\!\?\n]+|\b(?:but|however|except|though|although)\b")
+# Split clauses on punctuation, contrasting conjunctions, and coordinating 'and'/'aur'
+_CLAUSE_SPLIT_RE = re.compile(r"[,;.\!\?\n]+|\b(?:but|however|except|though|although|and|aur)\b")
 _NEGATION_TOKENS = {"no", "not", "never", "without", "none", "zero", "nahi", "na", "bina", "koi"}
 _RESOLVED_PAST_PHRASES = {"used to", "last week", "yesterday", "ago", "resolved", "no longer", "already stopped", "better now", "now fine"}
 
@@ -81,9 +100,11 @@ def _stem_token(tok: str) -> str:
 
 
 def _normalize_clauses(text: str) -> List[List[str]]:
-    """Lowercases, expands contractions, splits clauses, and returns stemmed token lists."""
+    """Lowercases, expands contractions, normalizes Roman Urdu spelling variants, splits clauses, and stems."""
     s = text.lower()
     for pat, rep in _CONTRACTIONS:
+        s = re.sub(pat, rep, s)
+    for pat, rep in _PHONETIC_NORMS:
         s = re.sub(pat, rep, s)
     clauses: List[List[str]] = []
     for raw_clause in _CLAUSE_SPLIT_RE.split(s):
@@ -95,24 +116,26 @@ def _normalize_clauses(text: str) -> List[List[str]]:
 
 
 # Concept groups defined via stems and domain synonyms (English + Roman Urdu)
-CONCEPT_INHERENT_AIRWAY = {"chok", "suffocat", "wheez", "gasp", "airway"}
+CONCEPT_INHERENT_AIRWAY = {"chok", "suffocat", "wheez", "gasp", "airway", "trachea", "stridor"}
 CONCEPT_BREATHING_CTX = {"breath", "air", "saans", "swallow", "nigal", "speak", "talk"}
-CONCEPT_THROAT_TONGUE = {"throat", "tongue", "gala", "zubaan", "neck", "gardan"}
-CONCEPT_AIRWAY_CLOSING = {"clos", "close", "closed", "closing", "shut", "tight", "tightening", "band", "ghut", "block", "blocked"}
+CONCEPT_THROAT_TONGUE = {"throat", "tongue", "windpipe", "trachea", "larynx", "esophagus", "gala", "zubaan", "neck", "gardan", "nali"}
+CONCEPT_AIRWAY_CLOSING = {"clos", "close", "closed", "closing", "shut", "tight", "tightening", "band", "ghut", "block", "blocked", "narrow", "obstruct"}
 
 CONCEPT_BLEEDING = {"bleed", "blood", "hemorrhag", "hemorrhage", "clot", "khoon", "lothr"}
 CONCEPT_SWELLING = {"swell", "puff", "balloon", "ballooned", "enlarg", "enlarged", "edema", "sooj", "soojan", "phool"}
-CONCEPT_SPREADING = {"spread", "fast", "rapid", "rapidly", "face", "chehra", "neck", "gardan", "eye"}
+CONCEPT_SPREADING = {"spread", "fast", "rapid", "rapidly", "face", "chehra", "neck", "gardan", "eye", "shut"}
 
-CONCEPT_TRAUMA = {"knocked", "avulsed", "fractur", "broken", "accident", "trauma", "toot", "nikal", "fall", "fell", "hit", "injur", "injury"}
+CONCEPT_TRAUMA = {"knocked", "avulsed", "fractur", "broken", "accident", "trauma", "toot", "nikal", "fall", "fell", "hit", "injur", "injury", "smash", "smashed"}
 CONCEPT_TRAUMA_SEVERE_NOUNS = {"jaw", "bone"}
 
-CONCEPT_SYSTEMIC_SINGLE = {"faint", "unconscious", "anaphylax", "behosh"}
+CONCEPT_SYSTEMIC_SINGLE = {"faint", "unconscious", "unrespons", "anaphylax", "collaps", "seiz", "behosh"}
 CONCEPT_SYSTEMIC_PHRASES = [
-    ("chest", "pain"), ("chest", "tight"), ("chest", "tightness"),
+    ("chest", "pain"), ("chest", "tight"), ("chest", "tightness"), ("chest", "pressure"),
     ("heart", "attack"), ("allergic", "reaction"), ("pass", "out"),
-    ("seene", "dard"), ("dil", "dora"), ("lips", "blue"), ("turn", "blue"),
+    ("seene", "dard"), ("dil", "dora"), ("lips", "blue"), ("turn", "blue"), ("turning", "blue"),
 ]
+# Vitality verbs that become systemic emergencies when negated ("not responding", "not waking", "no pulse")
+CONCEPT_VITALITY_VERBS = {"respond", "wake", "waking", "conscious", "pulse", "move", "moving"}
 CONCEPT_DIZZY = {"dizz", "lightheaded", "chakkar"}
 
 CONCEPT_DIFFICULTY = {
@@ -123,11 +146,14 @@ CONCEPT_DIFFICULTY = {
 CONCEPT_SEVERITY = {
     "uncontrolled", "heavy", "heavily", "profuse", "profusely", "constant", "constantly",
     "gush", "pour", "spurt", "stream", "streaming", "flowing", "drip", "everywhere",
-    "fill", "filling", "lot", "much", "hour", "hours", "gauze", "nonstop", "lothr",
-    "ghanton", "rukta", "band", "bohat", "bahut", "zyada", "nikal", "beh",
+    "fill", "filling", "pool", "pooling", "soak", "soaked", "lot", "much", "hour", "hours",
+    "gauze", "nonstop", "lothr", "ghanton", "rukta", "band", "bohat", "bahut", "zyada", "nikal", "beh",
 }
-CONCEPT_MILD = {"little", "slight", "slightly", "minor", "mild", "bit", "brush", "brushing", "floss", "clean", "cleaning", "checkup", "polish", "whitening", "routine", "regular", "consultation"}
-CONCEPT_URGENT_DENTAL = {"toothache", "abscess", "pus", "infection", "fever", "bukhar", "throbbing", "excruciating", "agonizing", "unbearable", "chipped", "cracked", "crown", "filling", "dard", "hurts", "pain"}
+CONCEPT_MILD = {"little", "slight", "slightly", "minor", "mild", "bit", "brush", "brushing", "floss", "clean", "cleaning", "checkup", "polish", "whitening", "routine", "regular", "consultation", "scaling"}
+CONCEPT_ADMIN_PRICING = {"cost", "price", "pricing", "fee", "fees", "much", "quote", "estimate", "insurance", "accept", "cover", "coverage", "hours", "timing"}
+CONCEPT_RESTORATION_NOUNS = {"crown", "filling", "cap", "veneer", "brace"}
+CONCEPT_RESTORATION_DAMAGE = {"lost", "fell", "off", "loose", "broken", "cracked", "chipped", "missing", "hurt", "hurts", "pain"}
+CONCEPT_URGENT_DENTAL = {"toothache", "abscess", "pus", "infection", "fever", "bukhar", "throbbing", "excruciating", "agonizing", "unbearable", "chipped", "cracked", "dard", "hurts", "pain"}
 
 # Backward-compatible indicator list imported by p07_voice/router.py booking emergency guard
 MEDICAL_EMERGENCY_INDICATORS = [
@@ -137,8 +163,26 @@ MEDICAL_EMERGENCY_INDICATORS = [
 ]
 
 
+def _clause_has_urdu_problem_negation(toks: List[str]) -> bool:
+    """
+    Detects Urdu SOV symptom negation such as:
+    'mujhe saans ki koi masla nahi', 'koi takleef nahi hai', 'dard nahi hai'.
+    Contrasts with inability expressions like 'saans nahi aa raha' (active verb 'aa'/'ho'/'ruk').
+    """
+    if "koi" in toks and "nahi" in toks:
+        return True
+    # Problem noun followed by 'nahi (hai)' with no inability action verb ('aa', 'ho', 'ja', 'ruk', 'le')
+    _INABILITY_VERBS = {"aa", "a", "ho", "ja", "ruk", "le", "lena", "nigal", "chal"}
+    if "nahi" in toks and not (set(toks) & _INABILITY_VERBS):
+        if any(w in toks for w in ("masla", "takleef", "dikkat", "mushkil", "dard", "khoon", "sooj", "problem")):
+            return True
+    return False
+
+
 def _is_negated_at(tokens: List[str], idx: int) -> bool:
-    """Checks 5-token lookback window within the clause for negation or resolved past context."""
+    """Checks 5-token lookback window within clause plus Roman Urdu trailing SOV negation."""
+    if _clause_has_urdu_problem_negation(tokens):
+        return True
     window = tokens[max(0, idx - 5):idx]
     if any(w in _NEGATION_TOKENS for w in window):
         return True
@@ -146,10 +190,30 @@ def _is_negated_at(tokens: List[str], idx: int) -> bool:
     return any(p in window_str for p in _RESOLVED_PAST_PHRASES)
 
 
+def _has_negated_vitality(clauses: List[List[str]]) -> bool:
+    """Detects life-critical negated vitality statements like 'not responding', 'no pulse', 'not breathing'."""
+    for toks in clauses:
+        if _clause_has_urdu_problem_negation(toks):
+            continue
+        for i, tok in enumerate(toks):
+            if tok in CONCEPT_VITALITY_VERBS:
+                before = toks[max(0, i - 3):i]
+                if any(n in before for n in ("not", "no", "cannot", "never", "unable")):
+                    return True
+            # Direct "not breathing" / "no breathing" (excluding "no breathing problem/issue/trouble")
+            if tok == "breath" and i >= 1 and toks[i - 1] in ("not", "no", "cannot"):
+                next_tok = toks[i + 1] if i + 1 < len(toks) else ""
+                if next_tok not in ("problem", "problems", "issue", "issues", "trouble", "difficulty"):
+                    return True
+    return False
+
+
 def _active_tokens(clauses: List[List[str]]) -> Set[str]:
     """Collects non-negated stemmed tokens across all clauses using per-occurrence negation windows."""
     active: Set[str] = set()
     for toks in clauses:
+        if _clause_has_urdu_problem_negation(toks):
+            continue
         for i, tok in enumerate(toks):
             if tok in _NEGATION_TOKENS:
                 continue
@@ -160,6 +224,8 @@ def _active_tokens(clauses: List[List[str]]) -> Set[str]:
 
 def _clause_has_unnegated_pair(clauses: List[List[str]], group_a: Set[str], group_b: Set[str]) -> bool:
     for toks in clauses:
+        if _clause_has_urdu_problem_negation(toks):
+            continue
         a_active = any(t in group_a and not _is_negated_at(toks, i) for i, t in enumerate(toks))
         b_active = any(t in group_b and not _is_negated_at(toks, i) for i, t in enumerate(toks))
         if a_active and b_active:
@@ -169,6 +235,8 @@ def _clause_has_unnegated_pair(clauses: List[List[str]], group_a: Set[str], grou
 
 def _has_phrase_unnegated(clauses: List[List[str]], w1: str, w2: str) -> bool:
     for toks in clauses:
+        if _clause_has_urdu_problem_negation(toks):
+            continue
         if w1 in toks and w2 in toks:
             idx1 = toks.index(w1)
             idx2 = toks.index(w2)
@@ -194,18 +262,21 @@ def _has_bleeding_persistence(clauses: List[List[str]], active: Set[str]) -> boo
 def _has_airway_distress(clauses: List[List[str]], active: Set[str]) -> bool:
     if active & CONCEPT_INHERENT_AIRWAY:
         return True
-    # Breathing/swallowing concept combined with difficulty or Roman Urdu 'nahi' right after
+    # Breathing/swallowing concept combined with difficulty or Roman Urdu inability ('sans nahi aa raha')
     if active & CONCEPT_BREATHING_CTX:
         if _clause_has_unnegated_pair(clauses, CONCEPT_BREATHING_CTX, CONCEPT_DIFFICULTY):
             return True
         for toks in clauses:
+            if _clause_has_urdu_problem_negation(toks):
+                continue
             for i, tok in enumerate(toks):
                 if tok in CONCEPT_BREATHING_CTX:
-                    before = toks[max(0, i - 4):i]
+                    before = toks[max(0, i - 3):i]
                     after = toks[i + 1:i + 4]
-                    if ("nahi" in after or "masla" in after or "dikkat" in after or "takleef" in after) and not any(w in {"no", "never", "without", "not"} for w in before):
-                        return True
-    # Throat/tongue obstruction or swelling
+                    if ("nahi" in after and any(v in after for v in ("aa", "a", "ho", "ja", "le"))) or any(d in after for d in ("masla", "dikkat", "takleef", "mushkil", "band", "phool")):
+                        if not any(w in {"no", "never", "without", "not"} for w in before):
+                            return True
+    # Throat/tongue/windpipe obstruction or swelling
     if _clause_has_unnegated_pair(clauses, CONCEPT_THROAT_TONGUE, CONCEPT_AIRWAY_CLOSING | CONCEPT_SWELLING):
         return True
     return False
@@ -223,7 +294,11 @@ def triage_dental_inquiry(transcript: str, tenant_id: str = "default_clinic") ->
 
     is_mild_context = bool(active & CONCEPT_MILD) and not (active & (CONCEPT_INHERENT_AIRWAY | CONCEPT_SYSTEMIC_SINGLE))
     has_airway = _has_airway_distress(clauses, active)
-    has_systemic = bool(active & CONCEPT_SYSTEMIC_SINGLE) or any(_has_phrase_unnegated(clauses, a, b) for a, b in CONCEPT_SYSTEMIC_PHRASES)
+    has_systemic = (
+        bool(active & CONCEPT_SYSTEMIC_SINGLE)
+        or _has_negated_vitality(clauses)
+        or any(_has_phrase_unnegated(clauses, a, b) for a, b in CONCEPT_SYSTEMIC_PHRASES)
+    )
     if (active & CONCEPT_DIZZY) and bool(active & (CONCEPT_BLEEDING | CONCEPT_SWELLING)):
         has_systemic = True
     has_bleed = bool(active & CONCEPT_BLEEDING)
@@ -244,7 +319,7 @@ def triage_dental_inquiry(transcript: str, tenant_id: str = "default_clinic") ->
     if has_trauma:
         symptoms.append("dental trauma")
 
-    # 1. Medical Emergency -> Emergency Dispatch Referral (CRITICAL_EMERGENCY tier for eval compat)
+    # 1. Medical Emergency -> Emergency Dispatch Referral
     if has_airway or has_systemic or (has_severe_bleed and not has_trauma) or has_spreading_swell:
         return VoiceTriageResponse(
             is_emergency=True,
@@ -279,8 +354,10 @@ def triage_dental_inquiry(transcript: str, tenant_id: str = "default_clinic") ->
         )
 
     # 3. Urgent Dental Care + Safety-First Fallback for unnegated airway/bleeding vocab
+    is_pricing_query = bool(active & CONCEPT_ADMIN_PRICING) and not bool(active & CONCEPT_URGENT_DENTAL)
+    has_damaged_restoration = _clause_has_unnegated_pair(clauses, CONCEPT_RESTORATION_NOUNS, CONCEPT_RESTORATION_DAMAGE)
     has_ambiguous_airway_or_bleed = (bool(active & (CONCEPT_BREATHING_CTX | CONCEPT_THROAT_TONGUE)) or has_bleed) and not is_mild_context
-    has_urgent_symptom = bool(active & CONCEPT_URGENT_DENTAL) or (has_swelling and not is_mild_context) or has_trauma
+    has_urgent_symptom = (bool(active & CONCEPT_URGENT_DENTAL) or has_damaged_restoration or (has_swelling and not is_mild_context) or has_trauma) and not is_pricing_query
 
     if has_urgent_symptom or has_ambiguous_airway_or_bleed:
         if not symptoms:

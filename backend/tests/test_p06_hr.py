@@ -215,3 +215,17 @@ def test_counterfactual_score_equality_across_swaps():
         rubric, rec, _, _, _ = evaluate_candidate_rubric(redacted, job_role="Senior Backend Engineer")
         scores.append((rubric.total_score, rec))
     assert len(set(scores)) == 1, f"Counterfactual scores diverged: {scores}"
+
+
+def test_continuous_phones_regional_cities_age_family_and_portfolio_urls():
+    """Verify continuous/unformatted phones, regional cities/provinces, 'aged NN', extended family terms, and arbitrary portfolio domains."""
+    cv = """Zeeshan Qureshi
+Phone: +923155551234 | Alt: 03155551234 | WhatsApp: +92 3155551234
+Location: Sialkot, Sindh | Previous: Gujranwala, Bahawalpur, Hyderabad
+Aged 34, engaged to partner, living with stepdaughter.
+Portfolio: behance.net/zeeshanqureshi | Code: dribbble.com/zqureshi
+Senior Backend Engineer with 6 years of experience in Python, FastAPI, Docker, and PostgreSQL."""
+    redacted, audit = redact_demographic_pii(cv)
+    assert audit.is_fully_anonymized is True, f"Residuals remained: {audit.residual_categories}"
+    for leak in ["+923155551234", "03155551234", "3155551234", "Sialkot", "Sindh", "Gujranwala", "Bahawalpur", "Hyderabad", "aged 34", "34", "engaged", "partner", "stepdaughter", "behance.net", "dribbble.com"]:
+        assert leak.lower() not in redacted.lower(), f"Leaked '{leak}' in:\n{redacted}"

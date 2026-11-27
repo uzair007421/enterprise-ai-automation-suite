@@ -310,3 +310,24 @@ def test_holdout_emergency_recall_and_low_false_alarms():
 
     false_alarms = [txt for txt in HOLDOUT_NON_EMERGENCIES if triage_dental_inquiry(txt).is_emergency]
     assert len(false_alarms) <= 2, f"Too many hold-out false alarms ({len(false_alarms)}): {false_alarms}"
+
+
+def test_generalized_airway_vitality_urdu_variants_and_pricing():
+    """Verify anatomical airway synonyms, phonetic Roman Urdu ('sans'), negated vitality, Urdu SOV negation, and pricing questions."""
+    # Emergencies -> CRITICAL
+    for phrase in [
+        "his windpipe feels like it is closing up fast",
+        "sans nahi aa raha hai aur chakkar aa rahe hain",
+        "he's not responding and there's blood in his mouth",
+    ]:
+        res = triage_dental_inquiry(phrase)
+        assert res.is_emergency is True, f"Missed emergency: '{phrase}' -> {res.urgency_tier}"
+
+    # Roman Urdu SOV negation & dental pricing question -> ROUTINE
+    r_urdu_neg = triage_dental_inquiry("mujhe saans ki koi masla nahi, bas scaling karwani hai")
+    assert r_urdu_neg.is_emergency is False
+    assert r_urdu_neg.urgency_tier == "ROUTINE_CHECKUP"
+
+    r_cost = triage_dental_inquiry("how much does a filling cost")
+    assert r_cost.is_emergency is False
+    assert r_cost.urgency_tier == "ROUTINE_CHECKUP"

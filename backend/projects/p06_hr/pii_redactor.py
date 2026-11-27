@@ -10,11 +10,19 @@ from .schemas import PIIAuditReport
 
 EMAIL_PATTERN = r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b"
 OBFUSCATED_EMAIL_PATTERN = r"\b[A-Za-z0-9._%+-]+\s*(?:\[at\]|\(at\))\s*[A-Za-z0-9.-]+\s*(?:\[dot\]|\(dot\))\s*[A-Za-z]{2,}\b"
-PHONE_PATTERN = r"(?:\+?\d{1,4}[-.\s]*)?(?:\(?\d{2,4}\)?[-.\s]*)?\b\d{3,4}[-.\s]?\d{4}\b"
+# Generalized phone detector: international (+CC...), continuous 10-14 digit numbers, or formatted groups
+PHONE_PATTERN = (
+    r"(?:(?<!\d)\+\d{1,3}[\s.\-]?(?:\(?\d{1,5}\)?[\s.\-]?){1,4}\d{2,10}\b|"
+    r"\b0\d{9,13}\b|"
+    r"\b[1-9]\d{9,12}\b|"
+    r"(?:\(?\d{3,4}\)?[\s.\-]+){1,2}\d{3,4}\b)"
+)
+# Generalized URL & social handle detector: full URLs, www, @handles, and any domain.tld/path or common profile TLDs
 URL_AND_HANDLE_PATTERN = (
-    r"(?:https?://[^\s<>\"')]+|www\.[^\s<>\"')]+|"
-    r"\b(?:linkedin\.com/(?:in|pub)|github\.com|gitlab\.com|twitter\.com|x\.com|"
-    r"instagram\.com|facebook\.com|tiktok\.com|youtube\.com|medium\.com|t\.me)/[^\s<>\"')]+|"
+    r"(?:https?://[^\s<>\"')]+|"
+    r"\bwww\.[^\s<>\"')]+|"
+    r"\b[a-z0-9](?:[a-z0-9\-]{0,61}[a-z0-9])?\.(?:[a-z]{2,12})(?:\.[a-z]{2,3})?/[^\s<>\"')]+|"
+    r"(?<!asp)(?<!vb)\b[a-z0-9](?:[a-z0-9\-]{0,61}[a-z0-9])?\.(?:com|net|org|io|dev|me|co|app|pk|uk|in|ca|au|de|fr|ae|sa|info|biz|tech|xyz|site|online|portfolio|blog)(?:\.[a-z]{2,3})?\b|"
     r"(?<!\S)@[A-Za-z0-9_.\-]{2,32}\b)"
 )
 
@@ -30,7 +38,7 @@ DOB_PATTERN = (
 STANDALONE_DATE_PATTERN = r"\b(?:\d{1,2}[/\-\.](?:0?[1-9]|1[0-2])[/\-\.](?:19[5-9]\d|20[0-2]\d)|(?:19[5-9]\d|20[0-2]\d)[/\-\.](?:0?[1-9]|1[0-2])[/\-\.]\d{1,2})\b"
 LABELED_YEAR_PATTERN = r"\b(?:graduated(?:\s+from\s+[^,\n]+?)?|class\s+of|batch\s+of|degree\s+obtained|mba|b\.?sc\.?|m\.?sc\.?|b\.?a\.?|m\.?a\.?|ph\.?d\.?|started\s+in|since)\s*(?:in\s*)?((?:19[5-9]\d|20[0-2]\d))\b"
 STANDALONE_YEAR_PATTERN = r"\b(19[5-9]\d|20(?:[01]\d|2[0-6]))\b(?!\s*years?\b)"
-DEMOGRAPHIC_AGE = r"\b(?:age\s*[:\-]?\s*\d{1,2}|\d{1,2}\s*(?:y/?o|y\.?o\.?|yrs?\s+old|years?\s+old|years?\s+of\s+age)|(?<=[,\s])(?:1[89]|[2-6]\d)(?=[,\s]))\b"
+DEMOGRAPHIC_AGE = r"\b(?:aged?\s*[:\-]?\s*\d{1,2}|\d{1,2}[\s\-]+(?:y/?o|y\.?o\.?|yrs?[\s\-]+old|years?[\s\-]+old|years?\s+of\s+age)|(?<=[,\s])(?:1[89]|[2-6]\d)(?=[,\s]))\b"
 
 GENDER_TITLE_AND_PRONOUN_PATTERN = (
     r"\b(?:mr|mrs|ms|miss|mx)\.(?=\s)|\b(?:mr|mrs|ms|miss|mx)\b(?=\s+[A-Za-z])|"
@@ -68,22 +76,25 @@ DEMOGRAPHIC_RELIGION = (
 
 DEMOGRAPHIC_FAMILY = (
     r"\b(?:single\s+(?:mother|father|parent)|(?:mother|father|parent)\s+of\s+\w+|\d+\s+(?:kids|children|child|dependents)|"
-    r"wife|husband|spouse|fiancee?|married|unmarried|divorced|separated|widow(?:er|ed)?|marital\s+status(?:\s*:\s*\w+)?|"
-    r"kids|children|child|sons?|daughters?|mother|father|parents|dependents|pregnant|pregnancy|maternity|paternity)\b|"
+    r"(?:step[\-\s]?)?(?:son|daughter|mother|father|parent|child|brother|sister)s?(?:[\-\s]?in[\-\s]?law)?|"
+    r"wife|husband|spouse|partner|fiancee?|boyfriend|girlfriend|married|unmarried|engaged|divorced|separated|widow(?:er|ed)?|newlywed|"
+    r"marital\s+status(?:\s*:\s*\w+)?|kids?|children|siblings?|relatives?|mom|dad|dependents|pregnant|pregnancy|maternity|paternity|expecting)\b|"
     r"\bsingle\b(?!\-)"
 )
 
 DEMOGRAPHIC_LOCATION = (
-    r"\b(?:lahore|karachi|islamabad|rawalpindi|peshawar|quetta|faisalabad|multan|"
-    r"pakistan|india|dubai|uae|london|uk|united kingdom|united states|usa|new york|nyc|"
-    r"california|austin|texas|seattle|toronto|canada|berlin|germany|paris|france|"
-    r"tokyo|japan|beijing|shanghai|china|sydney|melbourne|australia|riyadh|jeddah)\b"
+    r"\b(?:location|city|town|province|state|region|address|hometown|based\s+in|located\s+in|residing\s+in)\b\s*[:\-]?\s*[A-Z][a-zA-Z'\-]+(?:\s*,\s*[A-Z][a-zA-Z'\-]+)*|"
+    r"\b(?:lahore|karachi|islamabad|rawalpindi|peshawar|quetta|faisalabad|multan|sialkot|gujranwala|hyderabad|bahawalpur|sukkur|abbottabad|mardan|"
+    r"punjab|sindh|balochistan|kpk|khyber\s+pakhtunkhwa|gilgit|kashmir|maharashtra|karnataka|gujarat|delhi|mumbai|bangalore|chennai|kolkata|"
+    r"pakistan|india|dubai|abu\s+dhabi|uae|london|manchester|birmingham|uk|united\s+kingdom|united\s+states|usa|new\s+york|nyc|"
+    r"california|austin|texas|seattle|toronto|ontario|canada|berlin|germany|paris|france|"
+    r"tokyo|japan|beijing|shanghai|china|sydney|melbourne|australia|riyadh|jeddah|doha|muscat|cairo)\b"
 )
 
 INSTITUTION_PATTERN = (
     r"\b(?:[A-Z][a-zA-Z'\-]*(?:\s+[A-Z][a-zA-Z'\-]*)*\s+(?:University|College|Institute|Academy|School)|"
     r"(?:University|College|Institute)\s+of\s+(?:the\s+)?[A-Z][a-zA-Z'\-]*(?:\s+[A-Z][a-zA-Z'\-]*)*|"
-    r"LUMS|NUST|FAST(?:-NUCES)?|UET|GIKI|IBA|MIT|UCLA|NYU|USC|Stanford|Harvard|Oxford|Cambridge|Yale|Princeton)\b"
+    r"LUMS|NUST|FAST(?:-NUCES)?|UET|GIKI|IBA|COMSATS|NED|MIT|UCLA|NYU|USC|Stanford|Harvard|Oxford|Cambridge|Yale|Princeton)\b"
 )
 
 _NON_NAME_HEADER_WORDS = {
@@ -246,6 +257,46 @@ def redact_demographic_pii(raw_text: str) -> Tuple[str, PIIAuditReport]:
             categories.append(cat_name)
             redaction_count += len(matches)
             text = re.sub(pattern, replacement, text, flags=flags)
+
+    # Pass 1d: Structural adjacency redaction for unseen cities before [REDACTED_LOCATION] or on contact lines
+    # e.g., "Sialkot, [REDACTED_LOCATION]" or "[REDACTED_PHONE] | Gujranwala | [REDACTED_EMAIL]"
+    _TECH_OR_SECTION_WORDS = _NON_NAME_HEADER_WORDS | {
+        "python", "fastapi", "django", "react", "typescript", "javascript", "docker", "kubernetes",
+        "postgresql", "sqlite", "redis", "aws", "gcp", "azure", "linux", "git", "ci", "cd",
+        "rest", "api", "llm", "rag", "pytorch", "tensorflow", "html", "css", "tailwind",
+        "redacted", "candidate", "anonymous", "degree", "completed", "present", "current",
+    }
+
+    def _mask_adj_city(m: re.Match) -> str:
+        word = m.group(1)
+        if word.lower() in _TECH_OR_SECTION_WORDS:
+            return m.group(0)
+        return m.group(0).replace(word, "[REDACTED_LOCATION]", 1)
+
+    adj_pat = r"\b([A-Z][a-zA-Z'\-]{2,24})\s*,\s*\[REDACTED_LOCATION\]"
+    if re.search(adj_pat, text):
+        text = re.sub(adj_pat, _mask_adj_city, text)
+        categories.append("Protected Demographic: Location")
+        redaction_count += 1
+
+    # Also mask unlabelled capitalized standalone city/name tokens on lines that already contain redacted contact/demographic markers
+    cleaned_lines = []
+    for line in text.split("\n"):
+        if any(tag in line for tag in ("[REDACTED_PHONE]", "[REDACTED_EMAIL]", "[REDACTED_DOB]", "[REDACTED_NATIONALITY]", "[REDACTED_LOCATION]", "[REDACTED_URL]")):
+            def _mask_contact_token(m: re.Match) -> str:
+                tok = m.group(1)
+                if tok.lower() in _TECH_OR_SECTION_WORDS or tok.startswith("REDACTED"):
+                    return tok
+                return "[REDACTED_LOCATION]"
+            # Standalone capitalized word bounded by pipes/commas/start-of-line
+            new_line = re.sub(r"(?:(?<=^)|(?<=[\|,]\s))([A-Z][a-z]{2,24})(?=\s*(?:[\|,]|\n|$))", _mask_contact_token, line)
+            if new_line != line:
+                categories.append("Protected Demographic: Location")
+                redaction_count += 1
+            cleaned_lines.append(new_line)
+        else:
+            cleaned_lines.append(line)
+    text = "\n".join(cleaned_lines)
 
     # Pass 2: Mandatory residual verification scan (fail-closed source of truth)
     residual_categories = detect_residual_pii(text, detected_names, email_tokens, phone_digits)

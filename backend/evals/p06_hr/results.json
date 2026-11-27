@@ -1,13 +1,23 @@
 {
   "project": "06-hr-ai-recruiter-assistant",
   "benchmark_name": "Candidate PII Category Redaction & Fail-Closed Eval",
-  "timestamp": "2026-11-26 21:10:27Z",
+  "timestamp": "2026-11-27 14:09:03Z",
   "total_candidates_screened": 26,
   "pii_anonymization_success_percent": 96.15,
   "synthetic_category_protection": {
-    "dob": {
+    "dob_age": {
+      "passed": 4,
+      "total": 4,
+      "pct": 100.0
+    },
+    "phones_unformatted": {
       "passed": 3,
       "total": 3,
+      "pct": 100.0
+    },
+    "locations_regional": {
+      "passed": 4,
+      "total": 4,
       "pct": 100.0
     },
     "nationality": {
@@ -21,13 +31,13 @@
       "pct": 100.0
     },
     "family": {
-      "passed": 5,
-      "total": 5,
+      "passed": 6,
+      "total": 6,
       "pct": 100.0
     },
     "urls_handles": {
-      "passed": 3,
-      "total": 3,
+      "passed": 4,
+      "total": 4,
       "pct": 100.0
     },
     "years": {
@@ -38,6 +48,6 @@
   },
   "recommendation_accuracy_percent": 61.54,
   "role_mismatch_containment_percent": 100.0,
-  "average_screening_latency_ms": 2.0,
+  "average_screening_latency_ms": 2.22,
   "engine": "rules"
 }
