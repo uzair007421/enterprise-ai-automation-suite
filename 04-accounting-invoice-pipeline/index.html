@@ -3,11 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>LedgerPulse | Real AI Invoice Vision & OCR Pipeline</title>
+  <title>LedgerPulse | Invoice Validation Demo (Sample Data Only)</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <!-- Real Tesseract.js OCR Engine (Client-Side Neural Network) -->
-  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
   <script src="config.js"></script>
   <style>
     ::-webkit-scrollbar { width: 6px; height: 6px; }
@@ -16,12 +14,13 @@
   </style>
 </head>
 <body class="bg-slate-950 text-slate-100 min-h-screen font-sans flex flex-col">
-  <!-- Backend Error Banner -->
+  <!-- Backend Status / Error Banner -->
   <div id="backend-error-banner" class="hidden bg-rose-950 border-b border-rose-500 text-rose-200 text-xs px-4 py-2 text-center font-mono font-bold flex items-center justify-center gap-2">
-    <i class="fa-solid fa-triangle-exclamation text-rose-400"></i> <span id="backend-error-text">Backend unavailable</span>
+    <i class="fa-solid fa-triangle-exclamation text-rose-400"></i>
+    <span id="backend-error-text">Backend API unavailable</span>
   </div>
 
-  <!-- Production Header -->
+  <!-- Header -->
   <header class="border-b border-slate-800 bg-slate-900/90 backdrop-blur sticky top-0 z-40">
     <div class="max-w-7xl mx-auto px-4 py-3 flex flex-wrap items-center justify-between gap-3">
       <div class="flex items-center space-x-3">
@@ -30,81 +29,94 @@
         </div>
         <div>
           <h1 class="text-base font-bold tracking-tight text-white flex items-center gap-2">
-            LedgerPulse AI <span class="text-[10px] bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 px-2 py-0.5 rounded-full font-mono uppercase">Neural OCR Engine</span>
+            LedgerPulse <span class="text-[10px] bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 px-2 py-0.5 rounded-full font-mono uppercase">Validation Demo</span>
           </h1>
-          <p class="text-xs text-slate-400">Real Tesseract.js WebAssembly OCR • Live Image Upload • 4-Way Math Reconciliation</p>
+          <p class="text-xs text-slate-400">Invoice validation demo (sample data only)</p>
         </div>
       </div>
-      <div class="flex items-center gap-2">
+      <div class="flex flex-wrap items-center gap-2">
         <button onclick="document.getElementById('file-upload-input').click()" class="px-3.5 py-1.5 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-slate-950 rounded-lg text-xs font-black transition shadow-md flex items-center gap-1.5">
-          <i class="fa-solid fa-cloud-arrow-up"></i> Upload Real Invoice
+          <i class="fa-solid fa-cloud-arrow-up"></i> Upload PDF / TXT
         </button>
-        <button onclick="openApiKeyModal()" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-cyan-400 rounded-lg text-xs font-bold border border-slate-700 transition flex items-center gap-1.5">
-          <i class="fa-solid fa-key"></i> Gemini Vision API Key
-        </button>
-        <a href="https://github.com/uzair007421/enterprise-ai-automation-suite/tree/main/backend/projects/p04_invoice" target="_blank" rel="noopener noreferrer" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-cyan-400 hover:text-white rounded-lg text-xs font-semibold border border-slate-700 transition flex items-center gap-1.5"><i class="fa-brands fa-github text-xs"></i> GitHub Source</a>
-        <button onclick="exportGoogleSheetCSV()" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-xs font-semibold border border-slate-700 transition flex items-center gap-1.5">
-          <i class="fa-solid fa-file-csv text-emerald-400"></i> Export to Google Sheet
+        <a href="https://github.com/uzair007421/enterprise-ai-automation-suite/tree/main/backend/projects/p04_invoice" target="_blank" rel="noopener noreferrer" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-cyan-400 hover:text-white rounded-lg text-xs font-semibold border border-slate-700 transition flex items-center gap-1.5">
+          <i class="fa-brands fa-github text-xs"></i> GitHub Source
+        </a>
+        <button onclick="downloadCSV()" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-xs font-semibold border border-slate-700 transition flex items-center gap-1.5">
+          <i class="fa-solid fa-file-csv text-emerald-400"></i> Download CSV
         </button>
       </div>
     </div>
   </header>
 
-  <!-- Hidden File Input -->
-  <input type="file" id="file-upload-input" accept="image/*" class="hidden" onchange="handleRealFileUpload(event)">
+  <!-- Hidden File Input: text-based PDF, TXT, CSV -->
+  <input type="file" id="file-upload-input" accept=".pdf,.txt,.csv,application/pdf,text/plain,text/csv" class="hidden" onchange="handleRealFileUpload(event)">
 
-  <!-- Drag & Drop Hero Upload Zone -->
-  <section class="max-w-7xl mx-auto px-4 pt-6 pb-2 w-full">
-    <div id="drop-zone" onclick="document.getElementById('file-upload-input').click()" 
-         ondragover="event.preventDefault(); this.classList.add('border-cyan-400', 'bg-cyan-950/20')" 
-         ondragleave="this.classList.remove('border-cyan-400', 'bg-cyan-950/20')" 
+  <!-- Upload & Raw Invoice Validation Panel -->
+  <section class="max-w-7xl mx-auto px-4 pt-6 pb-2 w-full grid grid-cols-1 lg:grid-cols-12 gap-4">
+    <div id="drop-zone" onclick="document.getElementById('file-upload-input').click()"
+         ondragover="event.preventDefault(); this.classList.add('border-cyan-400', 'bg-cyan-950/20')"
+         ondragleave="this.classList.remove('border-cyan-400', 'bg-cyan-950/20')"
          ondrop="handleFileDrop(event)"
-         class="border-2 border-dashed border-slate-700 hover:border-cyan-500/80 bg-slate-900/40 hover:bg-slate-900/80 rounded-2xl p-6 text-center cursor-pointer transition flex flex-col items-center justify-center gap-2">
-      <div class="w-12 h-12 rounded-full bg-cyan-500/10 text-cyan-400 flex items-center justify-center text-xl">
+         class="lg:col-span-5 border-2 border-dashed border-slate-700 hover:border-cyan-500/80 bg-slate-900/40 hover:bg-slate-900/80 rounded-2xl p-5 text-center cursor-pointer transition flex flex-col items-center justify-center gap-2">
+      <div class="w-11 h-11 rounded-full bg-cyan-500/10 text-cyan-400 flex items-center justify-center text-lg">
         <i class="fa-solid fa-file-arrow-up"></i>
       </div>
       <div>
-        <p class="text-sm font-bold text-white">Click or drag & drop any real invoice/receipt image here</p>
-        <p class="text-xs text-slate-400 mt-0.5">Supports PNG, JPG, WEBP • Processed live in browser via Tesseract.js neural OCR</p>
+        <p class="text-sm font-bold text-white">Click or drop a text-based PDF, TXT, or CSV invoice</p>
+        <p class="text-xs text-slate-400 mt-1">Processed by backend FastAPI pipeline: field parsing, 4-way math reconciliation, SHA-256 duplicate detection, and review queue.</p>
       </div>
-      <div id="ocr-progress-container" class="w-full max-w-md hidden mt-2">
+      <div id="upload-progress-container" class="w-full max-w-sm hidden mt-2">
         <div class="flex items-center justify-between text-xs font-mono text-cyan-400 mb-1">
-          <span id="ocr-status-text">Initializing Neural Worker...</span>
-          <span id="ocr-pct-text">0%</span>
+          <span id="upload-status-text">Sending to backend...</span>
+          <span id="upload-pct-text">50%</span>
         </div>
         <div class="w-full bg-slate-800 rounded-full h-2 overflow-hidden">
-          <div id="ocr-progress-bar" class="bg-cyan-500 h-2 rounded-full transition-all duration-200" style="width: 0%"></div>
+          <div id="upload-progress-bar" class="bg-cyan-500 h-2 rounded-full transition-all duration-200" style="width: 0%"></div>
         </div>
       </div>
     </div>
+
+    <div class="lg:col-span-7 bg-slate-900/60 border border-slate-800 rounded-2xl p-4 flex flex-col gap-2.5">
+      <div class="flex flex-wrap items-center justify-between gap-2">
+        <span class="text-xs font-bold text-white flex items-center gap-1.5">
+          <i class="fa-solid fa-terminal text-cyan-400"></i> Paste Sample Invoice Text (Backend Validation)
+        </span>
+        <div class="flex flex-wrap gap-1.5 text-[11px]">
+          <button onclick="fillSample('clean')" class="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-emerald-300 rounded border border-slate-700">Sample Clean</button>
+          <button onclick="fillSample('mismatch')" class="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-amber-300 rounded border border-slate-700">Sample Discrepancy</button>
+          <button onclick="validateRawText()" class="px-3 py-1 bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold rounded">Validate via Backend</button>
+        </div>
+      </div>
+      <textarea id="raw-text-input" rows="4" placeholder="Vendor: Northwind Supplies&#10;Invoice No: NW-1042&#10;Date: 2026-11-20&#10;Subtotal: $400.00&#10;Tax: $40.00&#10;Total: $440.00" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-xs text-slate-200 font-mono focus:outline-none focus:border-cyan-500 resize-none"></textarea>
+    </div>
   </section>
 
-  <!-- Metrics Bar -->
+  <!-- Metrics Bar (computed dynamically from backend ledger only) -->
   <section class="max-w-7xl mx-auto px-4 py-4 w-full grid grid-cols-2 sm:grid-cols-4 gap-4">
     <div class="bg-slate-900/70 border border-slate-800 rounded-xl p-4 flex items-center justify-between">
       <div>
-        <p class="text-[11px] text-slate-400 uppercase font-bold tracking-wider">Invoices Processed</p>
+        <p class="text-[11px] text-slate-400 uppercase font-bold tracking-wider">Session Invoices</p>
         <p id="stat-total" class="text-2xl font-black text-white mt-0.5">0</p>
       </div>
       <div class="w-10 h-10 rounded-lg bg-blue-500/10 text-blue-400 flex items-center justify-center text-base"><i class="fa-solid fa-file-invoice"></i></div>
     </div>
     <div class="bg-slate-900/70 border border-slate-800 rounded-xl p-4 flex items-center justify-between">
       <div>
-        <p class="text-[11px] text-slate-400 uppercase font-bold tracking-wider">Math Validated</p>
-        <p id="stat-synced" class="text-2xl font-black text-emerald-400 mt-0.5">0</p>
+        <p class="text-[11px] text-slate-400 uppercase font-bold tracking-wider">Approved</p>
+        <p id="stat-approved" class="text-2xl font-black text-emerald-400 mt-0.5">0</p>
       </div>
       <div class="w-10 h-10 rounded-lg bg-emerald-500/10 text-emerald-400 flex items-center justify-center text-base"><i class="fa-solid fa-circle-check"></i></div>
     </div>
     <div class="bg-slate-900/70 border border-slate-800 rounded-xl p-4 flex items-center justify-between">
       <div>
-        <p class="text-[11px] text-slate-400 uppercase font-bold tracking-wider">Discrepancy Flags</p>
+        <p class="text-[11px] text-slate-400 uppercase font-bold tracking-wider">Review / Duplicates</p>
         <p id="stat-flagged" class="text-2xl font-black text-amber-400 mt-0.5">0</p>
       </div>
       <div class="w-10 h-10 rounded-lg bg-amber-500/10 text-amber-400 flex items-center justify-center text-base"><i class="fa-solid fa-triangle-exclamation"></i></div>
     </div>
     <div class="bg-slate-900/70 border border-slate-800 rounded-xl p-4 flex items-center justify-between">
       <div>
-        <p class="text-[11px] text-slate-400 uppercase font-bold tracking-wider">Cumulative Total</p>
+        <p class="text-[11px] text-slate-400 uppercase font-bold tracking-wider">Ledger Total</p>
         <p id="stat-volume" class="text-2xl font-black text-cyan-400 mt-0.5">$0.00</p>
       </div>
       <div class="w-10 h-10 rounded-lg bg-cyan-500/10 text-cyan-400 flex items-center justify-center text-base"><i class="fa-solid fa-dollar-sign"></i></div>
@@ -113,70 +125,83 @@
 
   <!-- Main Workstation Layout -->
   <main class="max-w-7xl mx-auto px-4 pb-12 w-full grid grid-cols-1 lg:grid-cols-12 gap-6 flex-1">
-    
-    <!-- Left Column: Ingested Invoices Queue (4 cols) -->
-    <div class="lg:col-span-4 space-y-4">
+    <!-- Left Column: Backend Ledger & Review Queue (4 cols) -->
+    <div class="lg:col-span-4 space-y-3">
       <div class="flex items-center justify-between">
         <h2 class="text-sm font-bold text-white flex items-center gap-2">
-          <i class="fa-solid fa-list-check text-cyan-400"></i> Ingested Documents Queue
+          <i class="fa-solid fa-list-check text-cyan-400"></i> Backend Queue &amp; Ledger
         </h2>
-        <span class="text-xs text-slate-500 font-mono" id="queue-count-badge">0 Invoices</span>
+        <div class="flex items-center gap-2">
+          <select id="queue-filter" onchange="renderInvoiceList()" class="bg-slate-900 border border-slate-800 text-[11px] text-slate-300 rounded px-2 py-0.5 font-mono">
+            <option value="ALL">All</option>
+            <option value="APPROVED">Approved</option>
+            <option value="NEEDS_REVIEW">Review Queue</option>
+            <option value="DUPLICATE_REJECTED">Duplicates</option>
+          </select>
+          <span class="text-xs text-slate-500 font-mono" id="queue-count-badge">0 Invoices</span>
+        </div>
       </div>
 
       <div id="invoice-list" class="space-y-2.5 max-h-[640px] overflow-y-auto pr-1"></div>
     </div>
 
-    <!-- Right Column: Live OCR Deep Inspector & Math Reconciliation (8 cols) -->
+    <!-- Right Column: Validation, Duplicate Gate & Reconciliation Inspector (8 cols) -->
     <div class="lg:col-span-8 space-y-4">
-      
-      <div id="ocr-empty-state" class="bg-slate-900/50 border border-slate-800 rounded-2xl p-12 text-center text-slate-400">
+      <div id="inspector-empty-state" class="bg-slate-900/50 border border-slate-800 rounded-2xl p-12 text-center text-slate-400">
         <i class="fa-solid fa-receipt text-4xl mb-3 text-slate-600 block"></i>
-        <p class="text-sm font-bold text-white">No Invoice Selected</p>
-        <p class="text-xs text-slate-400 mt-1">Upload an image above or select an invoice from the queue to inspect real OCR extraction.</p>
+        <p class="text-sm font-bold text-white">No Invoice Validated Yet</p>
+        <p class="text-xs text-slate-400 mt-1">Upload a text-based PDF/TXT/CSV or paste sample text above to inspect backend validation, duplicate checks, and review status.</p>
       </div>
 
-      <div id="ocr-detail-panel" class="bg-slate-900/70 border border-slate-800 rounded-2xl p-5 shadow-2xl hidden space-y-5">
-        
+      <div id="inspector-detail-panel" class="bg-slate-900/70 border border-slate-800 rounded-2xl p-5 shadow-2xl hidden space-y-5">
         <!-- Header Info -->
         <div class="flex flex-wrap items-center justify-between pb-4 border-b border-slate-800 gap-3">
           <div>
-            <div class="flex items-center gap-2">
-              <h2 id="current-inv-vendor" class="text-lg font-bold text-white">Vendor Name</h2>
-              <span id="current-inv-status" class="text-[10px] px-2 py-0.5 rounded-full font-mono uppercase font-bold bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">
-                PROCESSED
-              </span>
+            <div class="flex items-center gap-2 flex-wrap">
+              <h2 id="current-inv-vendor" class="text-lg font-bold text-white">--</h2>
+              <span id="current-inv-status" class="text-[10px] px-2 py-0.5 rounded-full font-mono uppercase font-bold bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">--</span>
             </div>
-            <p id="current-inv-subtext" class="text-xs text-slate-400 mt-0.5 font-mono">Invoice Number | Date</p>
+            <p id="current-inv-subtext" class="text-xs text-slate-400 mt-0.5 font-mono">--</p>
           </div>
-          <div class="flex items-center gap-2">
-            <button onclick="reprocessCurrentWithAI()" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-cyan-400 rounded-lg text-xs font-semibold border border-slate-700 transition flex items-center gap-1.5">
-              <i class="fa-solid fa-wand-magic-sparkles"></i> Re-Extract via Vision AI
-            </button>
-            <button onclick="deleteActiveInvoice()" class="px-3 py-1.5 bg-rose-950/40 hover:bg-rose-950/70 text-rose-300 rounded-lg text-xs font-semibold border border-rose-900/60 transition">
-              <i class="fa-solid fa-trash mr-1"></i> Delete
-            </button>
+          <div class="flex items-center gap-2 text-xs font-mono">
+            <span id="backend-engine-badge" class="px-2.5 py-1 rounded bg-slate-800 text-slate-300 border border-slate-700">Engine: --</span>
           </div>
         </div>
 
-        <!-- 2-Column Split: Image Preview vs Extracted Fields -->
+        <!-- Duplicate Detection & Review Queue Status -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <!-- Image Preview -->
-          <div class="bg-slate-950 rounded-xl p-3 border border-slate-800 flex flex-col">
-            <span class="text-[11px] font-mono font-bold text-slate-400 uppercase mb-2 flex items-center gap-1.5">
-              <i class="fa-solid fa-image text-cyan-400"></i> Original Upload Preview
+          <div class="bg-slate-950 rounded-xl p-3.5 border border-slate-800 space-y-1.5">
+            <span class="text-[11px] font-mono font-bold text-slate-400 uppercase flex items-center gap-1.5">
+              <i class="fa-solid fa-fingerprint text-cyan-400"></i> SHA-256 Duplicate Gate
             </span>
-            <div class="flex-1 flex items-center justify-center bg-slate-900/60 rounded-lg overflow-hidden border border-slate-800/80 min-h-[200px] max-h-[280px]">
-              <img id="current-inv-img" src="" alt="Invoice Preview" class="max-h-full max-w-full object-contain">
-            </div>
+            <p id="dup-status-text" class="text-xs font-mono font-bold text-emerald-400">--</p>
+            <p id="dup-hash-text" class="text-[11px] font-mono text-slate-500 break-all">--</p>
           </div>
 
-          <!-- Raw OCR Text / Stream -->
+          <div class="bg-slate-950 rounded-xl p-3.5 border border-slate-800 space-y-1.5">
+            <span class="text-[11px] font-mono font-bold text-slate-400 uppercase flex items-center gap-1.5">
+              <i class="fa-solid fa-shield-halved text-amber-400"></i> Ledger &amp; Accounting Sync Status
+            </span>
+            <p id="sync-status-text" class="text-xs font-mono font-bold text-white">--</p>
+            <p id="sync-message-text" class="text-[11px] text-slate-400">--</p>
+          </div>
+        </div>
+
+        <!-- Source Document Preview vs Backend Extracted JSON -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="bg-slate-950 rounded-xl p-3 border border-slate-800 flex flex-col">
+            <span class="text-[11px] font-mono font-bold text-slate-400 uppercase mb-2 flex items-center gap-1.5">
+              <i class="fa-solid fa-file-lines text-cyan-400"></i> Submitted Document Text
+            </span>
+            <textarea id="current-inv-source-text" rows="7" readonly class="w-full flex-1 bg-slate-900/90 border border-slate-800 rounded-lg p-2.5 text-xs text-slate-300 font-mono leading-relaxed resize-none"></textarea>
+          </div>
+
           <div class="bg-slate-950 rounded-xl p-3 border border-slate-800 flex flex-col">
             <span class="text-[11px] font-mono font-bold text-slate-400 uppercase mb-2 flex items-center justify-between">
-              <span><i class="fa-solid fa-align-left text-amber-400 mr-1"></i> Raw OCR Text Extracted</span>
-              <span id="ocr-confidence-badge" class="text-[10px] text-emerald-400 font-mono">Confidence: 96%</span>
+              <span><i class="fa-solid fa-code text-amber-400 mr-1"></i> Backend Extracted Payload</span>
+              <span id="backend-confidence-badge" class="text-[10px] text-cyan-300 font-mono">Confidence: --</span>
             </span>
-            <textarea id="current-inv-raw-text" rows="8" readonly class="w-full flex-1 bg-slate-900/90 border border-slate-800 rounded-lg p-2.5 text-xs text-slate-300 font-mono leading-relaxed resize-none"></textarea>
+            <textarea id="current-inv-extracted-json" rows="7" readonly class="w-full flex-1 bg-slate-900/90 border border-slate-800 rounded-lg p-2.5 text-xs text-slate-300 font-mono leading-relaxed resize-none"></textarea>
           </div>
         </div>
 
@@ -186,7 +211,7 @@
             <h3 class="text-xs font-bold text-white uppercase font-mono tracking-wider">
               <i class="fa-solid fa-table-list text-cyan-400 mr-1.5"></i> Parsed Itemized Line Items
             </h3>
-            <span class="text-[10px] text-slate-500 font-mono">Deterministic Extractor</span>
+            <span class="text-[10px] text-slate-500 font-mono">Backend Extractor</span>
           </div>
           <div class="overflow-x-auto">
             <table class="w-full text-xs text-left">
@@ -204,130 +229,105 @@
         </div>
 
         <!-- 4-Way Math Reconciliation Gate -->
-        <div class="bg-slate-950 rounded-xl p-4 border border-slate-800">
-          <div class="flex items-center justify-between pb-2 border-b border-slate-800 mb-3">
+        <div class="bg-slate-950 rounded-xl p-4 border border-slate-800 space-y-3">
+          <div class="flex items-center justify-between pb-2 border-b border-slate-800">
             <h3 class="text-xs font-bold text-white uppercase font-mono tracking-wider flex items-center gap-2">
-              <i class="fa-solid fa-calculator text-emerald-400"></i> Deterministic 4-Way Mathematical Reconciliation
+              <i class="fa-solid fa-calculator text-emerald-400"></i> 4-Way Mathematical Reconciliation
             </h3>
-            <span id="math-status-badge" class="text-[10px] font-mono px-2 py-0.5 rounded font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
-              PASSED
-            </span>
+            <span id="math-status-badge" class="text-[10px] font-mono px-2 py-0.5 rounded font-bold bg-slate-800 text-slate-300 border border-slate-700">--</span>
           </div>
 
           <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs font-mono">
             <div class="p-2.5 bg-slate-900 rounded-lg border border-slate-800">
-              <span class="text-slate-500 text-[10px] block">Sum of Line Items</span>
-              <strong id="math-subtotal" class="text-white text-sm">$0.00</strong>
+              <span class="text-slate-500 text-[10px] block">Extracted Subtotal</span>
+              <strong id="math-subtotal" class="text-white text-sm">--</strong>
             </div>
             <div class="p-2.5 bg-slate-900 rounded-lg border border-slate-800">
               <span class="text-slate-500 text-[10px] block">Extracted Tax</span>
-              <strong id="math-tax" class="text-white text-sm">$0.00</strong>
+              <strong id="math-tax" class="text-white text-sm">--</strong>
             </div>
             <div class="p-2.5 bg-slate-900 rounded-lg border border-slate-800">
               <span class="text-slate-500 text-[10px] block">Document Total</span>
-              <strong id="math-doc-total" class="text-cyan-400 text-sm">$0.00</strong>
+              <strong id="math-doc-total" class="text-cyan-400 text-sm">--</strong>
             </div>
             <div class="p-2.5 bg-slate-900 rounded-lg border border-slate-800">
-              <span class="text-slate-500 text-[10px] block">Math Variance</span>
-              <strong id="math-variance" class="text-emerald-400 text-sm">$0.00</strong>
+              <span class="text-slate-500 text-[10px] block">Total Delta</span>
+              <strong id="math-variance" class="text-emerald-400 text-sm">--</strong>
             </div>
           </div>
+          <ul id="discrepancy-list" class="text-[11px] font-mono text-amber-300 space-y-1 list-disc list-inside hidden"></ul>
         </div>
-
       </div>
-
     </div>
   </main>
 
-  <!-- API Key Modal -->
-  <div id="apikey-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
-    <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full p-6 shadow-2xl">
-      <div class="flex items-center justify-between pb-3 border-b border-slate-800 mb-4">
-        <h3 class="text-sm font-bold text-white flex items-center gap-2">
-          <i class="fa-solid fa-key text-cyan-400"></i> Google Gemini Vision API Key
-        </h3>
-        <button onclick="closeApiKeyModal()" class="text-slate-400 hover:text-white">
-          <i class="fa-solid fa-xmark"></i>
-        </button>
-      </div>
-
-      <p class="text-xs text-slate-300 mb-3 leading-relaxed">
-        API keys are securely configured on the backend server via <code>GEMINI_API_KEY</code> environment variable. Browser client-side key storage is disabled to prevent credential leakage.
-      </p>
-
-      <div class="flex items-center justify-between pt-3 border-t border-slate-800 text-xs">
-        <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener" class="text-cyan-400 hover:underline">
-          Get Free Gemini API Key →
-        </a>
-        <div class="flex gap-2">
-          <button onclick="closeApiKeyModal()" class="px-3 py-1.5 bg-slate-800 text-slate-300 rounded-lg text-xs font-semibold">Close</button>
-        </div>
-      </div>
-    </div>
-  </div>
-
   <script>
-    // PRODUCTION REAL OCR & MULTIMODAL INVOICE PIPELINE
-    const STORAGE_KEY = 'ledgerpulse_real_invoices';
+    const API_BASE = window.AI_API_BASE || '';
+    const SESSION_ID = 'p04_demo_' + Math.random().toString(36).slice(2, 12);
 
-    // Sample real reference invoices to start with
-    const INITIAL_INVOICES = [
-      {
-        id: "INV-2026-001",
-        vendor: "Apex Cloud Solutions Inc.",
-        invoice_number: "APX-89421",
-        date: "2026-11-15",
-        tax_id: "EIN 84-2910392",
-        subtotal: 1250.00,
-        tax_amount: 112.50,
-        doc_total: 1362.50,
-        confidence: 98,
-        image_url: "https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?auto=format&fit=crop&w=600&q=80",
-        raw_text: "APEX CLOUD SOLUTIONS INC.\n100 Tech Boulevard, Suite 400\nInvoice Number: APX-89421\nDate: 2026-11-15\nEIN: 84-2910392\n\nDescription Qty Unit Price Total\nDedicated Kubernetes Cluster 1 $950.00 $950.00\nManaged Redis Caching 2 $150.00 $300.00\n\nSubtotal: $1250.00\nSales Tax (9%): $112.50\nTOTAL AMOUNT DUE: $1362.50\nPayment Terms: Net 30",
-        items: [
-          { description: "Dedicated Kubernetes Cluster", qty: 1, unit_price: 950.00, total: 950.00 },
-          { description: "Managed Redis Caching Instance", qty: 2, unit_price: 150.00, total: 300.00 }
-        ]
-      },
-      {
-        id: "INV-2026-002",
-        vendor: "Falcon Logistics & Freight",
-        invoice_number: "FL-55102",
-        date: "2026-11-18",
-        tax_id: "EIN 12-4091823",
-        subtotal: 820.00,
-        tax_amount: 65.60,
-        doc_total: 885.60,
-        confidence: 96,
-        image_url: "https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?auto=format&fit=crop&w=600&q=80",
-        raw_text: "FALCON LOGISTICS & FREIGHT\nTerminal 4, Port Bay\nInvoice: FL-55102\nDate: 2026-11-18\n\nItem Description Qty Rate Amount\nOvernight Air Pallet Shipping 1 $620.00 $620.00\nCold-Chain Temperature Surcharge 1 $200.00 $200.00\n\nSubtotal: $820.00\nTax: $65.60\nTotal Due: $885.60",
-        items: [
-          { description: "Overnight Air Pallet Shipping", qty: 1, unit_price: 620.00, total: 620.00 },
-          { description: "Cold-Chain Temperature Surcharge", qty: 1, unit_price: 200.00, total: 200.00 }
-        ]
-      }
-    ];
-
-    let invoices = [];
+    let ledgerRows = [];
+    let validationById = {};
     let activeInvoiceId = null;
 
-    function loadInvoices() {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved) {
-        try {
-          invoices = JSON.parse(saved);
-        } catch(e) {
-          invoices = JSON.parse(JSON.stringify(INITIAL_INVOICES));
-        }
-      } else {
-        invoices = JSON.parse(JSON.stringify(INITIAL_INVOICES));
-      }
-      if (invoices.length > 0) activeInvoiceId = invoices[0].id;
-      renderAll();
+    function authHeaders(extra = {}) {
+      return Object.assign({ 'X-Session-ID': SESSION_ID }, extra);
     }
 
-    function saveInvoices() {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(invoices));
+    function showBackendError(msg) {
+      const banner = document.getElementById('backend-error-banner');
+      const text = document.getElementById('backend-error-text');
+      if (text) text.textContent = msg || 'Backend API unavailable';
+      if (banner) banner.classList.remove('hidden');
+    }
+
+    function hideBackendError() {
+      const banner = document.getElementById('backend-error-banner');
+      if (banner) banner.classList.add('hidden');
+    }
+
+    function fillSample(kind) {
+      const box = document.getElementById('raw-text-input');
+      if (kind === 'clean') {
+        box.value = [
+          'Vendor: Northwind Supplies Ltd',
+          'Invoice No: NW-2026-101',
+          'Date: 2026-11-20',
+          'Cloud Compute Node 2 x $200.00 $400.00',
+          'Subtotal: $400.00',
+          'Tax: $40.00',
+          'Total: $440.00'
+        ].join('\n');
+      } else {
+        box.value = [
+          'Vendor: Delta Freight Co',
+          'Invoice No: DF-9902',
+          'Date: 2026-11-21',
+          'Subtotal: $500.00',
+          'Tax: $50.00',
+          'Total: $625.00'
+        ].join('\n');
+      }
+    }
+
+    async function refreshLedgerFromBackend() {
+      try {
+        const res = await fetch(`${API_BASE}/api/ai/invoice-processing/ledger?limit=50`, {
+          headers: authHeaders()
+        });
+        if (!res.ok) {
+          throw new Error(`HTTP ${res.status}`);
+        }
+        const data = await res.json();
+        hideBackendError();
+        ledgerRows = data.invoices || [];
+        if (!activeInvoiceId && ledgerRows.length > 0) {
+          activeInvoiceId = ledgerRows[0].id;
+        }
+        renderAll();
+      } catch (err) {
+        showBackendError('Backend API unavailable (start FastAPI backend on port 8000 or configure window.AI_API_BASE).');
+        renderAll();
+      }
     }
 
     function renderAll() {
@@ -337,48 +337,49 @@
     }
 
     function updateMetrics() {
-      document.getElementById('stat-total').textContent = invoices.length;
-      document.getElementById('queue-count-badge').textContent = `${invoices.length} Invoices`;
+      document.getElementById('stat-total').textContent = ledgerRows.length;
+      document.getElementById('queue-count-badge').textContent = `${ledgerRows.length} Invoices`;
 
-      let syncedCount = 0;
+      let approvedCount = 0;
       let flaggedCount = 0;
       let totalVolume = 0;
 
-      invoices.forEach(inv => {
-        totalVolume += inv.doc_total;
-        const mathDiff = Math.abs((inv.subtotal + inv.tax_amount) - inv.doc_total);
-        if (mathDiff < 0.05) syncedCount++;
+      ledgerRows.forEach(r => {
+        totalVolume += Number(r.amount || 0);
+        if (r.status === 'APPROVED') approvedCount++;
         else flaggedCount++;
       });
 
-      document.getElementById('stat-synced').textContent = syncedCount;
+      document.getElementById('stat-approved').textContent = approvedCount;
       document.getElementById('stat-flagged').textContent = flaggedCount;
       document.getElementById('stat-volume').textContent = '$' + totalVolume.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     }
 
     function renderInvoiceList() {
       const listEl = document.getElementById('invoice-list');
-      if (invoices.length === 0) {
-        listEl.innerHTML = `<p class="text-xs text-slate-500 text-center py-8">No invoices. Upload one above!</p>`;
+      const filterVal = document.getElementById('queue-filter').value;
+      const filtered = ledgerRows.filter(r => filterVal === 'ALL' || r.status === filterVal);
+
+      if (filtered.length === 0) {
+        listEl.innerHTML = `<p class="text-xs text-slate-500 text-center py-8 border border-dashed border-slate-800 rounded-xl">No invoices in this queue yet. Validate a sample or upload a PDF/TXT above.</p>`;
         return;
       }
 
-      listEl.innerHTML = invoices.map(inv => {
-        const isSelected = inv.id === activeInvoiceId;
-        const mathDiff = Math.abs((inv.subtotal + inv.tax_amount) - inv.doc_total);
-        const mathValid = mathDiff < 0.05;
+      listEl.innerHTML = filtered.map(r => {
+        const isSelected = r.id === activeInvoiceId;
+        const badgeColor = r.status === 'APPROVED'
+          ? 'text-emerald-400'
+          : (r.status === 'DUPLICATE_REJECTED' ? 'text-rose-400' : 'text-amber-400');
 
         return `
-          <div onclick="selectInvoice('${inv.id}')" class="p-3.5 rounded-xl border transition cursor-pointer ${isSelected ? 'bg-cyan-950/30 border-cyan-500/60 shadow-lg' : 'bg-slate-900/60 border-slate-800 hover:border-slate-700'}">
+          <div onclick="selectInvoice('${r.id}')" class="p-3.5 rounded-xl border transition cursor-pointer ${isSelected ? 'bg-cyan-950/30 border-cyan-500/60 shadow-lg' : 'bg-slate-900/60 border-slate-800 hover:border-slate-700'}">
             <div class="flex items-center justify-between text-xs mb-1">
-              <span class="font-bold text-white truncate max-w-[160px]">${inv.vendor}</span>
-              <span class="font-mono font-bold text-cyan-400">$${inv.doc_total.toFixed(2)}</span>
+              <span class="font-bold text-white truncate max-w-[160px]">${r.vendor || 'UNKNOWN'}</span>
+              <span class="font-mono font-bold text-cyan-400">$${Number(r.amount || 0).toFixed(2)}</span>
             </div>
             <div class="flex items-center justify-between text-[10px] text-slate-400 font-mono">
-              <span>${inv.invoice_number} • ${inv.date}</span>
-              <span class="${mathValid ? 'text-emerald-400' : 'text-amber-400'} font-bold">
-                ${mathValid ? '● Reconciled' : '▲ Variance'}
-              </span>
+              <span>${r.invoice_number || 'UNKNOWN'} • ${r.invoice_date || ''}</span>
+              <span class="${badgeColor} font-bold">${r.status}</span>
             </div>
           </div>
         `;
@@ -391,11 +392,11 @@
     }
 
     function renderActiveDetail() {
-      const inv = invoices.find(i => i.id === activeInvoiceId);
-      const emptyState = document.getElementById('ocr-empty-state');
-      const panel = document.getElementById('ocr-detail-panel');
+      const row = ledgerRows.find(i => i.id === activeInvoiceId);
+      const emptyState = document.getElementById('inspector-empty-state');
+      const panel = document.getElementById('inspector-detail-panel');
 
-      if (!inv) {
+      if (!row) {
         emptyState.classList.remove('hidden');
         panel.classList.add('hidden');
         return;
@@ -404,72 +405,155 @@
       emptyState.classList.add('hidden');
       panel.classList.remove('hidden');
 
-      document.getElementById('current-inv-vendor').textContent = inv.vendor;
-      document.getElementById('current-inv-subtext').textContent = `Invoice: ${inv.invoice_number} | Billing Date: ${inv.date} | ${inv.tax_id || 'ID Verified'}`;
-      document.getElementById('current-inv-img').src = inv.image_url;
-      document.getElementById('current-inv-raw-text').value = inv.raw_text;
-      document.getElementById('ocr-confidence-badge').textContent = `Confidence: ${inv.confidence}%`;
+      const detail = validationById[row.id] || null;
+      const ext = detail ? detail.extracted : null;
+      const rec = detail ? detail.reconciliation : null;
+      const dup = detail ? detail.duplicate_check : null;
+
+      document.getElementById('current-inv-vendor').textContent = row.vendor || 'UNKNOWN';
+      const statusBadge = document.getElementById('current-inv-status');
+      statusBadge.textContent = row.status;
+      statusBadge.className = row.status === 'APPROVED'
+        ? 'text-[10px] px-2 py-0.5 rounded-full font-mono uppercase font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
+        : (row.status === 'DUPLICATE_REJECTED'
+            ? 'text-[10px] px-2 py-0.5 rounded-full font-mono uppercase font-bold bg-rose-500/20 text-rose-300 border border-rose-500/30'
+            : 'text-[10px] px-2 py-0.5 rounded-full font-mono uppercase font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30');
+
+      document.getElementById('current-inv-subtext').textContent =
+        `ID: ${row.id} | Invoice #: ${row.invoice_number || 'UNKNOWN'} | Date: ${row.invoice_date || '--'}`;
+
+      document.getElementById('backend-engine-badge').textContent =
+        `Engine: ${detail ? detail.engine : 'sqlite_record'}`;
+
+      const confEl = document.getElementById('backend-confidence-badge');
+      confEl.textContent = (detail && detail.confidence_score !== undefined && detail.confidence_score !== null)
+        ? `Confidence: ${detail.confidence_score}%`
+        : 'Confidence: -- (stored record)';
+
+      document.getElementById('current-inv-source-text').value =
+        (detail && detail._submitted_text) ? detail._submitted_text : `Stored SQLite Ledger Record (${row.id})\nSHA-256: ${row.file_hash || '--'}`;
+      document.getElementById('current-inv-extracted-json').value =
+        ext ? JSON.stringify(ext, null, 2) : JSON.stringify(row, null, 2);
+
+      // Duplicate & Sync status
+      const dupText = document.getElementById('dup-status-text');
+      const dupHash = document.getElementById('dup-hash-text');
+      if (dup) {
+        dupText.textContent = dup.is_duplicate ? `DUPLICATE DETECTED: ${dup.match_reason}` : 'UNIQUE DOCUMENT (No collision)';
+        dupText.className = dup.is_duplicate ? 'text-xs font-mono font-bold text-rose-400' : 'text-xs font-mono font-bold text-emerald-400';
+      } else {
+        dupText.textContent = row.status === 'DUPLICATE_REJECTED' ? 'DUPLICATE_REJECTED' : 'Recorded in session ledger';
+        dupText.className = row.status === 'DUPLICATE_REJECTED' ? 'text-xs font-mono font-bold text-rose-400' : 'text-xs font-mono font-bold text-slate-300';
+      }
+      dupHash.textContent = `SHA-256: ${row.file_hash || '--'}`;
+
+      document.getElementById('sync-status-text').textContent = detail ? detail.accounting_sync_status : row.status;
+      document.getElementById('sync-message-text').textContent = detail ? detail.message : `Math Check 1: ${row.math_check_1} | Math Check 2: ${row.math_check_2}`;
 
       // Line Items
       const tbody = document.getElementById('line-items-body');
-      tbody.innerHTML = inv.items.map(it => `
-        <tr class="hover:bg-slate-900/40">
-          <td class="py-2 px-3 text-white font-sans font-medium">${it.description}</td>
-          <td class="py-2 px-3 text-center text-slate-400">${it.qty}</td>
-          <td class="py-2 px-3 text-right text-slate-300">$${it.unit_price.toFixed(2)}</td>
-          <td class="py-2 px-3 text-right text-cyan-400 font-bold">$${it.total.toFixed(2)}</td>
-        </tr>
-      `).join('');
+      const items = (ext && Array.isArray(ext.line_items)) ? ext.line_items : [];
+      if (items.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="4" class="py-3 px-3 text-center text-slate-500">No itemized line items extracted</td></tr>`;
+      } else {
+        tbody.innerHTML = items.map(it => `
+          <tr class="hover:bg-slate-900/40">
+            <td class="py-2 px-3 text-white font-sans font-medium">${it.description}</td>
+            <td class="py-2 px-3 text-center text-slate-400">${it.quantity ?? it.qty ?? 1}</td>
+            <td class="py-2 px-3 text-right text-slate-300">$${Number(it.unit_price || 0).toFixed(2)}</td>
+            <td class="py-2 px-3 text-right text-cyan-400 font-bold">$${Number(it.line_total ?? it.total ?? 0).toFixed(2)}</td>
+          </tr>
+        `).join('');
+      }
 
       // Math Reconciliation
-      document.getElementById('math-subtotal').textContent = '$' + inv.subtotal.toFixed(2);
-      document.getElementById('math-tax').textContent = '$' + inv.tax_amount.toFixed(2);
-      document.getElementById('math-doc-total').textContent = '$' + inv.doc_total.toFixed(2);
+      document.getElementById('math-subtotal').textContent = (ext && ext.subtotal !== null && ext.subtotal !== undefined) ? '$' + Number(ext.subtotal).toFixed(2) : '--';
+      document.getElementById('math-tax').textContent = (ext && ext.tax_amount !== null && ext.tax_amount !== undefined) ? '$' + Number(ext.tax_amount).toFixed(2) : '--';
+      document.getElementById('math-doc-total').textContent = '$' + Number((ext && ext.total_amount !== null) ? ext.total_amount : (row.amount || 0)).toFixed(2);
 
-      const mathDiff = Math.abs((inv.subtotal + inv.tax_amount) - inv.doc_total);
-      const mathValid = mathDiff < 0.05;
       const varEl = document.getElementById('math-variance');
       const badgeEl = document.getElementById('math-status-badge');
+      const discList = document.getElementById('discrepancy-list');
 
-      if (mathValid) {
-        varEl.textContent = '$0.00 (Balanced)';
-        varEl.className = 'text-emerald-400 text-sm font-bold';
-        badgeEl.textContent = 'PASSED 4-WAY CHECK';
-        badgeEl.className = 'text-[10px] font-mono px-2 py-0.5 rounded font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30';
+      if (rec) {
+        varEl.textContent = '$' + Number(rec.total_delta || 0).toFixed(2);
+        varEl.className = rec.overall_status === 'APPROVED' ? 'text-emerald-400 text-sm font-bold' : 'text-rose-400 text-sm font-bold';
+        badgeEl.textContent = rec.overall_status;
+        badgeEl.className = rec.overall_status === 'APPROVED'
+          ? 'text-[10px] font-mono px-2 py-0.5 rounded font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
+          : 'text-[10px] font-mono px-2 py-0.5 rounded font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30';
+
+        if (Array.isArray(rec.discrepancy_details) && rec.discrepancy_details.length > 0) {
+          discList.innerHTML = rec.discrepancy_details.map(d => `<li>${d}</li>`).join('');
+          discList.classList.remove('hidden');
+        } else {
+          discList.innerHTML = '';
+          discList.classList.add('hidden');
+        }
       } else {
-        varEl.textContent = `+$${mathDiff.toFixed(2)} (Discrepancy)`;
-        varEl.className = 'text-rose-400 text-sm font-bold';
-        badgeEl.textContent = 'VARIANCE FLAGGED';
-        badgeEl.className = 'text-[10px] font-mono px-2 py-0.5 rounded font-bold bg-rose-500/20 text-rose-400 border border-rose-500/30';
+        varEl.textContent = `${row.math_check_1} / ${row.math_check_2}`;
+        badgeEl.textContent = row.status;
+        discList.classList.add('hidden');
       }
     }
 
-    // REAL FILE UPLOAD HANDLING (DRAG & DROP OR INPUT)
+    async function validateRawText() {
+      const rawText = document.getElementById('raw-text-input').value.trim();
+      if (!rawText) {
+        alert('Please enter or select sample invoice text first.');
+        return;
+      }
+      try {
+        const res = await fetch(`${API_BASE}/api/ai/invoice-processing/process`, {
+          method: 'POST',
+          headers: authHeaders({ 'Content-Type': 'application/json' }),
+          body: JSON.stringify({
+            raw_text: rawText,
+            filename: 'pasted_invoice.txt',
+            session_id: SESSION_ID
+          })
+        });
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
+          showBackendError(err.detail || `Backend returned HTTP ${res.status}`);
+          return;
+        }
+        hideBackendError();
+        const data = await res.json();
+        data._submitted_text = rawText;
+        validationById[data.invoice_id] = data;
+        activeInvoiceId = data.invoice_id;
+        await refreshLedgerFromBackend();
+      } catch (err) {
+        showBackendError('Backend API unavailable (start FastAPI backend to run validation).');
+      }
+    }
+
     function handleFileDrop(e) {
       e.preventDefault();
       document.getElementById('drop-zone').classList.remove('border-cyan-400', 'bg-cyan-950/20');
       if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-        processRealUploadedImage(e.dataTransfer.files[0]);
+        uploadDocumentToBackend(e.dataTransfer.files[0]);
       }
     }
 
     function handleRealFileUpload(e) {
       if (e.target.files && e.target.files[0]) {
-        processRealUploadedImage(e.target.files[0]);
+        uploadDocumentToBackend(e.target.files[0]);
       }
     }
 
-    async function processRealUploadedImage(file) {
-      if (!file.type.startsWith('image/')) {
-        alert('Please select an image file (PNG, JPG, WEBP).');
+    async function uploadDocumentToBackend(file) {
+      const lower = (file.name || '').toLowerCase();
+      if (!lower.endsWith('.pdf') && !lower.endsWith('.txt') && !lower.endsWith('.csv')) {
+        showBackendError('Please upload a text-based .pdf, .txt, or .csv invoice file (image OCR requires server vision LLM key).');
         return;
       }
 
-      // Show Progress Bar
-      const progContainer = document.getElementById('ocr-progress-container');
-      const progBar = document.getElementById('ocr-progress-bar');
-      const statusText = document.getElementById('ocr-status-text');
-      const pctText = document.getElementById('ocr-pct-text');
+      const progContainer = document.getElementById('upload-progress-container');
+      const progBar = document.getElementById('upload-progress-bar');
+      const statusText = document.getElementById('upload-status-text');
+      const pctText = document.getElementById('upload-pct-text');
       progContainer.classList.remove('hidden');
       statusText.textContent = 'Uploading document to backend pipeline...';
       pctText.textContent = '50%';
@@ -478,110 +562,58 @@
       try {
         const formData = new FormData();
         formData.append('file', file);
-        formData.append('session_id', 'ui_sess_' + Date.now());
+        formData.append('session_id', SESSION_ID);
 
         const res = await fetch(`${API_BASE}/api/ai/invoice-processing/upload`, {
           method: 'POST',
+          headers: authHeaders(),
           body: formData
         });
 
         if (!res.ok) {
           const errData = await res.json().catch(() => ({}));
-          showBackendError(errData.detail || 'Backend unavailable');
+          showBackendError(errData.detail || `Backend returned HTTP ${res.status}`);
           return;
         }
 
         hideBackendError();
         const data = await res.json();
-        const newInv = {
-          id: data.invoice_id,
-          vendor: data.vendor_name || 'Unknown Vendor',
-          invoice_number: data.invoice_number || 'UNKNOWN',
-          date: data.invoice_date || new Date().toISOString().substring(0, 10),
-          tax_id: 'N/A',
-          subtotal: data.extracted ? (data.extracted.subtotal || 0.0) : 0.0,
-          tax_amount: data.extracted ? (data.extracted.tax_amount || 0.0) : 0.0,
-          doc_total: data.total_amount || 0.0,
-          confidence: data.confidence_score,
-          image_url: '',
-          raw_text: JSON.stringify(data.extracted || {}, null, 2),
-          items: data.extracted ? (data.extracted.line_items || []) : [],
-          status: data.reconciliation ? data.reconciliation.overall_status : 'NEEDS_REVIEW'
-        };
-
-        invoices.unshift(newInv);
-        activeInvoiceId = newInv.id;
-        saveInvoices();
-        renderAll();
+        data._submitted_text = `Uploaded file: ${file.name}`;
+        validationById[data.invoice_id] = data;
+        activeInvoiceId = data.invoice_id;
+        await refreshLedgerFromBackend();
       } catch (err) {
-        console.error('Upload Error:', err);
-        showBackendError('Backend unavailable');
+        showBackendError('Backend API unavailable');
       } finally {
         progContainer.classList.add('hidden');
         progBar.style.width = '0%';
       }
     }
 
-    const API_BASE = window.AI_API_BASE || '';
-
-    function showBackendError(msg) {
-      const banner = document.getElementById('backend-error-banner');
-      const text = document.getElementById('backend-error-text');
-      if (text) text.textContent = msg || 'Backend unavailable';
-      if (banner) banner.classList.remove('hidden');
-    }
-
-    function hideBackendError() {
-      const banner = document.getElementById('backend-error-banner');
-      if (banner) banner.classList.add('hidden');
-    }
-
-    function deleteActiveInvoice() {
-      if (!activeInvoiceId) return;
-      invoices = invoices.filter(i => i.id !== activeInvoiceId);
-      activeInvoiceId = invoices.length > 0 ? invoices[0].id : null;
-      saveInvoices();
-      renderAll();
-    }
-
-    function exportGoogleSheetCSV() {
-      if (invoices.length === 0) {
-        alert('No invoices to export.');
-        return;
+    async function downloadCSV() {
+      try {
+        const res = await fetch(`${API_BASE}/api/ai/invoice-processing/export/csv`, {
+          headers: authHeaders()
+        });
+        if (!res.ok) {
+          throw new Error(`HTTP ${res.status}`);
+        }
+        const csvText = await res.text();
+        const blob = new Blob([csvText], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `accounting_ledger_${Date.now()}.csv`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      } catch (err) {
+        showBackendError('CSV export requires active backend connection.');
       }
-
-      let csv = 'Invoice ID,Vendor,Invoice Number,Date,Subtotal,Tax,Grand Total,Confidence\n';
-      invoices.forEach(i => {
-        csv += `"${i.id}","${i.vendor.replace(/"/g, '""')}","${i.invoice_number}","${i.date}",${i.subtotal},${i.tax_amount},${i.doc_total},${i.confidence}%\n`;
-      });
-
-      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `ledgerpulse_google_sheets_sync_${Date.now()}.csv`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
     }
 
-    function openApiKeyModal() {
-      document.getElementById('apikey-modal').classList.remove('hidden');
-    }
-
-    function closeApiKeyModal() {
-      document.getElementById('apikey-modal').classList.add('hidden');
-    }
-
-    function saveApiKey() {
-      closeApiKeyModal();
-    }
-
-    function reprocessCurrentWithAI() {
-      alert("AI processing is managed server-side by the backend API. Please upload documents via the backend /upload endpoint.");
-    }
-
-    loadInvoices();
+    refreshLedgerFromBackend();
   </script>
 </body>
 </html>
